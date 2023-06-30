@@ -1273,6 +1273,22 @@
           "lib/net5.0/SharpCompress.dll": {}
         }
       },
+      "SixLabors.ImageSharp/3.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/SixLabors.ImageSharp.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/SixLabors.ImageSharp.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "build/_._": {}
+        }
+      },
       "Snappier/1.0.0": {
         "type": "package",
         "compile": {
@@ -1571,6 +1587,7 @@
           "MongoDB.Driver": "2.20.0",
           "MongoDB.Driver.Core": "2.20.0",
           "SendGrid": "9.28.1",
+          "SixLabors.ImageSharp": "3.0.1",
           "System.Drawing.Common": "7.0.0",
           "System.IdentityModel.Tokens.Jwt": "6.31.0"
         },
@@ -2823,6 +2840,22 @@
         "lib/netstandard2.1/SharpCompress.dll",
         "sharpcompress.0.30.1.nupkg.sha512",
         "sharpcompress.nuspec"
+      ]
+    },
+    "SixLabors.ImageSharp/3.0.1": {
+      "sha512": "o0v/J6SJwp3RFrzR29beGx0cK7xcMRgOyIuw8ZNLQyNnBhiyL/vIQKn7cfycthcWUPG3XezUjFwBWzkcUUDFbg==",
+      "type": "package",
+      "path": "sixlabors.imagesharp/3.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "build/SixLabors.ImageSharp.props",
+        "lib/net6.0/SixLabors.ImageSharp.dll",
+        "lib/net6.0/SixLabors.ImageSharp.xml",
+        "sixlabors.imagesharp.128.png",
+        "sixlabors.imagesharp.3.0.1.nupkg.sha512",
+        "sixlabors.imagesharp.nuspec"
       ]
     },
     "Snappier/1.0.0": {

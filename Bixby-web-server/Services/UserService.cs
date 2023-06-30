@@ -107,6 +107,9 @@ namespace BixbyShop_LK.Services
            if(GetUserByEmail(username) == null)
             {
                 User newUser = new User();
+                newUser.FirstName = FirstName;
+                newUser.LastName = LastName;
+                newUser.Address = Address;
                 newUser.Email = username;
                 newUser.Password = BCryptNet.HashPassword(password);
                 newUser.Tokens = new Dictionary<string, VerficationCode>();

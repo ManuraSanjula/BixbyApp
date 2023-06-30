@@ -1,6 +1,11 @@
 ﻿using System.Net;
+using System.Reflection.PortableExecutable;
+using System.Text;
+using System.Text.RegularExpressions;
 using BixbyShop_LK.Services;
+using MongoDB.Bson;
 using Newtonsoft.Json;
+using SendGrid;
 
 namespace BixbyShop_LK
 {
@@ -9,6 +14,25 @@ namespace BixbyShop_LK
         public static void AddToken(dynamic obj, string token)
         {
             obj.Token = token;
+        }
+    }
+
+    public static class HttpResponseExtensions
+    {
+        public static async Task WriteJsonAsync(this HttpListenerResponse response, object obj)
+        {
+            response.ContentType = "application/json";
+            var json = JsonConvert.SerializeObject(obj);
+            var buffer = Encoding.UTF8.GetBytes(json);
+            response.ContentLength64 = buffer.Length;
+            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
+        public static async Task WriteAsync(this HttpListenerResponse response, string content)
+        {
+            var buffer = Encoding.UTF8.GetBytes(content);
+            response.ContentLength64 = buffer.Length;
+            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
         }
     }
 
@@ -85,6 +109,7 @@ namespace BixbyShop_LK
                 // Delay to prevent overwhelming the thread pool with too many concurrent requests
                 await Task.Delay(1).ConfigureAwait(false);
             }
+
         }
 
         private void ConfigureRoutes()
@@ -93,9 +118,7 @@ namespace BixbyShop_LK
 
             routeHandlers.Add("/addUser", AddUser); // ==
             routeHandlers.Add("/login", Login); // ==
-            routeHandlers.Add("/updateUser", HandleUpdateUserRequest);
-            routeHandlers.Add("/deleteUser", HandleDeleteUserRequest);
-
+            routeHandlers.Add("/updateUser/{email}", HandleUpdateUserRequest);
             routeHandlers.Add("/addUserPic", HandleFileRequest);
 
             routeHandlers.Add("/emailVerification", HandleFileRequest);
@@ -107,7 +130,38 @@ namespace BixbyShop_LK
            
         }
 
-        private void ProcessRequest(HttpListenerContext context)
+        private static bool WildcardMatch(string input, string pattern)
+        {
+            return Regex.IsMatch(input, $"^{Regex.Escape(pattern).Replace("\\*", ".*")}$");
+        }
+
+        private static string ExtractDynamicRouteName(string input, string pattern)
+        {
+            var regexPattern = $"^{Regex.Escape(pattern).Replace("\\*", "(.*?)")}$";
+            var match = Regex.Match(input, regexPattern);
+            return match.Groups[1].Value;
+        }
+
+        public String param(HttpListenerContext context, String value)
+        {
+            var request = context.Request;
+
+            // Get the path from the request URL
+            var path = request.Url.AbsolutePath;
+
+            // Get the query string from the request URL
+            var queryString = request.Url.Query;
+
+            // Parse the query string parameters
+            var queryParams = System.Web.HttpUtility.ParseQueryString(queryString);
+
+            // Example: Extract the value of the "hhh" parameter
+            String hhhValue = queryParams[value];
+
+            return hhhValue;
+        }
+
+        private async Task ProcessRequest(HttpListenerContext context)
         {
             try
             {
@@ -116,23 +170,28 @@ namespace BixbyShop_LK
 
                 Console.WriteLine($"Received {request.HttpMethod} request: {request.Url.AbsolutePath}");
 
-                var httpContext = new HttpContext(request, response);
+                // Extract the dynamic route name from the URL
+                var path = request.Url.AbsolutePath;
+                var route = routeHandlers.Keys.FirstOrDefault(route => WildcardMatch(path, route));
+                var dynamicRouteName = ExtractDynamicRouteName(path, route);
+                var httpContext = new HttpContext(request, response, dynamicRouteName);
 
-                if (routeHandlers.TryGetValue(request.Url.AbsolutePath, out var handler))
+                if (route != null && routeHandlers.TryGetValue(route, out var handler))
                 {
                     try
                     {
-                        handler(httpContext).Wait();
+                        // Call the route handler with the extracted dynamic route name
+                        await handler(httpContext).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Error: {ex.Message}");
-                        httpContext.WriteResponse("An error occurred.", "text/plain", HttpStatusCode.InternalServerError).Wait();
+                        await httpContext.WriteResponse("An error occurred.", "text/plain", HttpStatusCode.InternalServerError).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    httpContext.WriteResponse("Route not found.", "text/plain", HttpStatusCode.NotFound).Wait();
+                    await httpContext.WriteResponse("Route not found.", "text/plain", HttpStatusCode.NotFound).ConfigureAwait(false);
                 }
             }
             finally
@@ -141,6 +200,7 @@ namespace BixbyShop_LK
                 context.Response.Close();
             }
         }
+
 
         private async Task HandleHomeRequest(HttpContext context)
         {
@@ -158,7 +218,7 @@ namespace BixbyShop_LK
                     string json = await reader.ReadToEndAsync().ConfigureAwait(false);
                     if(json == null)
                     {
-                        await context.WriteResponse("Opps !!! .", "text/plain", HttpStatusCode.BadRequest).ConfigureAwait(false);
+                        HandleBadRequest(context, "BadRequest");
                     }
 
                     JsonSerializerSettings settings = new JsonSerializerSettings
@@ -170,26 +230,31 @@ namespace BixbyShop_LK
 
                     if(user == null)
                     {
-                        await context.WriteResponse("Opps !!! .", "text/plain", HttpStatusCode.InternalServerError).ConfigureAwait(false);
+                        HandleServerError(context, new Exception("Server Error"));
                     }
 
                     String res = UserService.CreateNewAccount(user.Email, user.Password, user.FirstName, user.LastName, user.Address);
                     
                     if(res == null)
                     {
-                        await context.WriteResponse("Opps !!! .", "text/plain", HttpStatusCode.BadRequest).ConfigureAwait(false);
+                        HandleBadRequest(context, "BadRequest");
                     }
                     else
                     {
                         Dictionary<string, string> headers = new Dictionary<string, string>();
                         headers.Add("Token", res);
-                        await context.WriteResponse("", "application/json", HttpStatusCode.OK, headers).ConfigureAwait(false);
+                        var response = new
+                        {
+                            status = "success",
+                            message = "User added successfully"
+                        };
+                        HandleOkay(context, response.ToJson());
                     }
                 }
             }
             else
             {
-                await context.WriteResponse("Method not allowed.", "text/plain", HttpStatusCode.MethodNotAllowed).ConfigureAwait(false);
+                HandleMethodNotAllowed(context);
             }
         }
 
@@ -203,7 +268,7 @@ namespace BixbyShop_LK
                     string json = await reader.ReadToEndAsync().ConfigureAwait(false);
                     if (json == null)
                     {
-                        await context.WriteResponse("Opps !!! .", "text/plain", HttpStatusCode.BadRequest).ConfigureAwait(false);
+                        HandleBadRequest(context, "BadRequest");
                     }
 
                     JsonSerializerSettings settings = new JsonSerializerSettings
@@ -214,6 +279,7 @@ namespace BixbyShop_LK
                     UserLoginReq user = JsonConvert.DeserializeObject<UserLoginReq>(json, settings);
                     if (user == null)
                     {
+                        HandleServerError(context, new Exception("Server Error"));
                         await context.WriteResponse("Opps !!! .", "text/plain", HttpStatusCode.InternalServerError).ConfigureAwait(false);
                     }
 
@@ -221,47 +287,108 @@ namespace BixbyShop_LK
                     Dictionary<string, string> headers = new Dictionary<string, string>();
                     headers.Add("Token", token);
 
-                    await context.WriteResponse("","application/json", HttpStatusCode.OK, headers).ConfigureAwait(false);
+                    var response = new
+                    {
+                        status = "success",
+                        message = "User logged in successfully",
+                    };
+                    HandleOkay(context, response.ToJson());
                 }
             }
             else
             {
-                await context.WriteResponse("Method not allowed.", "text/plain", HttpStatusCode.MethodNotAllowed).ConfigureAwait(false);
+                HandleMethodNotAllowed(context);
             }
 
         }
 
         private async Task HandleFileRequest(HttpContext context)
         {
-            var request = context.Request;
-
-            if (request.HttpMethod == "GET")
+            if (context.Request.HttpMethod != "POST")
             {
-                string filePath = "path_to_your_file"; // Specify the path to the file you want to serve
-                if (File.Exists(filePath))
-                {
-                    try
-                    {
-                        byte[] fileBytes = await File.ReadAllBytesAsync(filePath).ConfigureAwait(false);
-                        context.Response.ContentType = "application/octet-stream";
-                        context.Response.ContentLength64 = fileBytes.Length;
-                        await context.Response.OutputStream.WriteAsync(fileBytes, 0, fileBytes.Length).ConfigureAwait(false);
-                        context.Response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error serving file: {ex.Message}");
-                        await context.WriteResponse("An error occurred while serving the file.", "text/plain", HttpStatusCode.InternalServerError).ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    await context.WriteResponse("File not found.", "text/plain", HttpStatusCode.NotFound).ConfigureAwait(false);
-                }
+                await HandleMethodNotAllowed(context);
+                return;
             }
-            else if (request.HttpMethod == "POST")
+
+            try
             {
-                
+                var request = context.Request;
+                if (!request.HasEntityBody)
+                {
+                    await HandleBadRequest(context, "No file found in the request");
+                    return;
+                }
+
+                var contentType = request.Headers["Content-Type"];
+                if (string.IsNullOrEmpty(contentType) || !contentType.StartsWith("multipart/form-data"))
+                {
+                    await HandleBadRequest(context, "Invalid content type for file upload");
+                    return;
+                }
+
+                var tempFilePath = Path.GetTempFileName();
+                using (var fileStream = File.Create(tempFilePath))
+                {
+                    request.InputStream.CopyTo(fileStream);
+                }
+
+                // Resize the image and save it
+                var resizedFilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".jpg");
+                ResizeImage(tempFilePath, resizedFilePath, 800, 600);
+
+                // Perform further operations on the resized image
+                // ...
+
+                File.Delete(tempFilePath);
+
+                HandleOkay(context, "File uploaded and processed successfully");
+            }
+            catch (Exception ex)
+            {
+                await HandleServerError(context, ex);
+            }
+        }
+
+
+        private async Task HandleUnAuthorized(HttpContext context)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            await context.Response.WriteAsync("Unauthorized");
+        }
+
+        private async Task HandleOkay(HttpContext context, String json)
+        {
+            await context.WriteResponse(json, "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+        }
+
+        private async Task HandleMethodNotAllowed(HttpContext context)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
+            await context.Response.WriteAsync("Method not allowed");
+        }
+
+        private async Task HandleBadRequest(HttpContext context, string message)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            await context.Response.WriteAsync(message);
+        }
+
+        private async Task HandleServerError(HttpContext context, Exception ex)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            await context.Response.WriteAsync("An error occurred: " + ex.Message);
+        }
+
+        private void ResizeImage(string sourceImagePath, string targetImagePath, int maxWidth, int maxHeight)
+        {
+            using (var image = Image.Load(sourceImagePath))
+            {
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Size = new Size(maxWidth, maxHeight),
+                    Mode = ResizeMode.Max
+                }));
+                image.Save(targetImagePath);
             }
         }
 
@@ -270,26 +397,90 @@ namespace BixbyShop_LK
             if (context.Request.HttpMethod == "PUT" || context.Request.HttpMethod == "PATCH")
             {
                 var request = context.Request;
-                 
-                await context.WriteResponse("User updated successfully.", "text/plain").ConfigureAwait(false);
+
+                User jwtUser = GetTheUserFromToken(request);
+
+                if(jwtUser != null)
+                {
+                    using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                    {
+                        string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+                        if (json == null)
+                        {
+                            await context.WriteResponse("Opps !!! .", "text/plain", HttpStatusCode.BadRequest).ConfigureAwait(false);
+                        }
+
+                        JsonSerializerSettings settings = new JsonSerializerSettings
+                        {
+                            NullValueHandling = NullValueHandling.Ignore
+                        };
+
+                        UserReqAndRes userReq = JsonConvert.DeserializeObject<UserReqAndRes>(json, settings);
+
+                        if (userReq == null)
+                        {
+                            HandleServerError(context, new Exception("ServerError"));
+                        }
+
+                        if (context.Dynamic.Equals(jwtUser.Email))
+                        {
+                            User user = UserService.GetUserByEmail(userReq.Email);
+
+                            if (user.Equals(jwtUser))
+                            {
+                                HandleBadRequest(context, "BadRequest");
+                            }
+                            user.FirstName = userReq.FirstName;
+                            user.LastName = userReq.LastName;
+                            user.Address = userReq.Address;
+
+                            bool IsAcknowledged = UserService.UpdateUser(user.Id, user);
+                            if (!IsAcknowledged)
+                            {
+                                HandleBadRequest(context, "BadRequest");
+                            }
+                            else
+                            {
+                                var response = new
+                                {
+                                    status = "success",
+                                    message = "User updated successfully"
+                                };
+                                await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+                            }
+                        }
+                        else
+                        {
+                            HandleBadRequest(context, "BadRequest");
+                        }
+
+                    }
+                }
+                else
+                {
+                    await context.WriteResponse("Opps !!! .", "text/plain", HttpStatusCode.Unauthorized).ConfigureAwait(false);
+                }
             }
             else
             {
-                await context.WriteResponse("Method not allowed.", "text/plain", HttpStatusCode.MethodNotAllowed).ConfigureAwait(false);
+                HandleMethodNotAllowed(context);
             }
         }
 
-        private async Task HandleDeleteUserRequest(HttpContext context)
+        private static User GetTheUserFromToken(HttpListenerRequest request)
         {
-            if (context.Request.HttpMethod == "DELETE")
+            var authorizationHeader = request.Headers["Authorization"];
+            if (!string.IsNullOrEmpty(authorizationHeader))
             {
-               
-                await context.WriteResponse("User deleted successfully.", "text/plain").ConfigureAwait(false);
+                if (authorizationHeader.StartsWith("Bearer "))
+                {
+                    var jwtToken = authorizationHeader.Substring("Bearer ".Length);
+                    User jwtUser = TokenService.ValidateJwtToken(jwtToken, false, (string token) => { });
+                    return jwtUser;
+                }
+                return null;
             }
-            else
-            {
-                await context.WriteResponse("Method not allowed.", "text/plain", HttpStatusCode.MethodNotAllowed).ConfigureAwait(false);
-            }
+            return null;
         }
     }
 
@@ -298,10 +489,13 @@ namespace BixbyShop_LK
         public HttpListenerRequest Request { get; }
         public HttpListenerResponse Response { get; }
 
-        public HttpContext(HttpListenerRequest request, HttpListenerResponse response)
+        public String Dynamic { get; }
+
+        public HttpContext(HttpListenerRequest request, HttpListenerResponse response, String dynamic)
         {
             Request = request;
             Response = response;
+            this.Dynamic = dynamic;
         }
 
         public async Task WriteResponse(string content, string contentType, HttpStatusCode statusCode = HttpStatusCode.OK, Dictionary<string, string> headers = null)

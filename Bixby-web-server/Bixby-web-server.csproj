@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -19,6 +19,8 @@
     <PackageReference Include="MongoDB.Driver" Version="2.20.0" />
     <PackageReference Include="MongoDB.Driver.Core" Version="2.20.0" />
     <PackageReference Include="SendGrid" Version="9.28.1" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
+    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.31.0" />
   </ItemGroup>
 

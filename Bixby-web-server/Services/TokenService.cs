@@ -50,13 +50,11 @@ namespace BixbyShop_LK.Services
             var token = tokenHandler.ReadJwtToken(jwtToken);
             var claims = token.Claims;
 
-            var email = claims.FirstOrDefault(c => c.Type == "email");
-            var password = claims.FirstOrDefault(c => c.Type == "password");
-
-            User user = userService.GetUserByEmail(email.ToString());
-            if (user == null)
+            String email = claims.FirstOrDefault(c => c.Type == "email").Value;
+            String password = claims.FirstOrDefault(c => c.Type == "password").Value;
+            User user = userService.GetUserByEmail(email);
+            if (user == null && !user.UserAuthTokens.Contains(jwtToken) && user.Password == password)
             {
-                userDelegate(jwtToken + " You Fucking Pussy 2");
                 return null;
             }
             else
@@ -65,17 +63,14 @@ namespace BixbyShop_LK.Services
                 {
                     if (allowBoolean)
                     {
-                        userDelegate(jwtToken + " Fuck you 1");
                         return true;
                     }
                     else
                     {
-                        userDelegate(jwtToken + " Fuck you 2");
                         return user;
                     }
                 }
                 return null;
-
             }
         }
 

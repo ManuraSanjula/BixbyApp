@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "zM1uDzySlZRI/WVVTRKb+sWJyYGIeNuf6yER1r+dKXsuqTw2SL0egc28meUQByjpgEvEFhLib1G1jDZeq4GgPA==",
+  "dgSpecHash": "qY7Pj7r4oTwjjgyCf3RlUMAn0DK4dgDHk+tBzVa+IEep2P6ae9wjiyaHaccxFskNuutMZyxPNXjoK9yCJEFojg==",
   "success": true,
   "projectFilePath": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Testing\\Testing.csproj",
   "expectedPackageFiles": [
@@ -68,6 +68,7 @@
     "C:\\Users\\MSI\\.nuget\\packages\\microsoft.netcore.platforms\\5.0.0\\microsoft.netcore.platforms.5.0.0.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\microsoft.netcore.targets\\1.1.0\\microsoft.netcore.targets.1.1.0.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\microsoft.win32.registry\\5.0.0\\microsoft.win32.registry.5.0.0.nupkg.sha512",
+    "C:\\Users\\MSI\\.nuget\\packages\\microsoft.win32.systemevents\\7.0.0\\microsoft.win32.systemevents.7.0.0.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\mongodb.bson\\2.20.0\\mongodb.bson.2.20.0.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\mongodb.driver\\2.20.0\\mongodb.driver.2.20.0.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\mongodb.driver.core\\2.20.0\\mongodb.driver.core.2.20.0.nupkg.sha512",
@@ -80,6 +81,7 @@
     "C:\\Users\\MSI\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\system.componentmodel.annotations\\4.5.0\\system.componentmodel.annotations.4.5.0.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\system.diagnostics.diagnosticsource\\4.5.0\\system.diagnostics.diagnosticsource.4.5.0.nupkg.sha512",
+    "C:\\Users\\MSI\\.nuget\\packages\\system.drawing.common\\7.0.0\\system.drawing.common.7.0.0.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\system.identitymodel.tokens.jwt\\6.31.0\\system.identitymodel.tokens.jwt.6.31.0.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\system.io.pipelines\\5.0.2\\system.io.pipelines.5.0.2.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\system.memory\\4.5.1\\system.memory.4.5.1.nupkg.sha512",

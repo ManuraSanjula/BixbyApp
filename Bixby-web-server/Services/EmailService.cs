@@ -44,7 +44,7 @@ namespace BixbyShop_LK.Services
         }
         private static void userUpdate(string email, string token)
         {
-            User user = userService.GetUserByEmail(email);
+            User? user = userService.GetUserByEmail(email);
             if (user != null)
             {
                 user.AddToken(token, DateTime.Now.ToString());
@@ -107,11 +107,11 @@ namespace BixbyShop_LK.Services
             {
                 message = MailHelper.CreateSingleEmail(from, to, subject, emailVerificationCode(toEmail), emailVerificationCode(toEmail));
             }
-            else if (i == 1)
+            if (i == 1)
             {
                 message = MailHelper.CreateSingleEmail(from, to, subject, forgotPasswordEmailVerification(toEmail), forgotPasswordEmailVerification(toEmail));
             }
-            else if (i == 2)
+            if (i == 2)
             {
                 message = MailHelper.CreateSingleEmail(from, to, subject, successfullyResetThePassword(toEmail), successfullyResetThePassword(toEmail));
             }

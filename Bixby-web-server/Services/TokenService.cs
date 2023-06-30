@@ -18,7 +18,7 @@ namespace BixbyShop_LK.Services
         private static string audience = "Manura Sanjula";
         private static UserService userService = new UserService();
 
-        private static string GenerateJwtToken(string secretKey, string issuer, string audience, int expiryMinutes, string email, string password, UserNewAccountDelegate userNewAccountDelegate, User user)
+        private static string? GenerateJwtToken(string secretKey, string issuer, string audience, int expiryMinutes, string email, string password, UserNewAccountDelegate userNewAccountDelegate, User? user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -44,7 +44,7 @@ namespace BixbyShop_LK.Services
             return userNewAccountDelegate(UserToken, user);
         }
 
-        private static dynamic ExtractCustomClaim(string jwtToken, bool allowBoolean, UserDelegate userDelegate)
+        private static dynamic? ExtractCustomClaim(string jwtToken, bool allowBoolean, UserDelegate userDelegate)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.ReadJwtToken(jwtToken);
@@ -52,7 +52,7 @@ namespace BixbyShop_LK.Services
 
             String email = claims.FirstOrDefault(c => c.Type == "email").Value;
             String password = claims.FirstOrDefault(c => c.Type == "password").Value;
-            User user = userService.GetUserByEmail(email);
+            User? user = userService.GetUserByEmail(email);
             if (user == null && !user.UserAuthTokens.Contains(jwtToken) && user.Password == password)
             {
                 return null;
@@ -74,9 +74,9 @@ namespace BixbyShop_LK.Services
             }
         }
 
-        public delegate String UserNewAccountDelegate(string token, User user);
+        public delegate string? UserNewAccountDelegate(string token, User? user);
 
-        public static string tokenCreator(string email, string password, UserNewAccountDelegate userNewAccountDelegate, User user)
+        public static string? tokenCreator(string email, string password, UserNewAccountDelegate userNewAccountDelegate, User? user)
         {
             if (string.IsNullOrEmpty(email) && string.IsNullOrEmpty(password))
             {
@@ -85,7 +85,7 @@ namespace BixbyShop_LK.Services
             int expiryMinutes = 10000;
             return GenerateJwtToken(secretKey, issuer, audience, expiryMinutes, email, password, userNewAccountDelegate, user);
         }
-        public static dynamic ValidateJwtToken(string token, bool allowBoolean, UserDelegate userDelegate)
+        public static dynamic? ValidateJwtToken(string token, bool allowBoolean, UserDelegate userDelegate)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var validationParameters = new TokenValidationParameters

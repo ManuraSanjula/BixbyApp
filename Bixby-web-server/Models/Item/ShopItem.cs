@@ -11,5 +11,8 @@ namespace BixbyShop_LK.Models.Item
         public String Description { get; set; }
         public int Price { get; set; }
         public Comment[] Comments { get; set; }
+        public User publish { get; set; }
+        public int likes { get; set; }
+        public int dislikes { get; set; }
     }
 }

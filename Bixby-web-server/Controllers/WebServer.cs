@@ -2,7 +2,6 @@
 using Bixby_web_server.Helpers;
 using BixbyShop_LK.Services;
 using MongoDB.Bson;
-using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace Bixby_web_server.Controllers
 {

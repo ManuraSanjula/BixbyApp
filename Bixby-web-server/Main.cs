@@ -7,7 +7,7 @@ namespace BixbyShop_LK
     {
         public static void Main(string[] args)
         {
-            var server = new WebServer(8080);
+            var server = new WebServer2(8080);
             server.Start();
 
             Console.WriteLine("Press any key to stop the server...");

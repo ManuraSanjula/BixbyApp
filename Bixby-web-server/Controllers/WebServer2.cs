@@ -4,6 +4,7 @@ using SendGrid.Helpers.Errors.Model;
 using System.Collections.Concurrent;
 using System.Net;
 
+
 namespace Bixby_web_server.Controllers
 {
     public class WebServer2
@@ -195,25 +196,6 @@ namespace Bixby_web_server.Controllers
             }
 
             return inputSegment == patternSegment; // Exact match required
-        }
-
-        public string param(HttpListenerContext context, string value)
-        {
-            var request = context.Request;
-
-            // Get the path from the request URL
-            var path = request.Url.AbsolutePath;
-
-            // Get the query string from the request URL
-            var queryString = request.Url.Query;
-
-            // Parse the query string parameters
-            var queryParams = System.Web.HttpUtility.ParseQueryString(queryString);
-
-            // Example: Extract the value of the "hhh" parameter
-            string hhhValue = queryParams[value];
-
-            return hhhValue;
         }
     }
 }

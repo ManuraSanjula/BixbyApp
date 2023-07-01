@@ -1,6 +1,7 @@
 ﻿using SendGrid.Helpers.Mail;
 using SendGrid;
 using System.Text.RegularExpressions;
+using Bixby_web_server.Models;
 
 namespace BixbyShop_LK.Services
 {
@@ -102,7 +103,6 @@ namespace BixbyShop_LK.Services
             var from = new EmailAddress(EncryptionHelper.Decrypt(fromEmail));
             var to = new EmailAddress(toEmail);
             SendGridMessage message = null;
-
             if (i == 0)
             {
                 message = MailHelper.CreateSingleEmail(from, to, subject, emailVerificationCode(toEmail), emailVerificationCode(toEmail));

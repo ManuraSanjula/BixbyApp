@@ -5,6 +5,8 @@ using SendGrid;
 using MimeKit;
 using System.Text.RegularExpressions;
 using MailKit.Security;
+using System.Collections.Generic;
+using Bixby_web_server.Models;
 
 namespace BixbyShop_LK.Services
 {
@@ -188,10 +190,10 @@ namespace BixbyShop_LK.Services
         {
            if(GetUserByEmail(username) == null)
             {
-                if (!EmailServiceHelper.ValidateEmailUsing_Zerobounce(username))
+               /* if (!EmailServiceHelper.ValidateEmailUsing_Zerobounce(username))
                 {
                     return null;
-                }
+                }*/
                 User? newUser = new User();
                 newUser.FirstName = FirstName;
                 newUser.LastName = LastName;
@@ -217,7 +219,7 @@ namespace BixbyShop_LK.Services
 
         public string? Login(string username, string password)
         {
-            User? user = GetUserByEmail(username);
+            User? user = GetUserByEmail(username.ToString());
             if (user != null && BCryptNet.Verify(password, user.Password))
             {
                 return TokenService.tokenCreator(user.Email == null ? username : user.Email, user.Password, UserNewAccountDelegate, user);
@@ -238,7 +240,6 @@ namespace BixbyShop_LK.Services
             var user = userCollection.Find(filter).FirstOrDefault();
             return user;
         }
-
         public User GetUserById(ObjectId userId)
         {
             return userCollection.Find(user => user.Id == userId).FirstOrDefault();

@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using Bixby_web_server.Models;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 
@@ -53,21 +54,28 @@ namespace BixbyShop_LK.Services
             String email = claims.FirstOrDefault(c => c.Type == "email").Value;
             String password = claims.FirstOrDefault(c => c.Type == "password").Value;
             User? user = userService.GetUserByEmail(email);
-            if (user == null && !user.UserAuthTokens.Contains(jwtToken) && user.Password == password)
+            if (user == null)
             {
                 return null;
             }
             else
-            {
-                if (user.Password == password.ToString())
+            { 
+                if(user.Password == password && !user.UserAuthTokens.Contains(jwtToken))
                 {
-                    if (allowBoolean)
+                    return null;
+                }
+                else
+                {
+                    if (user.Password == password.ToString())
                     {
-                        return true;
-                    }
-                    else
-                    {
-                        return user;
+                        if (allowBoolean)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return user;
+                        }
                     }
                 }
                 return null;

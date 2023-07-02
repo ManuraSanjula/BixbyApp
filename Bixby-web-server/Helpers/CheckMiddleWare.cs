@@ -89,7 +89,8 @@ namespace Bixby_web_server.Helpers
                             FirstName = User.FirstName,
                             LastName = User.LastName,
                             Email = User.Email,
-                            Pic = User.Pic
+                            Pic = User.Pic,
+                            Id = User.Id
                         };
 
                         ShopItem shopItem = new ShopItem

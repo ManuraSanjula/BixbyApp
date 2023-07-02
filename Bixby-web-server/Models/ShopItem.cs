@@ -18,6 +18,8 @@ namespace Bixby_web_server.Models
 
     public class UserInShopItem
     {
+        public ObjectId Id { get; set; }
+
         public string FirstName { get; set; }
 
         public string LastName { get; set; }
@@ -29,7 +31,8 @@ namespace Bixby_web_server.Models
 
     public class ShopAllShopItem
     {
-        [BsonId] public ObjectId Id { get; set; }
+        public ObjectId Id { get; set; }
+
         public string Name { get; set; }
         public String PicLowRes { get; set; }
     }

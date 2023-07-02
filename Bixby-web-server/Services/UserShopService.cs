@@ -26,6 +26,20 @@ namespace Bixby_web_server.Services
             await this.UserShopCollection.InsertOneAsync(userShop);
         }
 
+        public async Task ProductUpdateByItemId(ObjectId id, UserShop userShop)
+        {
+            await this.UserShopCollection.ReplaceOneAsync(us=> us.Id == id, userShop);
+        }
+
+        public async Task<UserShop> GetProductByItemId(ObjectId id)
+        {
+            return await this.UserShopCollection.Find(u => u.Item == id).FirstOrDefaultAsync();
+        }
+        public async Task<List<UserShop>> GetProductByUserId(ObjectId id)
+        {
+            return await this.UserShopCollection.Find(u => u.User == id).ToListAsync();
+        }
+
         public async Task<UserShop> GetProduct(ObjectId id)
         {
             return await this.UserShopCollection.Find(u => u.Id == id).FirstOrDefaultAsync();

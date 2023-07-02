@@ -33,6 +33,10 @@ namespace BixbyShop_LK.Models.Item.Services
         public async Task<ShopItem> GetShopItemByIdAsync(string shopItemId)
         {
             return await shopItemCollection.Find(shopItem => shopItem.Id == new ObjectId(shopItemId)).FirstOrDefaultAsync();
+        } 
+        public async Task<ShopItem> GetShopItemByNameAsync(string name)
+        {
+            return await shopItemCollection.Find(shopItem => shopItem.Name == name).FirstOrDefaultAsync();
         }
 
         public async Task CreateShopItemAsync(ShopItem shopItem)

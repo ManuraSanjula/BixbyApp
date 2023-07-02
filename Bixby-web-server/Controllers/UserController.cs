@@ -1,6 +1,8 @@
 ﻿using Bixby_web_server.Helpers;
 using Bixby_web_server.Models;
+using Bixby_web_server.Services;
 using BixbyShop_LK.Services;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using SendGrid.Helpers.Errors.Model;
 using System.Dynamic;
@@ -13,7 +15,7 @@ namespace Bixby_web_server.Controllers
     public class UserController
     {
         private static readonly UserService UserService = new UserService();
-
+        private static readonly UserShopService userShopService = new UserShopService();
         public static async Task HandleUpdateUserRequest(HttpContext context)
         {
 
@@ -302,5 +304,26 @@ namespace Bixby_web_server.Controllers
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
 
+        internal async static Task GettingAllUserProducts(HttpContext context)
+        {
+            string email = context.DynamicPath[0];
+            User user = await UserService.GetUserByEmailAsync(email);
+
+            if (user == null)
+            {
+                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+            }
+            List<UserShop> userProducts = await userShopService.GetProductByUserId(user.Id);
+            if(userProducts.IsNullOrEmpty())
+            {
+                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+            }
+            var response = new {
+                status = "Success",
+                allTheProducts = userProducts
+            };
+            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+
+        }
     }
 }

@@ -164,9 +164,9 @@ namespace Bixby_web_server.Controllers
             routeHandlers.Add("/addUser", UserController.AddUser);
             routeHandlers.Add("/login", UserController.Login);
             routeHandlers.Add("/updateUser/{email}", UserController.HandleUpdateUserRequest);
+            routeHandlers.Add("/{email}/products", UserController.GettingAllUserProducts);
 
             routeHandlers.Add("/reset-password-req/{email}", UserController.ResetPasswordReq);
-
             routeHandlers.Add("/reset-password/{email}/{token}", UserController.ResetPassword);
             routeHandlers.Add("/email-verify/{email}/{token}", UserController.email_verify);
 

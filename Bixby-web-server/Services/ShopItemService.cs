@@ -2,6 +2,8 @@
 using BixbyShop_LK.Services;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BixbyShop_LK.Models.Item.Services
 {
@@ -17,30 +19,43 @@ namespace BixbyShop_LK.Models.Item.Services
             IMongoDatabase database = client.GetDatabase("BixByApp");
             this.shopItemCollection = database.GetCollection<ShopItem>("ShopItem");
         }
-        public List<ShopItem> GetAllShopItems()
+
+        public async Task<List<ShopItem>> GetAllShopItemsAsync()
         {
-            return shopItemCollection.Find(_ => true).ToList();
+            return await shopItemCollection.Find(_ => true).ToListAsync();
         }
 
-        public ShopItem GetShopItemById(ObjectId shopItemId)
+        public async Task<ShopItem> GetShopItemByIdAsync(ObjectId shopItemId)
         {
-            return shopItemCollection.Find(shopItem => shopItem.Id == shopItemId).FirstOrDefault();
+            return await shopItemCollection.Find(shopItem => shopItem.Id == shopItemId).FirstOrDefaultAsync();
         }
 
-        public void CreateShopItem(ShopItem shopItem)
+        public async Task<ShopItem> GetShopItemByIdAsync(string shopItemId)
         {
-            shopItemCollection.InsertOne(shopItem);
+            return await shopItemCollection.Find(shopItem => shopItem.Id == new ObjectId(shopItemId)).FirstOrDefaultAsync();
         }
 
-        public void UpdateShopItem(string shopItemId, ShopItem updatedShopItem)
+        public async Task CreateShopItemAsync(ShopItem shopItem)
+        {
+            await shopItemCollection.InsertOneAsync(shopItem);
+        }
+
+        public async Task<bool> UpdateShopItemAsync(string shopItemId, ShopItem updatedShopItem)
         {
             var objectId = new ObjectId(shopItemId);
-            shopItemCollection.ReplaceOne(shopItem => shopItem.Id == objectId, updatedShopItem);
+            var result = await shopItemCollection.ReplaceOneAsync(shopItem => shopItem.Id == objectId, updatedShopItem);
+            return result.IsAcknowledged;
         }
 
-        public void DeleteShopItem(ObjectId shopItemId)
+        public async Task<bool> UpdateShopItemAsync(ObjectId shopItemId, ShopItem updatedShopItem)
         {
-            shopItemCollection.DeleteOne(shopItem => shopItem.Id == shopItemId);
+            var result = await shopItemCollection.ReplaceOneAsync(shopItem => shopItem.Id == shopItemId, updatedShopItem);
+            return result.IsAcknowledged;
+        }
+
+        public async Task DeleteShopItemAsync(ObjectId shopItemId)
+        {
+            await shopItemCollection.DeleteOneAsync(shopItem => shopItem.Id == shopItemId);
         }
     }
 }

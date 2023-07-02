@@ -2,6 +2,7 @@
 using Bixby_web_server.Models;
 using BixbyShop_LK.Services;
 using MongoDB.Bson;
+using SendGrid.Helpers.Errors.Model;
 using System.Dynamic;
 using System.Net;
 using BCryptNet = BCrypt.Net.BCrypt;
@@ -10,468 +11,246 @@ namespace Bixby_web_server.Controllers
 {
     public class UserController
     {
-        public static UserService UserService = new UserService();
+        private static readonly UserService UserService = new UserService();
 
         public static async Task HandleUpdateUserRequest(HttpContext context)
         {
+            if (context.Request.HttpMethod != "PUT" && context.Request.HttpMethod != "PATCH")
+                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
             var request = context.Request;
-            CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
-            if (context.Request.HttpMethod == "PUT" || context.Request.HttpMethod == "PATCH")
+            var checkMiddleWare = new CheckMiddleWare();
+            dynamic jwt = await checkMiddleWare.CheckMiddleWareJWT(context, context.DynamicPath[0]);
+
+            if (NullEmptyChecker.HasNullEmptyValues(jwt) || !jwt.IsOkay)
+                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }.ToJson());
+
+            using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
             {
-                dynamic result = checkMiddleWare.CheckMiddleWareJWT(context, context.DynamicPath[0]);
-                if (result.IsOkay && !NullEmptyChecker.HasNullEmptyValues(result))
-                {
-                    using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
-                    {
-                        string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+                string json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
-                        CheckMiddleWare? validateResult =
-                            checkMiddleWare.CheckUserReq<UserReqAndRes>(json, context.DynamicPath);
-                        if (!NullEmptyChecker.HasNullEmptyValues(validateResult))
-                        {
-                            validateResult.User.FirstName = validateResult.UserReqAndRes.FirstName;
-                            validateResult.User.LastName = validateResult.UserReqAndRes.LastName;
-                            validateResult.User.Address = validateResult.UserReqAndRes.Address;
+                dynamic validateResult = await checkMiddleWare.CheckUserReq<UserReqForUpdate>(json, context.DynamicPath);
 
-                            if (validateResult.UserReqAndRes.UpdateUserPass)
-                            {
-                                if (BCryptNet.Verify(validateResult.UserReqAndRes.Password, validateResult.User.Password))
-                                {
-                                    if (string.Equals(validateResult.UserReqAndRes.newPassword, validateResult.UserReqAndRes.confirmNewPassword))
-                                    {
-                                        String newPassword = BCryptNet.HashPassword(validateResult.UserReqAndRes.newPassword);
-                                        if (BCryptNet.Verify(validateResult.UserReqAndRes.newPassword, newPassword))
-                                        {
-                                            validateResult.User.Password = newPassword;
-                                            IEmailService emailService = new EmailServiceHelper();
-                                            EmailService._emailServiceHelper = emailService;
-                                            EmailService.SendEmail(validateResult.User.Email, "Successfully Reset The Password of Your Account 🙂🙂", 2);
-                                        }    
-                                    }
-                                }
-                            }
+                if (NullEmptyChecker.HasNullEmptyValues(validateResult))
+                    throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-                            if (validateResult.UserReqAndRes.UpdateUserEmail)
-                            {
-                                if (validateResult.User.EmailVerify)
-                                {
-                                    validateResult.User.Email = validateResult.UserReqAndRes.Email;
-                                    IEmailService emailService = new EmailServiceHelper();
-                                    EmailService._emailServiceHelper = emailService;
-                                    EmailService.SendEmail(validateResult.User.Email, "Email Verification Code for Your Account 🙂🙂", 0);
-                                }
-                            }
+                var user = validateResult.User;
+                if (user == null)
+                    throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-                            bool IsAcknowledged = UserService.UpdateUser(validateResult.User.Id, validateResult.User);
-                            if (!IsAcknowledged)
-                            {
-                                var BadRequest = new
-                                {
-                                    status = "An error occurred.",
-                                    message = "BadRequest",
-                                };
-                                throw new Exception(BadRequest.ToJson());
-                            }
-                            else
-                            {
-                                var response = new
-                                {
-                                    status = "Success",
-                                    message = "User updated successfully"
-                                };
-                                await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
-                                    .ConfigureAwait(false);
-                            }
-                        }
-                        else
-                        {
-                            var BadRequest = new
-                            {
-                                status = "An error occurred.",
-                                message = "BadRequest",
-                            };
-                            throw new Exception(BadRequest.ToJson());
-                        }
-                    }
-                }
-                else
-                {
-                    var Unauthorized = new
-                    {
-                        status = "An error occurred.",
-                        message = "Unauthorized",
-                    };
-                    throw new Exception(Unauthorized.ToJson());
-                }
-            }
-            else
-            {
-                var MethodNotAllowed = new
-                {
-                    status = "An error occurred.",
-                    message = "Method Not Allowed",
-                };
-                throw new Exception(MethodNotAllowed.ToJson());
+                var userReqAndRes = validateResult.UserReqAndRes;
+                if (userReqAndRes == null)
+                    throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+                user.FirstName = userReqAndRes.FirstName;
+                user.LastName = userReqAndRes.LastName;
+                user.Address = userReqAndRes.Address;
+
+                bool isAcknowledged = await UserService.UpdateUserAsync(user.Id, user);
+
+                var response = isAcknowledged
+                    ? new { status = "Success", message = "User updated successfully" }
+                    : new { status = "An error occurred.", message = "BadRequest" };
+
+                await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
             }
         }
 
         public static async Task AddUser(HttpContext context)
         {
-            if (context.Request.HttpMethod == "POST")
+            if (context.Request.HttpMethod != "POST")
+                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
+            using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
             {
-                var request = context.Request;
-                using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
-                {
-                    CheckMiddleWare? checkMiddleWare = new CheckMiddleWare();
-                    string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+                var checkMiddleWare = new CheckMiddleWare();
+                var json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
-                    checkMiddleWare = checkMiddleWare.CheckUserReq<UserReqAndRes>(json, context.DynamicPath);
+                var userCheckResult = checkMiddleWare.CheckUserReq<UserReqForSignUp>(json, context.DynamicPath);
+                if (NullEmptyChecker.HasNullEmptyValues(userCheckResult) || !userCheckResult.User.Password.Equals(userCheckResult.User.confirmNewPassword))
+                    throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-                    if (NullEmptyChecker.HasNullEmptyValues(checkMiddleWare))
-                    {
-                        UserReqAndRes? user = checkMiddleWare.UserReqAndRes;
+                var user = userCheckResult.User;
+                if(user == null)
+                    throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-                        if (!user.Password.Equals(user.confirmNewPassword))
-                        {
-                            var BadRequest = new
-                            {
-                                status = "An error occurred.",
-                                message = "BadRequest",
-                            };
-                            throw new Exception(BadRequest.ToJson());
-                        }
+                var token = await UserService.CreateNewAccountAsync(user.Email, user.Password, user.FirstName, user.LastName, user.Address);
 
-                        string? res = UserService.CreateNewAccount(user.Email, user.Password, user.FirstName,
-                            user.LastName, user.Address);
+                if (string.IsNullOrEmpty(token))
+                    throw new BadRequestException(new { status = "An error occurred.", message = "Empty Body" }.ToJson());
 
-                        if (string.IsNullOrEmpty(res))
-                        {
-                            var response = new
-                            {
-                                status = "An error occurred.",
-                                message = "Empty Body",
-                            };
-                            throw new Exception(response.ToJson());
-                        }
-                        else
-                        {
-                            var response = new
-                            {
-                                status = "Success",
-                                message = "User added successfully",
-                                token = res
-                            };
-
-                            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
-                                .ConfigureAwait(false);
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        var BadRequest = new
-                        {
-                            status = "An error occurred.",
-                            message = "BadRequest",
-                        };
-                        throw new Exception(BadRequest.ToJson());
-                    }
-                }
-            }
-            else
-            {
                 var response = new
                 {
-                    status = "An error occurred.",
-                    message = "Method Not Allowed",
+                    status = "Success",
+                    message = "User added successfully",
+                    token
                 };
-                throw new Exception(response.ToJson());
+
+                await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
             }
         }
 
         public static async Task email_verify(HttpContext context)
         {
-            if (context.Request.HttpMethod == "GET")
+            if (context.Request.HttpMethod != "GET")
+                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
+            string email = context.DynamicPath[0];
+            string token = context.DynamicPath[1];
+
+            User user = await UserService.GetUserByEmailAsync(email);
+            if (!user.IsTokenExpired(token))
             {
-                string email = context.DynamicPath[0];
-                string token = context.DynamicPath[1];
-
-                User user = UserService.GetUserByEmail(email);
-                if (!user.IsTokenExpired(token))
-                {
-                    user.EmailVerify = true;
-                    user.Tokens[token].valid = false;
-                    user.Tokens.Remove(token);
-                }
-                else
-                {
-                    user.Tokens.Remove(token);
-                    var BadRequest = new
-                    {
-                        status = "An error occurred.",
-                        message = "BadRequest",
-                    };
-                    throw new Exception(BadRequest.ToJson());
-                }
-
-                if (UserService.UpdateUser(user.Id, user))
-                {
-                    var response = new
-                    {
-                        status = "Success",
-                    };
-                    await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-                }
-                else
-                {
-                    var BadRequest = new
-                    {
-                        status = "An error occurred.",
-                        message = "BadRequest",
-                    };
-                    throw new Exception(BadRequest.ToJson());
-                }
+                user.EmailVerify = true;
+                user.Tokens[token].valid = false;
+                user.Tokens.Remove(token);
             }
             else
             {
+                user.Tokens.Remove(token);
+                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+            }
+
+            if (await UserService.UpdateUserAsync(user.Id, user))
+            {
                 var response = new
                 {
-                    status = "An error occurred.",
-                    message = "Method Not Allowed",
+                    status = "Success"
                 };
-                throw new Exception(response.ToJson());
+                await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+            }
+            else
+            {
+                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
             }
         }
 
-
         public static async Task GetUser(HttpContext context)
         {
-            if (context.Request.HttpMethod == "GET")
-            {
-                CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
-                dynamic jwt = checkMiddleWare.CheckMiddleWareJWT(context, context.DynamicPath[0]);
+            if (context.Request.HttpMethod != "GET")
+                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
-                if (!NullEmptyChecker.HasNullEmptyValues(jwt) && jwt.IsOkay)
-                {
-                    dynamic user = new ExpandoObject();
-                    user.Email = jwt.User.Email;
-                    user.FirstName = jwt.User.FirstName;
-                    user.LastName = jwt.User.LastName;
-                    user.Address = jwt.User.Address;
-                    user.EmailVerify = jwt.User.EmailVerify;
+            CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
+            dynamic jwt = await checkMiddleWare.CheckMiddleWareJWT(context, context.DynamicPath[0].Trim());
 
-                    var response = new
-                    {
-                        status = "Success",
-                        body = user
-                    };
-                    await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-                   
-                }
-                else
-                {
-                    var BadRequest = new
-                    {
-                        status = "An error occurred.",
-                        message = "BadRequest",
-                    };
-                    throw new Exception(BadRequest.ToJson());
-                }
-            }
-            else
+            if (NullEmptyChecker.HasNullEmptyValues(jwt) && !jwt.IsOkay)
+                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+            dynamic user = new ExpandoObject();
+            user.Email = jwt.User.Email;
+            user.FirstName = jwt.User.FirstName;
+            user.LastName = jwt.User.LastName;
+            user.Address = jwt.User.Address;
+            user.EmailVerify = jwt.User.EmailVerify;
+
+            var response = new
             {
-                var response = new
-                {
-                    status = "An error occurred.",
-                    message = "Method Not Allowed",
-                };
-                throw new Exception(response.ToJson());
-            }
+                status = "Success",
+                body = user
+            };
+
+            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
 
         public static async Task Login(HttpContext context)
         {
-            if (context.Request.HttpMethod == "POST")
-            {
-                var request = context.Request;
-                using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
-                {
-                    dynamic? checkMiddleWare = new CheckMiddleWare();
-                    string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+            if (context.Request.HttpMethod != "POST")
+                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
-                    checkMiddleWare = checkMiddleWare.CheckUserReq<UserLoginReq>(json, context.DynamicPath);
-                    if (!NullEmptyChecker.HasNullEmptyValues(checkMiddleWare))
-                    {
-                        string? token = UserService.Login(checkMiddleWare.UserLoginReq.email,
-                            checkMiddleWare.UserLoginReq.secret);
-                        if (!string.IsNullOrEmpty(token))
-                        {
-                            var response = new
-                            {
-                                status = "Success",
-                                message = "User logged in successfully",
-                                token,
-                            };
-
-                            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
-                                .ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            var Unauthorized = new
-                            {
-                                status = "An error occurred.",
-                                message = "Unauthorized",
-                            };
-                            throw new Exception(Unauthorized.ToJson());
-                        }
-                    }
-                    else
-                    {
-                        var BadRequest = new
-                        {
-                            status = "An error occurred.",
-                            message = "BadRequest",
-                        };
-                        throw new Exception(BadRequest.ToJson());
-                    }
-                }
-            }
-            else
+            using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
             {
+                string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+
+                dynamic checkMiddleWare = new CheckMiddleWare();
+                checkMiddleWare = checkMiddleWare.CheckUserReq<UserLoginReq>(json, context.DynamicPath);
+
+                if (NullEmptyChecker.HasNullEmptyValues(checkMiddleWare))
+                    throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+                string token = await UserService.LoginAsync(checkMiddleWare.UserLoginReq.email, checkMiddleWare.UserLoginReq.secret);
+
+                if (string.IsNullOrEmpty(token))
+                    throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }.ToJson());
+
                 var response = new
                 {
-                    status = "An error occurred.",
-                    message = "Method Not Allowed",
+                    status = "Success",
+                    message = "User logged in successfully",
+                    token
                 };
-                throw new Exception(response.ToJson());
+
+                await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
             }
         }
 
         public static async Task ResetPasswordReq(HttpContext context)
         {
-            if (context.Request.HttpMethod == "GET")
+            if (context.Request.HttpMethod != "GET")
+                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
+            User user = await UserService.GetUserByEmailAsync(context.DynamicPath[0]);
+
+            IEmailService emailService = new EmailServiceHelper();
+            EmailService._emailServiceHelper = emailService;
+            EmailService.SendEmail(user.Email, "Forgot Password EmailVerification to Reset Password in your Account 🙂🙂", 1);
+
+            var response = new
             {
-                User user = UserService.GetUserByEmail(context.DynamicPath[0]);
+                status = "Success"
+            };
 
-                IEmailService emailService = new EmailServiceHelper();
-                EmailService._emailServiceHelper = emailService;
-                EmailService.SendEmail(user.Email, "Forgot Password EmailVerification to Reset Password in your Account 🙂🙂", 1);
-
-                var response = new
-                {
-                    status = "Success",
-                };
-
-                await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-            }
-            else
-            {
-                var response = new
-                {
-                    status = "An error occurred.",
-                    message = "Method Not Allowed",
-                };
-                throw new Exception(response.ToJson());
-            }
+            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
 
-        public static async Task reset_password(HttpContext context)
+        public static async Task ResetPassword(HttpContext context)
         {
-            if (context.Request.HttpMethod == "GET")
+            if (context.Request.HttpMethod != "GET")
+                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
+            string email = context.DynamicPath[0];
+            string token = context.DynamicPath[1];
+
+            User user = await UserService.GetUserByEmailAsync(email);
+
+            if (user.IsTokenExpired(token))
             {
-                string email = context.DynamicPath[0];
-                string token = context.DynamicPath[1];
-
-                User user = UserService.GetUserByEmail(email);
-
-                if (!user.IsTokenExpired(token))
-                {
-                    string password = context.Request.Headers["password"];
-                    string conform_password = context.Request.Headers["conform_password"];
-
-                    if (string.IsNullOrEmpty(password) && string.IsNullOrEmpty(conform_password))
-                    {
-                        var BadRequest = new
-                        {
-                            status = "An error occurred.",
-                            message = "BadRequest",
-                        };
-                    }
-                    else
-                    {
-                        if (string.Equals(password, conform_password))
-                        {
-                            string encryptPass = BCryptNet.HashPassword(password);
-                            if(BCryptNet.Verify(password, encryptPass))
-                            {
-                                user.Password = encryptPass;
-                                user.Tokens.Remove(token);
-
-                                if (UserService.UpdateUser(user.Id, user))
-                                {
-                                    var response = new
-                                    {
-                                        status = "Success",
-                                    };
-                                    IEmailService emailService = new EmailServiceHelper();
-                                    EmailService._emailServiceHelper = emailService;
-                                    EmailService.SendEmail(user.Email, "Successfully Reset The Password of Your Account 🙂🙂", 2);
-                                    await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-                                }
-                                else
-                                {
-                                    var BadRequest = new
-                                    {
-                                        status = "An error occurred.",
-                                        message = "BadRequest",
-                                    };
-                                    throw new Exception(BadRequest.ToJson());
-                                }
-                            }
-                            else
-                            {
-                                user.Tokens.Remove(token);
-                                var BadRequest = new
-                                {
-                                    status = "An error occurred.",
-                                    message = "BadRequest",
-                                };
-                                throw new Exception(BadRequest.ToJson());
-                            }
-                        }
-                        else
-                        {
-                            user.Tokens.Remove(token);
-                            var BadRequest = new
-                            {
-                                status = "An error occurred.",
-                                message = "BadRequest",
-                            };
-                            throw new Exception(BadRequest.ToJson());
-                        }
-                    }
-                }
-                else
-                {
-                    user.Tokens.Remove(token);
-                    var BadRequest = new
-                    {
-                        status = "An error occurred.",
-                        message = "BadRequest",
-                    };
-                    throw new Exception(BadRequest.ToJson());
-                }
+                user.Tokens.Remove(token);
+                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
             }
-            else
+
+            string password = context.Request.Headers["password"];
+            string confirmPassword = context.Request.Headers["conform_password"];
+
+            if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword))
+                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+            if (!string.Equals(password, confirmPassword))
             {
-                var response = new
-                {
-                    status = "An error occurred.",
-                    message = "Method Not Allowed",
-                };
-                throw new Exception(response.ToJson());
+                user.Tokens.Remove(token);
+                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
             }
+
+            string encryptedPassword = BCryptNet.HashPassword(password);
+
+            if (!BCryptNet.Verify(password, encryptedPassword))
+            {
+                user.Tokens.Remove(token);
+                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+            }
+
+            user.Password = encryptedPassword;
+            user.Tokens.Remove(token);
+
+            if (await UserService.UpdateUserAsync(user.Id, user) == false)
+                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+            var response = new { status = "Success" };
+
+            IEmailService emailService = new EmailServiceHelper();
+            EmailService._emailServiceHelper = emailService;
+            EmailService.SendEmail(user.Email, "Successfully Reset The Password of Your Account 🙂🙂", 2);
+
+            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
     }
 }

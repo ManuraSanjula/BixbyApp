@@ -89,7 +89,7 @@ namespace Bixby_web_server.Controllers
                         var statusCode = GetStatusCodeFromException(ex);
                         var res = new
                         {
-                            message = ex.Message,
+                            message = ex.ToString(),
                         };
                         await httpContext.WriteResponse(res.ToJson(), "application/json", statusCode)
                             .ConfigureAwait(false);
@@ -150,6 +150,10 @@ namespace Bixby_web_server.Controllers
             {
                 return HttpStatusCode.MethodNotAllowed;
             }
+            else if (ex is NotFoundException)
+            {
+                return HttpStatusCode.NotFound;
+            }
 
             return HttpStatusCode.BadRequest; // Default to BadRequest for other exceptions
         }
@@ -163,8 +167,15 @@ namespace Bixby_web_server.Controllers
 
             routeHandlers.Add("/reset-password-req/{email}", UserController.ResetPasswordReq);
 
-            routeHandlers.Add("/reset-password/{email}/{token}", UserController.reset_password);
+            routeHandlers.Add("/reset-password/{email}/{token}", UserController.ResetPassword);
             routeHandlers.Add("/email-verify/{email}/{token}", UserController.email_verify);
+
+            routeHandlers.Add("/{email}/add-shop-item", ShopController.UploadOneShopItem);
+            routeHandlers.Add("/{email}/update-shop-item/{shopId}", ShopController.UpdateOneShopItem);
+            routeHandlers.Add("/shopItem/{shopId}/view", ShopController.ViewOneShopItem);
+
+            routeHandlers.Add("/", ShopController.GetAllTheShopItems);
+
         }
 
         private static bool WildcardMatch(string input, string pattern)

@@ -63,8 +63,11 @@ namespace Bixby_web_server.Controllers
 
             routeHandlers.Add("/reset-password-req/{email}", UserController.ResetPasswordReq);
 
-            routeHandlers.Add("/reset-password/{email}/{token}", UserController.reset_password);
+            routeHandlers.Add("/reset-password/{email}/{token}", UserController.ResetPassword);
             routeHandlers.Add("/email-verify/{email}/{token}", UserController.email_verify);
+
+            routeHandlers.Add("/{email}/add-shop-item", ShopController.UploadOneShopItem);
+            routeHandlers.Add("shopItem/{shopId}/view", ShopController.ViewOneShopItem);
         }
 
         private static bool WildcardMatch(string input, string pattern)

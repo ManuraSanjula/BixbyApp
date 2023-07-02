@@ -1,5 +1,6 @@
 ﻿using SendGrid.Helpers.Mail;
 using SendGrid;
+using System;
 using System.Text.RegularExpressions;
 using Bixby_web_server.Models;
 
@@ -10,6 +11,7 @@ namespace BixbyShop_LK.Services
     {
         void SendEmail(Response response);
     }
+
     public static class EmailService
     {
         private static readonly UserService userService = new UserService();
@@ -40,18 +42,20 @@ namespace BixbyShop_LK.Services
                 int digit = random.Next(0, 10);
                 verificationCode += digit.ToString();
             }
-           // MapService.AddOrUpdateMapValue(email, verificationCode);
+            // MapService.AddOrUpdateMapValue(email, verificationCode);
             return verificationCode;
         }
-        private static void userUpdate(string email, string token)
+
+        private async static void userUpdate(string email, string token)
         {
-            User? user = userService.GetUserByEmail(email);
+            User? user = await userService.GetUserByEmailAsync(email);
             if (user != null)
             {
                 user.AddToken(token, DateTime.Now.ToString());
-                userService.UpdateUser(user.Id, user);
+                await userService.UpdateUserAsync(user.Id, user);
             }
         }
+
         private static string emailVerificationCode(string email)
         {
             string text = "<!-- \r\nOnline HTML, CSS and JavaScript editor to run code online.\r\n-->\r\n<!DOCTYPE html>\r\n<html lang=\"en\">\r\n\r\n<head>\r\n  <meta charset=\"UTF-8\" />\r\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n  <link rel=\"stylesheet\" href=\"style.css\" />\r\n  <title>Browser</title>\r\n</head>\r\n\r\n<body>\r\n  <p style=\"text-align:center\"><span style=\"color:#ffffff\"><span style=\"font-family:Comic Sans MS,cursive\"><span style=\"font-size:72px\"><u><strong><span style=\"background-color:#2ecc71\">Welcome to BixbyShop</span></strong></u></span></span></span></p>\r\n\r\n<blockquote>\r\n<p style=\"text-align:center\"><span style=\"font-size:48px\"><span style=\"font-family:Comic Sans MS,cursive\">Your Code is : {VerificationCode}</span></span></p>\r\n\r\n<p style=\"text-align:center\"><span style=\"font-size:48px\"><span style=\"font-family:Comic Sans MS,cursive\">Please Enter our Application</span></span></p>\r\n</blockquote>\r\n\r\n</body>\r\n\r\n</html>";
@@ -79,7 +83,7 @@ namespace BixbyShop_LK.Services
             {
                 if (placeholder == "VerificationCode")
                 {
-                    String code  = GenerateVerificationCode(20, email);
+                    String code = GenerateVerificationCode(20, email);
                     userUpdate(email, code);
                     return code;
                 }
@@ -97,7 +101,7 @@ namespace BixbyShop_LK.Services
             return text;
         }
 
-        public static void SendEmail(string toEmail, string subject, int i)
+        public static async Task SendEmail(string toEmail, string subject, int i)
         {
             var client = new SendGridClient(EncryptionHelper.Decrypt(_apiKey));
             var from = new EmailAddress(EncryptionHelper.Decrypt(fromEmail));
@@ -115,7 +119,7 @@ namespace BixbyShop_LK.Services
             {
                 message = MailHelper.CreateSingleEmail(from, to, subject, successfullyResetThePassword(toEmail), successfullyResetThePassword(toEmail));
             }
-            var response = client.SendEmailAsync(message).GetAwaiter().GetResult();
+            var response = await client.SendEmailAsync(message);
 
             if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
             {
@@ -123,9 +127,8 @@ namespace BixbyShop_LK.Services
             }
             else
             {
-
+                // Handle the error case here
             }
-
         }
     }
 }

@@ -5,14 +5,13 @@ using SendGrid;
 using MimeKit;
 using System.Text.RegularExpressions;
 using MailKit.Security;
-using System.Collections.Generic;
 using Bixby_web_server.Models;
 
 namespace BixbyShop_LK.Services
 {
     public class EmailServiceHelper : IEmailService
     {
-        public static bool ValidateEmailUsing_Zerobounce(string email)
+        public async static Task<bool> ValidateEmailUsing_Zerobounce(string email)
         {
             string apiKey = "Y54EU1YFR+lhBHiNSVJITj05oG5LiSvCNpTOd10NiSbiSBEMNc7MzPds/mh216IAdz2jPEBbALGBV2QY4isjwA==";
             apiKey = EncryptionHelper.Decrypt(apiKey);
@@ -20,10 +19,10 @@ namespace BixbyShop_LK.Services
 
             using (var httpClient = new HttpClient())
             {
-                var response = httpClient.GetAsync(apiUrl).GetAwaiter().GetResult();
+                var response = await httpClient.GetAsync(apiUrl);
                 if (response.IsSuccessStatusCode)
                 {
-                    var jsonResponse = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
 
                     // Parse the JSON response to check the email validity status
                     // You may need to adjust this code based on the ZeroBounce API response structure
@@ -34,6 +33,7 @@ namespace BixbyShop_LK.Services
 
             return false; // Error occurred or API request failed
         }
+
         public static bool ValidateEmailPattern(string email)
         {
             string pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
@@ -41,7 +41,8 @@ namespace BixbyShop_LK.Services
             Match match = regex.Match(email);
             return match.Success;
         }
-        public static bool ValidateEmail(string email)
+
+        public async static Task<bool> ValidateEmail(string email)
         {
             try
             {
@@ -51,7 +52,7 @@ namespace BixbyShop_LK.Services
                 message.Subject = "Email Address Verification";
                 message.Body = new TextPart("plain")
                 {
-                    Text = "This is a just verification email."
+                    Text = "This is just a verification email."
                 };
 
                 using (var client = new MailKit.Net.Smtp.SmtpClient())
@@ -61,8 +62,8 @@ namespace BixbyShop_LK.Services
                     // Note: Provide your SendGrid API key as the first parameter and an empty string as the second parameter.
                     client.Authenticate("your-sendgrid-api-key", "");
 
-                    client.Send(message);
-                    client.Disconnect(true); ;
+                    await client.SendAsync(message);
+                    await client.DisconnectAsync(true);
                 }
 
                 return true;
@@ -72,6 +73,7 @@ namespace BixbyShop_LK.Services
                 return false;
             }
         }
+
         public void SendEmail(Response response)
         {
             if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
@@ -79,10 +81,11 @@ namespace BixbyShop_LK.Services
             }
             else
             {
-                
+
             }
         }
     }
+
     public class UserService
     {
         private readonly IMongoCollection<User?> userCollection;
@@ -91,89 +94,39 @@ namespace BixbyShop_LK.Services
         {
             var settings = MongoClientSettings.FromUrl(new MongoUrl("mongodb+srv://geethaliyanage23:1dJz8r5mX6nfkoG6@cluster0.xdb3qmc.mongodb.net/?retryWrites=true&w=majority"));
             var client = new MongoClient(settings);
-        
+
             IMongoDatabase database = client.GetDatabase("BixByApp");
             this.userCollection = database.GetCollection<User>("Users");
         }
 
-        public List<User?> GetAllUsers()
+        public async Task<List<User?>> GetAllUsersAsync()
         {
-            return userCollection.Find(_ => true).ToList();
+            return await userCollection.Find(_ => true).ToListAsync();
         }
-
-        public delegate void UserDelegate(string token);
-
-        public static dynamic? GetUserBasedOnToken(string token, bool allowBoolean, UserDelegate userDelegate)
+        public static dynamic? GetUserBasedOnToken(string token, bool allowBoolean)
         {
             if (!string.IsNullOrEmpty(token))
-                return TokenService.ValidateJwtToken(token, allowBoolean, new TokenService.UserDelegate(userDelegate));
+                return TokenService.ValidateJwtToken(token, allowBoolean);
             else
                 return null;
         }
-
-        private String UserNewAccountDelegate(string token, User? user)
+        public async Task<string?> CreateNewAccountAsync(User? newUser)
         {
-            if (!string.IsNullOrEmpty(token))
+            if (newUser != null)
             {
-                if(user != null)
-                {
-                    if (user.UserAuthTokens == null || user.UserAuthTokens.Count == 0)
-                    {
-                        user.UserAuthTokens = new List<String>();
-                        user.UserAuthTokens.Add(token);
-                        if(UpdateUser(user.Id, user))
-                        {
-                            IEmailService emailService = new EmailServiceHelper();
-                            EmailService._emailServiceHelper = emailService;
-                            EmailService.SendEmail(user.Email, "Email Verification Code for Your Account 🙂🙂", 0);
-                            return token;
-                        }
-                    }
-                    else
-                    {
-                        user.UserAuthTokens.Add(token);
-                        if (UpdateUser(user.Id, user))
-                        {
-                            IEmailService emailService = new EmailServiceHelper();
-                            EmailService._emailServiceHelper = emailService;
-                            EmailService.SendEmail(user.Email, "Email Verification Code for Your Account 🙂🙂", 0);
-                            return token;
-                        }
-                        else
-                        {
-                            return null;
-                        }
-                    }
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            else
-            {
-                return null;
-            }
-            return null;
-        }
-        
-        public string? CreateNewAccount(User? newUser)
-        {           
-            if(newUser != null)
-            {
-                if(GetUserByEmail(newUser.Email) == null)
+                if (GetUserByEmailAsync(newUser.Email) == null)
                 {
                     newUser.Password = BCryptNet.HashPassword(newUser.Password);
                     newUser.Tokens = new Dictionary<string, VerficationCode>();
-                    newUser.UserAuthTokens = new List<String>();
-                    CreateUser(newUser);
+                    newUser.UserAuthTokens = new List<string>();
+                    await CreateUserAsync(newUser);
 
-                    User? createdUser = GetUserByEmail(newUser.Email);
+                    User? createdUser = await GetUserByEmailAsync(newUser.Email);
                     if (createdUser == null)
                     {
                         return null;
                     }
-                    return TokenService.tokenCreator(createdUser.Email == null ? newUser.Email : createdUser.Email, createdUser.Password == null ? newUser.Password : createdUser.Password, UserNewAccountDelegate, createdUser); ;
+                    return await TokenService.tokenCreator(createdUser.Email == null ? newUser.Email : createdUser.Email, createdUser.Password == null ? newUser.Password : createdUser.Password, createdUser); ;
                 }
                 else
                 {
@@ -184,13 +137,13 @@ namespace BixbyShop_LK.Services
             {
                 return null;
             }
-         }
-        
-        public string? CreateNewAccount(string username, string password, string FirstName, string LastName, String Address)
+        }
+
+        public async Task<string?> CreateNewAccountAsync(string username, string password, string FirstName, string LastName, string Address)
         {
-           if(GetUserByEmail(username) == null)
+            if (await GetUserByEmailAsync(username) == null)
             {
-               /* if (!EmailServiceHelper.ValidateEmailUsing_Zerobounce(username))
+                /* if (!EmailServiceHelper.ValidateEmailUsing_Zerobounce(username))
                 {
                     return null;
                 }*/
@@ -201,15 +154,15 @@ namespace BixbyShop_LK.Services
                 newUser.Email = username;
                 newUser.Password = BCryptNet.HashPassword(password);
                 newUser.Tokens = new Dictionary<string, VerficationCode>();
-                newUser.UserAuthTokens = new List<String>();
-                CreateUser(newUser);
+                newUser.UserAuthTokens = new List<string>();
+                await CreateUserAsync(newUser);
 
-                User? createdUser = GetUserByEmail(username);
+                User? createdUser = await GetUserByEmailAsync(username);
                 if (createdUser == null)
                 {
                     return null;
                 }
-                return TokenService.tokenCreator(createdUser.Email == null ? username : createdUser.Email, createdUser.Password == null ? newUser.Password : createdUser.Password, UserNewAccountDelegate, createdUser); ;
+                return await TokenService.tokenCreator(createdUser.Email == null ? username : createdUser.Email, createdUser.Password == null ? newUser.Password : createdUser.Password, createdUser); ;
             }
             else
             {
@@ -217,47 +170,49 @@ namespace BixbyShop_LK.Services
             }
         }
 
-        public string? Login(string username, string password)
+        public async Task<string?> LoginAsync(string username, string password)
         {
-            User? user = GetUserByEmail(username.ToString());
-            if (user != null && BCryptNet.Verify(password, user.Password))
+            User? user = await GetUserByEmailAsync(username.ToString());
+            if (user != null && BCryptNet.Verify(password, user.Password) && user.EmailVerify)
             {
-                return TokenService.tokenCreator(user.Email == null ? username : user.Email, user.Password, UserNewAccountDelegate, user);
+                return  await TokenService.tokenCreator(user.Email == null ? username : user.Email, user.Password, user);
             }
 
             return null;
         }
 
-        public User? GetUserByEmail(string email)
+        public async Task<User?> GetUserByEmailAsync(string email)
         {
             FilterDefinition<User?> filter = Builders<User>.Filter.Eq("Email", email);
-            return userCollection.Find(filter).FirstOrDefault();
+            return await userCollection.Find(filter).FirstOrDefaultAsync();
         }
 
-        public User GetUserByAuthToken(string authToken)
+        public async Task<User> GetUserByAuthTokenAsync(string authToken)
         {
             FilterDefinition<User?> filter = Builders<User>.Filter.Eq("UserAuthTokens", authToken);
-            var user = userCollection.Find(filter).FirstOrDefault();
+            var user = await userCollection.Find(filter).FirstOrDefaultAsync();
             return user;
         }
-        public User GetUserById(ObjectId userId)
+
+        public async Task<User> GetUserByIdAsync(ObjectId userId)
         {
-            return userCollection.Find(user => user.Id == userId).FirstOrDefault();
+            return await userCollection.Find(user => user.Id == userId).FirstOrDefaultAsync();
         }
 
-        public void CreateUser(User? user)
+        public async Task CreateUserAsync(User? user)
         {
-            userCollection.InsertOne(user);
+            await userCollection.InsertOneAsync(user);
         }
 
-        public bool UpdateUser(ObjectId userId, User? updatedUser)
+        public async Task<bool> UpdateUserAsync(ObjectId userId, User? updatedUser)
         {
-            return userCollection.ReplaceOne(user => user.Id == userId, updatedUser).IsAcknowledged;
+            var result = await userCollection.ReplaceOneAsync(user => user.Id == userId, updatedUser);
+            return result.IsAcknowledged;
         }
 
-        public void DeleteUser(ObjectId userId)
+        public async Task DeleteUserAsync(ObjectId userId)
         {
-            userCollection.DeleteOne(user => user.Id == userId);
+            await userCollection.DeleteOneAsync(user => user.Id == userId);
         }
     }
 }

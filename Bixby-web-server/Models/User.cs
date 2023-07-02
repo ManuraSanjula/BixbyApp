@@ -32,17 +32,9 @@ namespace Bixby_web_server.Models
         public string Password { get; set; }
 
         [JsonProperty("pic")]
-        public string Pic { get; set; }
+        public string Pic { get; set; } = "default";
 
         public bool EmailVerify { get; set; }
-
-        public Order[] Orders { get; set; } = { };
-        public CartAndOrder[] Cart { get; set; } = { };
-        public Comment[] Comments { get; set; } = { };
-        public ShopItem[] ShopItems { get; set; } = { };
-        public ShopItem[] UserItems { get; set; } = { };
-        public UserShop[] UserShop { get; set; } = { };
-
         public Dictionary<string, VerficationCode> Tokens { get; set; }
 
         public List<string> UserAuthTokens { get; set; }

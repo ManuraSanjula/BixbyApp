@@ -1,13 +1,12 @@
 ﻿using Bixby_web_server.Helpers;
 using Bixby_web_server.Models;
 using BixbyShop_LK.Services;
-using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using SendGrid.Helpers.Errors.Model;
 using System.Dynamic;
-using System.Linq;
 using System.Net;
 using BCryptNet = BCrypt.Net.BCrypt;
+using HttpContext = Bixby_web_server.Helpers.HttpContext;
 
 namespace Bixby_web_server.Controllers
 {
@@ -17,6 +16,7 @@ namespace Bixby_web_server.Controllers
 
         public static async Task HandleUpdateUserRequest(HttpContext context)
         {
+
             if (context.Request.HttpMethod != "PUT" && context.Request.HttpMethod != "PATCH")
                 throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
@@ -256,6 +256,11 @@ namespace Bixby_web_server.Controllers
 
             User user = await UserService.GetUserByEmailAsync(email);
 
+            if(user == null)
+            {
+                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+            }
+
             if (user.IsTokenExpired(token))
             {
                 user.Tokens.Remove(token);
@@ -296,5 +301,6 @@ namespace Bixby_web_server.Controllers
 
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
+
     }
 }

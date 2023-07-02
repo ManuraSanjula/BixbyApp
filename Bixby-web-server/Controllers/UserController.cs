@@ -1,9 +1,11 @@
 ﻿using Bixby_web_server.Helpers;
 using Bixby_web_server.Models;
 using BixbyShop_LK.Services;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using SendGrid.Helpers.Errors.Model;
 using System.Dynamic;
+using System.Linq;
 using System.Net;
 using BCryptNet = BCrypt.Net.BCrypt;
 
@@ -20,39 +22,69 @@ namespace Bixby_web_server.Controllers
 
             var request = context.Request;
             var checkMiddleWare = new CheckMiddleWare();
-            dynamic jwt = await checkMiddleWare.CheckMiddleWareJWT(context, context.DynamicPath[0]);
+            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJWT(context, context.DynamicPath[0]);
 
-            if (NullEmptyChecker.HasNullEmptyValues(jwt) || !jwt.IsOkay)
-                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }.ToJson());
+
+            if (!jwt.ContainsKey("jwt")){
+                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+            }
+
+            User result = (User)jwt["jwt"];
+            Console.WriteLine(result == null);
+            if (NullEmptyChecker.HasNullEmptyValues(result) && result == null)
+                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
 
             using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
             {
                 string json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
-                dynamic validateResult = await checkMiddleWare.CheckUserReq<UserReqForUpdate>(json, context.DynamicPath);
+                Dictionary<string, object> validateResult = await checkMiddleWare.CheckUserReq<UserReqForUpdate>(json, context.DynamicPath);
 
-                if (NullEmptyChecker.HasNullEmptyValues(validateResult))
+                if (validateResult.ContainsKey("UserReqForUpdate") && validateResult.ContainsKey("User"))
+                {
+                    if(validateResult["UserReqForUpdate"] != null && validateResult["User"] != null)
+                    {
+                        User user = (User)validateResult["User"];
+                        if (user == null)
+                            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+                        UserReqForUpdate userReqAndRes = (UserReqForUpdate)validateResult["UserReqForUpdate"];
+                        if (userReqAndRes == null)
+                            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+                        if (!string.IsNullOrEmpty(userReqAndRes.FirstName))
+                        {
+                            user.FirstName = userReqAndRes.FirstName;
+
+                        }
+                        if (!string.IsNullOrEmpty(userReqAndRes.LastName))
+                        {
+                            user.LastName = userReqAndRes.LastName;
+
+                        }
+                        if (!string.IsNullOrEmpty(userReqAndRes.Address))
+                        {
+                            user.Address = userReqAndRes.Address;
+
+                        }
+
+                        var response = await UserService.UpdateUserAsync(user.Id, user)
+                            ? new { status = "Success", message = "User updated successfully" }
+                            : new { status = "An error occurred.", message = "BadRequest" };
+
+                        await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+                    }
+                }
+                else
+                {
                     throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+                }
 
-                var user = validateResult.User;
-                if (user == null)
-                    throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-
-                var userReqAndRes = validateResult.UserReqAndRes;
-                if (userReqAndRes == null)
-                    throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-
-                user.FirstName = userReqAndRes.FirstName;
-                user.LastName = userReqAndRes.LastName;
-                user.Address = userReqAndRes.Address;
-
-                bool isAcknowledged = await UserService.UpdateUserAsync(user.Id, user);
-
-                var response = isAcknowledged
-                    ? new { status = "Success", message = "User updated successfully" }
-                    : new { status = "An error occurred.", message = "BadRequest" };
-
-                await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
             }
         }
 
@@ -66,15 +98,18 @@ namespace Bixby_web_server.Controllers
                 var checkMiddleWare = new CheckMiddleWare();
                 var json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
-                var userCheckResult = checkMiddleWare.CheckUserReq<UserReqForSignUp>(json, context.DynamicPath);
-                if (NullEmptyChecker.HasNullEmptyValues(userCheckResult) || !userCheckResult.User.Password.Equals(userCheckResult.User.confirmNewPassword))
+                Dictionary<string, object> userCheckResult = await checkMiddleWare.CheckUserReq<UserReqForSignUp>(json, context.DynamicPath);
+
+                UserReqForSignUp userReqForSignUp = (UserReqForSignUp)userCheckResult["User"];
+
+                if (NullEmptyChecker.HasNullEmptyValues(userReqForSignUp) || !userReqForSignUp.Password.Equals(userReqForSignUp.confirmNewPassword))
                     throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-                var user = userCheckResult.User;
-                if(user == null)
+                
+                if(userReqForSignUp == null)
                     throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-                var token = await UserService.CreateNewAccountAsync(user.Email, user.Password, user.FirstName, user.LastName, user.Address);
+                var token = await UserService.CreateNewAccountAsync(userReqForSignUp.Email, userReqForSignUp.Password, userReqForSignUp.FirstName, userReqForSignUp.LastName, userReqForSignUp.Address);
 
                 if (string.IsNullOrEmpty(token))
                     throw new BadRequestException(new { status = "An error occurred.", message = "Empty Body" }.ToJson());
@@ -131,17 +166,24 @@ namespace Bixby_web_server.Controllers
                 throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
             CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
-            dynamic jwt = await checkMiddleWare.CheckMiddleWareJWT(context, context.DynamicPath[0].Trim());
+            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJWT(context, context.DynamicPath[0].Trim());
 
-            if (NullEmptyChecker.HasNullEmptyValues(jwt) && !jwt.IsOkay)
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+            if (!jwt.ContainsKey("jwt"))
+            {
+                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+            }
+
+            User result = (User)jwt["jwt"];
+
+            if (NullEmptyChecker.HasNullEmptyValues(result) && result == null)
+                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
 
             dynamic user = new ExpandoObject();
-            user.Email = jwt.User.Email;
-            user.FirstName = jwt.User.FirstName;
-            user.LastName = jwt.User.LastName;
-            user.Address = jwt.User.Address;
-            user.EmailVerify = jwt.User.EmailVerify;
+            user.Email = result.Email;
+            user.FirstName = result.FirstName;
+            user.LastName = result.LastName;
+            user.Address = result.Address;
+            user.EmailVerify = result.EmailVerify;
 
             var response = new
             {
@@ -161,13 +203,15 @@ namespace Bixby_web_server.Controllers
             {
                 string json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
-                dynamic checkMiddleWare = new CheckMiddleWare();
-                checkMiddleWare = checkMiddleWare.CheckUserReq<UserLoginReq>(json, context.DynamicPath);
+                CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
 
-                if (NullEmptyChecker.HasNullEmptyValues(checkMiddleWare))
+                Dictionary<string, object> result = await checkMiddleWare.CheckUserReq<UserLoginReq>(json, context.DynamicPath);
+
+                if (NullEmptyChecker.HasNullEmptyValues(result["User"]))
                     throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-                string token = await UserService.LoginAsync(checkMiddleWare.UserLoginReq.email, checkMiddleWare.UserLoginReq.secret);
+                UserLoginReq user = (UserLoginReq)result["User"];
+                string token = await UserService.LoginAsync(user.email, user.secret);
 
                 if (string.IsNullOrEmpty(token))
                     throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }.ToJson());

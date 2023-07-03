@@ -17,10 +17,10 @@ namespace Bixby_web_server.Services
             this.UserShopCollection = database.GetCollection<UserShop>("UserShop");
         }
 
-        public async Task AddProduct(ObjectId user, ObjectId shopItem)
+        public async Task AddProduct(string? user, ObjectId shopItem)
         {
             UserShop userShop = new UserShop();
-            userShop.Id = user;
+            userShop.User = user;
             userShop.Item = shopItem;
 
             await this.UserShopCollection.InsertOneAsync(userShop);
@@ -35,11 +35,10 @@ namespace Bixby_web_server.Services
         {
             return await this.UserShopCollection.Find(u => u.Item == id).FirstOrDefaultAsync();
         }
-        public async Task<List<UserShop>> GetProductByUserId(ObjectId id)
+        public async Task<List<UserShop>> GetProductByUserId(string? email)
         {
-            return await this.UserShopCollection.Find(u => u.User == id).ToListAsync();
+            return await this.UserShopCollection.Find(u => u.User == email).ToListAsync();
         }
-
         public async Task<UserShop> GetProduct(ObjectId id)
         {
             return await this.UserShopCollection.Find(u => u.Id == id).FirstOrDefaultAsync();

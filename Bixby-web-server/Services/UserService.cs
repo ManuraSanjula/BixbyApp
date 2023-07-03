@@ -117,7 +117,7 @@ namespace BixbyShop_LK.Services
                 if (GetUserByEmailAsync(newUser.Email) == null)
                 {
                     newUser.Password = BCryptNet.HashPassword(newUser.Password);
-                    newUser.Tokens = new Dictionary<string, VerficationCode>();
+                    newUser.Tokens = new Dictionary<string?, VerficationCode>();
                     newUser.UserAuthTokens = new List<string>();
                     await CreateUserAsync(newUser);
 
@@ -139,7 +139,7 @@ namespace BixbyShop_LK.Services
             }
         }
 
-        public async Task<string?> CreateNewAccountAsync(string username, string password, string FirstName, string LastName, string Address)
+        public async Task<string?> CreateNewAccountAsync(string? username, string password, string FirstName, string LastName, string Address)
         {
             if (await GetUserByEmailAsync(username) == null)
             {
@@ -153,7 +153,7 @@ namespace BixbyShop_LK.Services
                 newUser.Address = Address;
                 newUser.Email = username;
                 newUser.Password = BCryptNet.HashPassword(password);
-                newUser.Tokens = new Dictionary<string, VerficationCode>();
+                newUser.Tokens = new Dictionary<string?, VerficationCode>();
                 newUser.UserAuthTokens = new List<string>();
                 await CreateUserAsync(newUser);
 
@@ -170,7 +170,7 @@ namespace BixbyShop_LK.Services
             }
         }
 
-        public async Task<string?> LoginAsync(string username, string password)
+        public async Task<string?> LoginAsync(string? username, string password)
         {
             User? user = await GetUserByEmailAsync(username.ToString());
             if (user != null && BCryptNet.Verify(password, user.Password) && user.EmailVerify)
@@ -181,7 +181,7 @@ namespace BixbyShop_LK.Services
             return null;
         }
 
-        public async Task<User?> GetUserByEmailAsync(string email)
+        public async Task<User?> GetUserByEmailAsync(string? email)
         {
             FilterDefinition<User?> filter = Builders<User>.Filter.Eq("Email", email);
             return await userCollection.Find(filter).FirstOrDefaultAsync();

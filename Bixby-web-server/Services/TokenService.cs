@@ -20,7 +20,7 @@ namespace BixbyShop_LK.Services
         private static string audience = "Manura Sanjula";
         private static UserService userService = new UserService();
 
-        private static async Task<string> GenerateJwtToken(string secretKey, string issuer, string audience, int expiryMinutes, string email, string password, User user)
+        private static async Task<string> GenerateJwtToken(string secretKey, string issuer, string audience, int expiryMinutes, string? email, string password, User user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -115,7 +115,7 @@ namespace BixbyShop_LK.Services
             }
         }
 
-        public static async Task<string> tokenCreator(string email, string password, User user)
+        public static async Task<string> tokenCreator(string? email, string password, User user)
         {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {

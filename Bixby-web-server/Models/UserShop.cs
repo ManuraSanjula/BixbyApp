@@ -7,7 +7,7 @@ public class UserShop
 {
     [BsonId]
     public ObjectId Id { get; set; }
-    public ObjectId User { get; set; }
+    public string? User { get; set; }
     public ObjectId Item { get; set; }
     public long Sells { get; set; } = 0;
     public long SellsPerDay { get; set; } = 0;

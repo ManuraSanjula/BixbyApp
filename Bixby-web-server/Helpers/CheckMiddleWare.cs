@@ -2,6 +2,7 @@
 using System.Net;
 using Bixby_web_server.Models;
 using BixbyShop_LK.Services;
+using MongoDB.Bson;
 using Newtonsoft.Json;
 
 namespace Bixby_web_server.Helpers
@@ -9,10 +10,8 @@ namespace Bixby_web_server.Helpers
     public class CheckMiddleWare
     {
         private UserService UserService { get; } = new UserService();
-        public bool IsOkay { get; set; }
-        public User? User { get; set; }
 
-        public Dictionary<string, object> values { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> Values { get; set; } = new Dictionary<string, object>();
         private static async Task<User?> GetTheUserFromToken(HttpListenerRequest request)
         {
             var authorizationHeader = request.Headers["Authorization"];
@@ -27,11 +26,11 @@ namespace Bixby_web_server.Helpers
         }
 
 
-        public async Task<Dictionary<string, object>> CheckUserReq<T>(string jsonString, string[]? dynamic)
+        public async Task<Dictionary<string, object>> CheckUserReq<T>(string jsonString, string?[]? dynamic)
         {
             if (string.IsNullOrEmpty(jsonString))
             {
-                return values;
+                return Values;
             }
 
             JsonSerializerSettings? settings = new JsonSerializerSettings
@@ -44,23 +43,23 @@ namespace Bixby_web_server.Helpers
                 UserReqForUpdate? userReq = JsonConvert.DeserializeObject<UserReqForUpdate>(jsonString, settings);
                 if (userReq == null && NullEmptyChecker.HasNullEmptyValues(userReq))
                 {
-                    return values;
+                    return Values;
                 }
-                if (dynamic.Length > 0 && !string.IsNullOrEmpty(dynamic[0]))
+                if (dynamic != null && dynamic.Length > 0 && !string.IsNullOrEmpty(dynamic[0]))
                 {
                     User? user = await UserService.GetUserByEmailAsync(dynamic[0]);
-                    Console.WriteLine(User == null);
-                    if (user == null && NullEmptyChecker.HasNullEmptyValues(User))
+                    if (user == null && NullEmptyChecker.HasNullEmptyValues(user) && user.EmailVerify)
                     {
-                        return values;
+                        return Values;
                     }
-                    values.Add("UserReqForUpdate", userReq);
-                    values.Add("User", user);
-                    return values;
+
+                    if (userReq != null) Values.Add("UserReqForUpdate", userReq);
+                    if (user != null) Values.Add("User", user);
+                    return Values;
                 }
                 else
                 {
-                    return values;
+                    return Values;
                 }
             }
             else if (typeof(T) == typeof(UserLoginReq))
@@ -73,43 +72,42 @@ namespace Bixby_web_server.Helpers
             }
             else if (typeof(T) == typeof(ShopItemeq))
             {
-                ShopItemeq? shopItemeq = JsonConvert.DeserializeObject<ShopItemeq>(jsonString, settings);
-                if (shopItemeq == null || NullEmptyChecker.HasNullEmptyValues(shopItemeq))
+                ShopItemeq? shopItemReq = JsonConvert.DeserializeObject<ShopItemeq>(jsonString, settings);
+                if (shopItemReq == null || NullEmptyChecker.HasNullEmptyValues(shopItemReq))
                 {
-                    return values;
+                    return Values;
                 }
 
-                if (dynamic.Length > 0)
+                if (dynamic != null && dynamic.Length > 0)
                 {
-                    User u = await UserService.GetUserByEmailAsync(dynamic[0]);
-                    if (u != null && u.Email.Equals(dynamic[0]))
+                    User? u = await UserService.GetUserByEmailAsync(dynamic[0]);
+                  
+                    if (!NullEmptyChecker.HasNullEmptyValues(u) && u.EmailVerify)
                     {
-                        UserInShopItem userInShopItem = new UserInShopItem
-                        {
-                            FirstName = User.FirstName,
-                            LastName = User.LastName,
-                            Email = User.Email,
-                            Pic = User.Pic,
-                            Id = User.Id
-                        };
+                        UserInShopItem userInShopItem = new UserInShopItem();
+                        userInShopItem.FirstName = u.FirstName;
+                        userInShopItem.LastName = u.LastName;
+                        userInShopItem.Email = u.Email;
+                        userInShopItem.Pic = u.Pic;
 
                         ShopItem shopItem = new ShopItem
                         {
-                            Name = shopItemeq.Name,
-                            Price = shopItemeq.Price,
+                            Name = shopItemReq.Name,
+                            Price = shopItemReq.Price,
                             publish = userInShopItem,
-                            Description = shopItemeq.Description
+                            Description = shopItemReq.Description
                         };
-                        values.Add(shopItem.publish.Email, shopItem);
-                        return values;
+                        
+                        Values.Add("data", shopItem);
+                        return Values;
                     }
                 }
 
-                return values;
+                return Values;
             }
             else
             {
-                return values;
+                return Values;
             }
         }
 
@@ -118,34 +116,48 @@ namespace Bixby_web_server.Helpers
             UserReqForSignUp? userReq = JsonConvert.DeserializeObject<UserReqForSignUp>(jsonString, settings);
             if (userReq == null || NullEmptyChecker.HasNullEmptyValues(userReq))
             {
-                return values;
+                return Values;
             }
-            values.Add("User", userReq);
-            return values;
+            Values.Add("User", userReq);
+            return Values;
         }
         private Dictionary<string, object> CheckUserLoginReq(string jsonString, JsonSerializerSettings? settings)
         {
             UserLoginReq? user = JsonConvert.DeserializeObject<UserLoginReq>(jsonString, settings);
             if (user == null)
             {
-                return values;
+                return Values;
             }
-            values.Add("User", user);
-            return values;
+            Values.Add("User", user);
+            return Values;
         }
 
-        public async Task<Dictionary<string, object>> CheckMiddleWareJWT(HttpContext context, string dynamicName)
+        public async Task<Dictionary<string, object>> CheckMiddleWareJwt(HttpContext context, string? dynamicName)
         {
             var request = context.Request;
             User? jwtUser = await GetTheUserFromToken(request);
             if (jwtUser != null && jwtUser.EmailVerify && string.Equals(jwtUser.Email, dynamicName))
             {
-                values.Add("jwt", jwtUser);
-                return values;
+                Values.Add("jwt", jwtUser);
+                return Values;
             }
             else
             {
-                return values;
+                return Values;
+            }
+        }
+        public async Task<Dictionary<string, object>> CheckMiddleWareJwt(HttpContext context)
+        {
+            var request = context.Request;
+            User? jwtUser = await GetTheUserFromToken(request);
+            if (jwtUser != null && jwtUser.EmailVerify)
+            {
+                Values.Add("jwt", jwtUser);
+                return Values;
+            }
+            else
+            {
+                return Values;
             }
         }
     }

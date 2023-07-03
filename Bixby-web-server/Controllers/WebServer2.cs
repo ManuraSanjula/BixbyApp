@@ -165,14 +165,16 @@ namespace Bixby_web_server.Controllers
             routeHandlers.Add("/login", UserController.Login);
             routeHandlers.Add("/updateUser/{email}", UserController.HandleUpdateUserRequest);
             routeHandlers.Add("/{email}/products", UserController.GettingAllUserProducts);
+            routeHandlers.Add("/{email}/comment", UserController.GetUserComment);
 
-            routeHandlers.Add("/reset-password-req/{email}", UserController.ResetPasswordReq);
-            routeHandlers.Add("/reset-password/{email}/{token}", UserController.ResetPassword);
-            routeHandlers.Add("/email-verify/{email}/{token}", UserController.email_verify);
+            routeHandlers.Add("/reset-password-req/{email}", UserController.ResetPasswordReq); //// new
+            routeHandlers.Add("/reset-password/{email}/{token}", UserController.ResetPassword); //// new
+            routeHandlers.Add("/email-verify/{email}/{token}", UserController.email_verify); //// new
 
             routeHandlers.Add("/{email}/add-shop-item", ShopController.UploadOneShopItem);
             routeHandlers.Add("/{email}/update-shop-item/{shopId}", ShopController.UpdateOneShopItem);
             routeHandlers.Add("/shopItem/{shopId}/view", ShopController.ViewOneShopItem);
+            routeHandlers.Add("/shopItem/{shopId}/comment", ShopController.OneShopItemComment);
 
             routeHandlers.Add("/", ShopController.GetAllTheShopItems);
 

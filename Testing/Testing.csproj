@@ -8,6 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Include="..\.editorconfig" Link=".editorconfig" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\Bixby-web-server\Bixby-web-server.csproj" />
     </ItemGroup>
 

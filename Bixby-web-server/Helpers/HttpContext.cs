@@ -8,7 +8,7 @@ namespace Bixby_web_server.Helpers
     {
         public HttpListenerRequest Request { get; }
         public HttpListenerResponse Response { get; }
-        public string[]? DynamicPath { get; private set; } = { }; // Variable to store the dynamic path
+        public string?[]? DynamicPath { get; private set; } = { }; // Variable to store the dynamic path
 
         public HttpContext(HttpListenerRequest request, HttpListenerResponse response)
         {

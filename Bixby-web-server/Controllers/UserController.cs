@@ -7,6 +7,7 @@ using MongoDB.Bson;
 using SendGrid.Helpers.Errors.Model;
 using System.Dynamic;
 using System.Net;
+using BixbyShop_LK.Models.Comments.Services;
 using BCryptNet = BCrypt.Net.BCrypt;
 using HttpContext = Bixby_web_server.Helpers.HttpContext;
 
@@ -16,6 +17,7 @@ namespace Bixby_web_server.Controllers
     {
         private static readonly UserService UserService = new UserService();
         private static readonly UserShopService userShopService = new UserShopService();
+        private static readonly CommentService CommentService = new CommentService();
         public static async Task HandleUpdateUserRequest(HttpContext context)
         {
 
@@ -24,7 +26,7 @@ namespace Bixby_web_server.Controllers
 
             var request = context.Request;
             var checkMiddleWare = new CheckMiddleWare();
-            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJWT(context, context.DynamicPath[0]);
+            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath[0]);
 
 
             if (!jwt.ContainsKey("jwt")){
@@ -132,8 +134,8 @@ namespace Bixby_web_server.Controllers
             if (context.Request.HttpMethod != "GET")
                 throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
-            string email = context.DynamicPath[0];
-            string token = context.DynamicPath[1];
+            string? email = context.DynamicPath[0];
+            string? token = context.DynamicPath[1];
 
             User user = await UserService.GetUserByEmailAsync(email);
             if (!user.IsTokenExpired(token))
@@ -168,7 +170,7 @@ namespace Bixby_web_server.Controllers
                 throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
             CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
-            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJWT(context, context.DynamicPath[0].Trim());
+            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath[0].Trim());
 
             if (!jwt.ContainsKey("jwt"))
             {
@@ -236,6 +238,9 @@ namespace Bixby_web_server.Controllers
 
             User user = await UserService.GetUserByEmailAsync(context.DynamicPath[0]);
 
+            if(user == null)
+                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+
             IEmailService emailService = new EmailServiceHelper();
             EmailService._emailServiceHelper = emailService;
             EmailService.SendEmail(user.Email, "Forgot Password EmailVerification to Reset Password in your Account 🙂🙂", 1);
@@ -253,8 +258,8 @@ namespace Bixby_web_server.Controllers
             if (context.Request.HttpMethod != "GET")
                 throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
-            string email = context.DynamicPath[0];
-            string token = context.DynamicPath[1];
+            string? email = context.DynamicPath[0];
+            string? token = context.DynamicPath[1];
 
             User user = await UserService.GetUserByEmailAsync(email);
 
@@ -306,14 +311,14 @@ namespace Bixby_web_server.Controllers
 
         internal async static Task GettingAllUserProducts(HttpContext context)
         {
-            string email = context.DynamicPath[0];
+            string? email = context.DynamicPath[0];
             User user = await UserService.GetUserByEmailAsync(email);
 
             if (user == null)
             {
                 throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
             }
-            List<UserShop> userProducts = await userShopService.GetProductByUserId(user.Id);
+            List<UserShop> userProducts = await userShopService.GetProductByUserId(user.Email);
             if(userProducts.IsNullOrEmpty())
             {
                 throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
@@ -324,6 +329,28 @@ namespace Bixby_web_server.Controllers
             };
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
 
+        }
+
+        public static async Task GetUserComment(HttpContext context)
+        {
+            string? email = context.DynamicPath[0];
+            User user = await UserService.GetUserByEmailAsync(email);
+
+            if (user == null)
+            {
+                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+            }
+
+            List<Comment> comments = CommentService.GetAllCommentsByUserName(user.Id);
+            if(comments.IsNullOrEmpty())
+            {
+                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+            }
+            var response = new {
+                status = "Success",
+                allTheProducts = comments
+            };
+            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
     }
 }

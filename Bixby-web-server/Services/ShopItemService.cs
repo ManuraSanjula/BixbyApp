@@ -1,9 +1,6 @@
 ﻿using Bixby_web_server.Models;
-using BixbyShop_LK.Services;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace BixbyShop_LK.Models.Item.Services
 {

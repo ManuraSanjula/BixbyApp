@@ -16,7 +16,7 @@ namespace Bixby_web_server.Controllers
         private static readonly ShopItemService ShopItemService = new ShopItemService();
         private static readonly UserShopService UserShopService = new UserShopService();
         private static readonly CommentService CommentService = new CommentService();
-
+        
         public static async Task GetAllTheShopItems(HttpContext context)
         {
             if (context.Request.HttpMethod == "GET")

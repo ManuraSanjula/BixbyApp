@@ -33,6 +33,10 @@ namespace Bixby_web_server.Services
         public async Task<List<ProductPurchases>> GetProductPurchasesByCustomerIdAsync(ObjectId customerId)
         {
             return await _productPurchasesCollection.Find(p => p.cutomerId == customerId).ToListAsync();
+        } 
+        public async Task<ProductPurchases> GetProductPurchasesByOrderIdAsync(ObjectId orderId)
+        {
+            return await _productPurchasesCollection.Find(p => p.orderId == orderId).FirstOrDefaultAsync();
         }
 
         public async Task<List<ProductPurchases>> GetProductPurchasesByOwnerIdAsync(String ownerId)

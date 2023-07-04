@@ -110,7 +110,7 @@ namespace Bixby_web_server.Controllers
                     var statusCode = GetStatusCodeFromException(ex);
                     var res = new
                     {
-                        message = ex.Message,
+                        message = ex.ToString(),
                     };
                     await httpContext.WriteResponse(res.ToJson(), "application/json", statusCode)
                         .ConfigureAwait(false);
@@ -157,30 +157,30 @@ namespace Bixby_web_server.Controllers
             routeHandlers.Add("/addUser", UserController.AddUser);
             routeHandlers.Add("/login", UserController.Login);
             routeHandlers.Add("/updateUser/{email}", UserController.HandleUpdateUserRequest);
-            routeHandlers.Add("/{email}/products", UserController.GettingAllUserProducts);
-            routeHandlers.Add("/{email}/products/products-orders", UserController.SeePurchase);
+            routeHandlers.Add("/{email}/products", UserController.GettingAllUserProducts); // 👌👍🏻👍🏻
+            routeHandlers.Add("/{email}/products/products-orders", UserController.SeePurchase); // 👍🏻👌👌
             routeHandlers.Add("/{email}/comment", UserController.GetUserComment);
             routeHandlers.Add("/delete/{email}/product/{shopId}", UserController.RemoveUserProduct);
 
-            routeHandlers.Add("/cart/{email}/{shopId}/add/", CartController.AddToCart);
-            routeHandlers.Add("/cart/{email}/view", CartController.SeeAllTheCart);
-            routeHandlers.Add("/cart/{email}/check-out", CartController.CheckOutAllItems);
+            routeHandlers.Add("/cart/{email}/{shopId}/add", CartController.AddToCart); // 👍🏻👌👌
+            routeHandlers.Add("/cart/{email}/view", CartController.SeeAllTheCart); // 👌👍🏻
+            routeHandlers.Add("/cart/{email}/check-out", CartController.CheckOutAllItems); // 👍🏻👌
 
-            routeHandlers.Add("/order/{email}/view", OrderController.SeeAllOrders);
-            routeHandlers.Add("/order/{email}/{orderId}/refund", OrderController.Refund);
-            routeHandlers.Add("/order/{email}/{orderId}/confirm", OrderController.ConfirmTheOrder);
+            routeHandlers.Add("/order/{email}/view", OrderController.SeeAllOrders); // 👌👍🏻
+            routeHandlers.Add("/order/{email}/{orderId}/refund", OrderController.Refund); // ====
+            routeHandlers.Add("/order/{email}/{orderId}/confirm", OrderController.ConfirmTheOrder); // 👌👍🏻
 
             routeHandlers.Add("/reset-password-req/{email}", UserController.ResetPasswordReq);
             routeHandlers.Add("/reset-password/{email}/{token}", UserController.ResetPassword);
             routeHandlers.Add("/email-verify/{email}/{token}", UserController.email_verify);
 
-            routeHandlers.Add("/{email}/add-shop-item", ShopController.UploadOneShopItem);
-            routeHandlers.Add("/{email}/update-shop-item/{shopId}", ShopController.UpdateOneShopItem);
-            routeHandlers.Add("/shopItem/{shopId}/view", ShopController.ViewOneShopItem);
-            routeHandlers.Add("/shopItem/{shopId}/comment", ShopController.OneShopItemComment);
-            routeHandlers.Add("/shopItem/{shopId}/buy/{email}", ShopController.BuyItem);
+            routeHandlers.Add("/{email}/add-shop-item", ShopController.UploadOneShopItem); /// 👌👍🏻
+            routeHandlers.Add("/{email}/update-shop-item/{shopId}", ShopController.UpdateOneShopItem); // ====
+            routeHandlers.Add("/shopItem/{shopId}/view", ShopController.ViewOneShopItem); // 👍🏻👌
+            routeHandlers.Add("/shopItem/{shopId}/comment", ShopController.OneShopItemComment); // ====
+            routeHandlers.Add("/shopItem/{shopId}/buy/{email}", ShopController.BuyItem); // 👍🏻👌
 
-            routeHandlers.Add("/", ShopController.GetAllTheShopItems);
+            routeHandlers.Add("/home", ShopController.GetAllTheShopItems);
         }
 
         private static bool WildcardMatch(string input, string pattern)

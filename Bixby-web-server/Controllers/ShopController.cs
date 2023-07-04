@@ -143,7 +143,7 @@ namespace Bixby_web_server.Controllers
                 throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
                     .ToJson());
 
-            if (!NullEmptyChecker.HasNullEmptyValues(jwt["jwt"]))
+            if (NullEmptyChecker.HasNullEmptyValues(jwt["jwt"]))
                 throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }
                     .ToJson());
             
@@ -154,7 +154,7 @@ namespace Bixby_web_server.Controllers
 
             ShopItem shopItem = (ShopItem)validateResult["data"];
 
-            if (!NullEmptyChecker.HasNullEmptyValues(shopItem))
+            if (NullEmptyChecker.HasNullEmptyValues(shopItem))
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }
                     .ToJson());
             
@@ -208,6 +208,7 @@ namespace Bixby_web_server.Controllers
                             if (commentReq != null) comment.rate = commentReq.rate;
 
                             await CommentService.CreateComment(comment);
+                              
                             shop.TotalComments += 1;
 
                             bool isAck = await ShopItemService.UpdateShopItemAsync(shop.Id, shop);
@@ -285,8 +286,7 @@ namespace Bixby_web_server.Controllers
 
             ShopItem shopItem = await ShopItemService.GetShopItemByIdAsync(shopId);
 
-            ObjectId[] items = { };
-            items[0] = shopItem.Id;
+            ObjectId[] items = { shopItem.Id };
 
             Order order = new Order {
                 Items = items,
@@ -295,12 +295,7 @@ namespace Bixby_web_server.Controllers
                 Confirm = false
             };
 
-           
-
             await OrderService.CreateOrder(order);
-
-            UserShop userShop = await UserShopService.GetProductByUserAndShopItem(new ObjectId(shopId), email);
-            UserShopService.CalculateShopAnalytics(userShop.Id);
 
 #pragma warning disable CS8601 // Possible null reference assignment.
             ProductPurchases productPurchases = new ProductPurchases

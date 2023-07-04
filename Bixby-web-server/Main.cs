@@ -15,8 +15,10 @@ namespace BixbyShop_LK
             {
                 if (context.Request.Url.AbsolutePath == "/home")
                 {
+                    Console.WriteLine("HI");
                     // Perform actions specific to the "/home" route
-                    await context.WriteResponse("Hello from the home route!", "text/plain");
+                    await next();
+
                 }
                 else
                 {

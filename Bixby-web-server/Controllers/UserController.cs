@@ -350,7 +350,7 @@ namespace Bixby_web_server.Controllers
             }
             var response = new {
                 status = "Success",
-                allTheProducts = comments
+                comments
             };
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
@@ -404,7 +404,7 @@ namespace Bixby_web_server.Controllers
 
             if (!jwt.ContainsKey("jwt"))
             {
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }.ToJson());
             }
 
             User result = (User)jwt["jwt"];

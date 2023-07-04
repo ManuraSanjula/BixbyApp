@@ -1,6 +1,8 @@
 ﻿using Bixby_web_server.Helpers;
 using Bixby_web_server.Models;
+using Bixby_web_server.Services;
 using BixbyShop_LK.Services;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using SendGrid.Helpers.Errors.Model;
 using System.Net;
@@ -12,6 +14,7 @@ namespace Bixby_web_server.Controllers
     {
         private static readonly OrderService OrderService = new OrderService();
         private static readonly UserService UserService = new UserService();
+        private static readonly ProductPurchasesService ProductPurchasesService = new ProductPurchasesService();
 
         private static async Task<User?> GetUser(CheckMiddleWare checkMiddleWare,string? email,HttpContext context)
         {
@@ -21,23 +24,23 @@ namespace Bixby_web_server.Controllers
             User? user = await UserService.GetUserByEmailAsync(email);
 
             if (NullEmptyChecker.HasNullEmptyValues(user))
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
+                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
                     .ToJson());
             Dictionary<string, object> jwt =
                 await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]?.Trim());
 
             if (!jwt.ContainsKey("jwt"))
-                throw new BadRequestException(new { status = "An error occurred.", message = "Bad Request Exception" }
-                    .ToJson());
+                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
+                   .ToJson());
 
             User result = (User)jwt["jwt"];
 
             if (NullEmptyChecker.HasNullEmptyValues(result))
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
-                    .ToJson());
+                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
+                   .ToJson());
 
             if (object.Equals(result, user))
-                throw new BadRequestException(new { status = "An error occurred.", message = "Bad Request Exception" }
+                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
                     .ToJson());
             return user;
         }
@@ -50,7 +53,7 @@ namespace Bixby_web_server.Controllers
             User? user = await GetUser(checkMiddleWare, email, context);
             Order order = OrderService.GetOrderById(new ObjectId(orderId));
             
-            if(user != null && !order.Id.Equals(user.Id))
+            if(user != null && !order.User.Equals(user.Email))
                 throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
                     .ToJson());
             
@@ -60,6 +63,10 @@ namespace Bixby_web_server.Controllers
             
             order.Confirm = true;
             OrderService.UpdateOrder(order.Id, order);
+
+            ProductPurchases productPurchases = await ProductPurchasesService.GetProductPurchasesByOrderIdAsync(order.Id);
+            productPurchases.isDeliverd = true;
+            await ProductPurchasesService.UpdateProductPurchaseAsync(productPurchases.Id, productPurchases);
             await context.WriteResponse(new { status = "Success"}
                 .ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
@@ -76,14 +83,14 @@ namespace Bixby_web_server.Controllers
             User? user = await GetUser(checkMiddleWare, email, context);
             List<Order> orders = OrderService.GetAllOrders(user?.Email);
 
-            if (NullEmptyChecker.HasNullEmptyValues(orders))
+            if (orders.IsNullOrEmpty())
                 throw new BadRequestException(new { status = "An error occurred.", message = "Bad Request Exception" }
                     .ToJson());
             
             var response = new
             {
                 status = "Success",
-                data = orders
+                data = orders.ToArray()
             };
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }

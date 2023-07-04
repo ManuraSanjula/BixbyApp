@@ -4,6 +4,7 @@ using Bixby_web_server.Models;
 using Bixby_web_server.Services;
 using BixbyShop_LK.Models.Item.Services;
 using BixbyShop_LK.Services;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using SendGrid.Helpers.Errors.Model;
@@ -20,7 +21,6 @@ namespace Bixby_web_server.Controllers
         private static readonly ShopItemService ShopItemService = new ShopItemService();
         private static readonly CartAndOrderService CartAndOrderService = new CartAndOrderService();
         private static readonly UserService UserService = new UserService();
-        private static readonly UserShopService UserShopService = new UserShopService();
         private static readonly OrderService OrderService = new OrderService();
         private static readonly ProductPurchasesService productPurchasesService = new ProductPurchasesService();
 
@@ -80,9 +80,12 @@ namespace Bixby_web_server.Controllers
             CartRes cartAndOrders = await CartAndOrders(arg, checkMiddleWare, email);
 
             if (cartAndOrders.User.Email != null && !cartAndOrders.User.Email.Equals(email))
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson()); 
+                throw new UnauthorizedException(new { status = "An error occurred.", message = "UnauthorizedException" }.ToJson());
 
-            if (!NullEmptyChecker.HasNullEmptyValues(cartAndOrders.cartAndOrder))
+            if (NullEmptyChecker.HasNullEmptyValues(cartAndOrders))
+                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+            if (cartAndOrders.cartAndOrder.IsNullOrEmpty())
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
             var response = new
@@ -99,7 +102,7 @@ namespace Bixby_web_server.Controllers
                 throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
             
             string? email = arg.DynamicPath?[0];
-            string? shopId = arg.DynamicPath?[0];
+            string? shopId = arg.DynamicPath?[1];
             
             User? user = await UserService.GetUserByEmailAsync(email);
             ShopItem? shopItem = await ShopItemService.GetShopItemByIdAsync(shopId);
@@ -139,9 +142,12 @@ namespace Bixby_web_server.Controllers
             CartRes cartAndOrders = await CartAndOrders(arg, checkMiddleWare, email);
 
             if (cartAndOrders.User.Email != null && !cartAndOrders.User.Email.Equals(email))
+                throw new UnauthorizedException(new { status = "An error occurred.", message = "UnauthorizedException" }.ToJson());
+
+            if (NullEmptyChecker.HasNullEmptyValues(cartAndOrders))
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-            if (!NullEmptyChecker.HasNullEmptyValues(cartAndOrders.cartAndOrder))
+            if (cartAndOrders.cartAndOrder.IsNullOrEmpty())
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
             Order order = new Order();
@@ -154,31 +160,23 @@ namespace Bixby_web_server.Controllers
                 items.Add(cartAndOrder.Id);
                 order.Price += cartAndOrder.Price;
             });
-
-            items.ForEach(id =>
-            {
-                UserShopService.CalculateShopAnalytics(id);
-            });
-
             order.Items = items.ToArray();
             order.User = cartAndOrders.User.Email;
 
-            if(!OrderService.CreateOrder(order).IsCompletedSuccessfully)
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+            await OrderService.CreateOrder(order);
 
-            ShopItem item = await ShopItemService.GetShopItemByIdAsync(order.Id);
 
 #pragma warning disable CS8601 // Possible null reference assignment.
             ProductPurchases productPurchases = new ProductPurchases
             {
                 orderId = order.Id,
                 cutomerId = cartAndOrdersList[0].Id,
-                ownerId = item.publish.Email
+                ownerId = email
             };
 #pragma warning restore CS8601 // Possible null reference assignment.
 
             await productPurchasesService.CreateProductPurchaseAsync(productPurchases);
-
+            cartAndOrdersList.ForEach(i => CartAndOrderService.DeleteCartAndOrder(i.Id));
             var response = new
             {
                 status = "Success",

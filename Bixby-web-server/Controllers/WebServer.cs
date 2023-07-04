@@ -16,7 +16,7 @@ namespace Bixby_web_server.Controllers
         private readonly int port;
         private readonly HttpListener listener;
         private readonly ConcurrentDictionary<HttpListenerContext, Task> activeRequests;
-        private readonly Dictionary<string, Func<HttpContext, Task>> routeHandlers;
+        public readonly Dictionary<string, Func<HttpContext, Task>> routeHandlers;
         private readonly List<MiddlewareFunc> middlewares;
 
         public WebServer(int port)
@@ -91,9 +91,7 @@ namespace Bixby_web_server.Controllers
         private async Task ProcessRouteAsync(HttpContext httpContext)
         {
             var request = httpContext.Request;
-            var response = httpContext.Response;
-
-            var path = request.Url.AbsolutePath;
+            var path = request.Url?.AbsolutePath;
             var route = routeHandlers.Keys.FirstOrDefault(route => WildcardMatch(path, route));
 
             if (route != null && routeHandlers.TryGetValue(route, out var handler))
@@ -174,8 +172,8 @@ namespace Bixby_web_server.Controllers
             routeHandlers.Add("/reset-password/{email}/{token}", UserController.ResetPassword);
             routeHandlers.Add("/email-verify/{email}/{token}", UserController.email_verify);
 
-            routeHandlers.Add("/{email}/add-shop-item", ShopController.UploadOneShopItem); /// 👌👍🏻
-            routeHandlers.Add("/{email}/update-shop-item/{shopId}", ShopController.UpdateOneShopItem); // ====
+            routeHandlers.Add("/{email}/add-shop-item", ShopController.UploadOneShopItem); // 👌👍🏻
+            routeHandlers.Add("/{email}/update-shop-item/{shopId}", ShopController.UpdateOneShopItem);
             routeHandlers.Add("/shopItem/{shopId}/view", ShopController.ViewOneShopItem); // 👍🏻👌
             routeHandlers.Add("/shopItem/{shopId}/comment", ShopController.OneShopItemComment); // ====
             routeHandlers.Add("/shopItem/{shopId}/buy/{email}", ShopController.BuyItem); // 👍🏻👌
@@ -183,7 +181,7 @@ namespace Bixby_web_server.Controllers
             routeHandlers.Add("/home", ShopController.GetAllTheShopItems);
         }
 
-        private static bool WildcardMatch(string input, string pattern)
+        public static bool WildcardMatch(string input, string pattern)
         {
             var inputSegments = input.Trim('/').Split('/');
             var patternSegments = pattern.Trim('/').Split('/');

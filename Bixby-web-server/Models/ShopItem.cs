@@ -40,7 +40,7 @@ namespace Bixby_web_server.Models
         [BsonId] public ObjectId Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public long Rating { get; set; }
+        public double Rating { get; set; }
         public long TotalComments { get; set; }
         public int Price { get; set; }
         public String[] PicsLowRes { get; set; } = { "default-low-res-pic.png" };

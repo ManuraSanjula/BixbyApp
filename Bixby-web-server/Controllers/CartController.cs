@@ -93,6 +93,7 @@ namespace Bixby_web_server.Controllers
                 status = "Success",
                 data = cartAndOrders.cartAndOrder
             };
+            arg.ResponseContent = response.ToJson();
             await arg.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
 

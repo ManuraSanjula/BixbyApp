@@ -189,7 +189,7 @@ namespace Bixby_web_server.Controllers
                 status = "Success",
                 body = user
             };
-
+            context.ResponseContent = response.ToJson();
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
 
@@ -322,10 +322,12 @@ namespace Bixby_web_server.Controllers
             {
                 throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
             }
+            
             var response = new {
                 status = "Success",
                 allTheProducts = userProducts
             };
+            context.ResponseContent = response.ToJson();
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
 
         }
@@ -352,6 +354,7 @@ namespace Bixby_web_server.Controllers
                 status = "Success",
                 comments
             };
+            context.ResponseContent = response.ToJson();
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
 
@@ -396,7 +399,7 @@ namespace Bixby_web_server.Controllers
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
 
-        public async static Task SeePurchase(HttpContext context)
+        public static async Task SeePurchase(HttpContext context)
         {
             var request = context.Request;
             var checkMiddleWare = new CheckMiddleWare();
@@ -417,6 +420,7 @@ namespace Bixby_web_server.Controllers
                 status = "Success",
                 productPurchases
             };
+            context.ResponseContent = response.ToJson();
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
     }

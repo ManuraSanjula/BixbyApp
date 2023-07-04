@@ -84,7 +84,7 @@ namespace Bixby_web_server.Controllers
             List<Order> orders = OrderService.GetAllOrders(user?.Email);
 
             if (orders.IsNullOrEmpty())
-                throw new BadRequestException(new { status = "An error occurred.", message = "Bad Request Exception" }
+                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }
                     .ToJson());
             
             var response = new
@@ -92,6 +92,7 @@ namespace Bixby_web_server.Controllers
                 status = "Success",
                 data = orders.ToArray()
             };
+            context.ResponseContent = response.ToJson();
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
     }

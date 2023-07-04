@@ -40,7 +40,7 @@ namespace Bixby_web_server.Controllers
                 status = "Success",
                 body = convertedItems
             };
-
+            context.ResponseContent = response.ToJson();
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
                 .ConfigureAwait(false);
         }
@@ -68,6 +68,7 @@ namespace Bixby_web_server.Controllers
                         status = "Success",
                         body = shopItem
                     };
+                    context.ResponseContent = response.ToJson();
                     await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
                         .ConfigureAwait(false);
                 }
@@ -206,11 +207,15 @@ namespace Bixby_web_server.Controllers
                             comment.User = user.Id;
                             comment.ShopItem = shop.Id;
                             if (commentReq != null) comment.rate = commentReq.rate;
+                            
 
                             await CommentService.CreateComment(comment);
-                              
-                            shop.TotalComments += 1;
 
+
+                            List<Comment> comments = CommentService.GetAllCommentsByShopItemName(shop.Id);
+                            double rate= CommentService.CalculateTotalRating(comments.ToArray().Length, comment.rate);
+                            shop.TotalComments += 1;
+                            shop.Rating = rate;
                             bool isAck = await ShopItemService.UpdateShopItemAsync(shop.Id, shop);
                             if (isAck)
                             {
@@ -239,7 +244,7 @@ namespace Bixby_web_server.Controllers
                                                     { status = "An error occurred.", message = "Not Found Exception" }
                                                 .ToJson());
 
-                    if (!comment.IsNullOrEmpty())
+                    if (comment.IsNullOrEmpty())
                         throw new NotFoundException(
                             new { status = "An error occurred.", message = "Not Found" }.ToJson());
                     
@@ -259,7 +264,7 @@ namespace Bixby_web_server.Controllers
             }
         }
 
-        internal async static Task BuyItem(HttpContext context)
+        internal static async Task BuyItem(HttpContext context)
         {
             CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
             String? shopId = context.DynamicPath?[0];

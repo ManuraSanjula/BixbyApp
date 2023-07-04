@@ -9,6 +9,7 @@ namespace Bixby_web_server.Helpers
         public HttpListenerRequest Request { get; }
         public HttpListenerResponse Response { get; }
         public string?[]? DynamicPath { get; private set; } = { }; // Variable to store the dynamic path
+        public string ResponseContent { get; set; } // Property to store the response content
 
         public HttpContext(HttpListenerRequest request, HttpListenerResponse response)
         {
@@ -18,12 +19,12 @@ namespace Bixby_web_server.Helpers
 
         public void ExtractDynamicPath(string pattern)
         {
-            string path = Request.RawUrl;
-            string[] pathSegments = path.Split('/');
+            string? path = Request.RawUrl;
+            string[]? pathSegments = path?.Split('/');
             string[] patternSegments = pattern.Split('/');
             List<string> dynamicSegments = new List<string>();
 
-            if (pathSegments.Length == patternSegments.Length)
+            if (pathSegments != null && pathSegments.Length == patternSegments.Length)
             {
                 for (int i = 0; i < pathSegments.Length; i++)
                 {
@@ -33,13 +34,12 @@ namespace Bixby_web_server.Helpers
                     }
                 }
             }
-
-            // Set the dynamic segments or null if no dynamic path is found
-            DynamicPath = dynamicSegments.Count > 0 ? dynamicSegments.ToArray() : dynamicSegments.ToArray();
+            DynamicPath = dynamicSegments.ToArray();
         }
 
-        public async Task WriteResponseAsync(string content, string contentType, HttpStatusCode statusCode = HttpStatusCode.OK, Dictionary<string, string> headers = null)
+        public async Task WriteResponseAsync(string content, string contentType, HttpStatusCode statusCode = HttpStatusCode.OK, Dictionary<string, string>? headers = null)
         {
+            ResponseContent = content;
             byte[] buffer = System.Text.Encoding.UTF8.GetBytes(content);
             Response.StatusCode = (int)statusCode;
             Response.ContentType = contentType;
@@ -52,18 +52,17 @@ namespace Bixby_web_server.Helpers
                     Response.Headers.Add(header.Key, header.Value);
                 }
             }
-
             await Response.OutputStream.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
             Response.Close();
         }
 
-        public async Task WriteResponse(string content, string contentType, HttpStatusCode statusCode = HttpStatusCode.OK, Dictionary<string, string> headers = null)
+        public async Task WriteResponse(string content, string contentType, HttpStatusCode statusCode = HttpStatusCode.OK, Dictionary<string, string>? headers = null)
         {
+            ResponseContent = content;
             byte[] buffer = System.Text.Encoding.UTF8.GetBytes(content);
             Response.StatusCode = (int)statusCode;
             Response.ContentType = contentType;
             Response.ContentLength64 = buffer.Length;
-
             if (headers != null)
             {
                 foreach (var header in headers)
@@ -71,7 +70,6 @@ namespace Bixby_web_server.Helpers
                     Response.Headers.Add(header.Key, header.Value);
                 }
             }
-
             await Response.OutputStream.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
         }
     }

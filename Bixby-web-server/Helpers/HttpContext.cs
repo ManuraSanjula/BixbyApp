@@ -38,6 +38,25 @@ namespace Bixby_web_server.Helpers
             DynamicPath = dynamicSegments.Count > 0 ? dynamicSegments.ToArray() : dynamicSegments.ToArray();
         }
 
+        public async Task WriteResponseAsync(string content, string contentType, HttpStatusCode statusCode = HttpStatusCode.OK, Dictionary<string, string> headers = null)
+        {
+            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(content);
+            Response.StatusCode = (int)statusCode;
+            Response.ContentType = contentType;
+            Response.ContentLength64 = buffer.Length;
+
+            if (headers != null)
+            {
+                foreach (var header in headers)
+                {
+                    Response.Headers.Add(header.Key, header.Value);
+                }
+            }
+
+            await Response.OutputStream.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+            Response.Close();
+        }
+
         public async Task WriteResponse(string content, string contentType, HttpStatusCode statusCode = HttpStatusCode.OK, Dictionary<string, string> headers = null)
         {
             byte[] buffer = System.Text.Encoding.UTF8.GetBytes(content);

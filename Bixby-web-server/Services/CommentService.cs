@@ -1,6 +1,4 @@
 ﻿using Bixby_web_server.Models;
-using BixbyShop_LK.Models.Order;
-using BixbyShop_LK.Services;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -18,6 +16,21 @@ namespace BixbyShop_LK.Models.Comments.Services
             IMongoDatabase database = client.GetDatabase("BixByApp");
             this.commentCollection = database.GetCollection<Comment>("Comment");
         }
+
+        public static double CalculateTotalRating(long totalComments, long commentRating)
+        {
+            if (totalComments == 0)
+                return 0;
+
+            // Calculate the average rating per comment
+            double averageRating = (double)commentRating / totalComments;
+
+            // Calculate the estimated total rating
+            double totalRating = averageRating * totalComments;
+
+            return totalRating;
+        }
+
         public List<Comment> GetAllComments()
         {
             return commentCollection.Find(_ => true).ToList();

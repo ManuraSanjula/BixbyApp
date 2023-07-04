@@ -7,8 +7,10 @@ namespace Bixby_web_server.Models
     {
         [BsonId]
         public ObjectId Id { get; set; }
-        public CartAndOrder[] Items { get; set; }
-        public User User { get; set; }
+        public ObjectId[] Items { get; set; }
+        public string? User { get; set; }
         public int Price { get; set; }
+        
+        public bool Confirm { get; set; }
     }
 }

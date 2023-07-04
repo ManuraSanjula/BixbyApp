@@ -17,6 +17,48 @@ namespace Bixby_web_server.Services
             this.UserShopCollection = database.GetCollection<UserShop>("UserShop");
         }
 
+        public void CalculateShopAnalytics(ObjectId shopId)
+        {
+            var filter = Builders<UserShop>.Filter.Eq("_id", shopId);
+            var update = Builders<UserShop>.Update
+                .Set("SellsPerDay", 0)
+                .Set("SellsPerMoth", 0);
+
+            UserShopCollection.UpdateOne(filter, update);
+
+            var currentDate = DateTime.Now;
+            var shop = UserShopCollection.Find(filter).FirstOrDefault();
+            if (shop != null)
+            {
+                // Check if it's a new day
+                if (currentDate.Date > shop.LastUpdated.Date)
+                {
+                    // Calculate sells per day
+                    var sellsPerDay = shop.Sells - shop.temp_SellsPerDay;
+                    shop.SellsPerDay = sellsPerDay;
+                    shop.temp_SellsPerDay = shop.Sells;
+                }
+
+                // Check if it's the first day of the month or the first time running
+                if (currentDate.Day == 1 || shop.LastUpdated.Month != currentDate.Month)
+                {
+                    // Calculate sells per month
+                    var sellsPerMonth = shop.Sells - shop.temp_SellsPerMonth;
+                    shop.SellsPerMonth = sellsPerMonth;
+                    shop.temp_SellsPerMonth = shop.Sells;
+                }
+
+                // Increment sells count
+                shop.Sells++;
+                shop.TotalSuccessfulOrders++; // Increment the total successful orders count
+
+                // Update the last updated date
+                shop.LastUpdated = currentDate;
+
+                UserShopCollection.ReplaceOne(filter, shop);
+            }
+        }
+
         public async Task AddProduct(string? user, ObjectId shopItem)
         {
             UserShop userShop = new UserShop();
@@ -35,13 +77,23 @@ namespace Bixby_web_server.Services
         {
             return await this.UserShopCollection.Find(u => u.Item == id).FirstOrDefaultAsync();
         }
-        public async Task<List<UserShop>> GetProductByUserId(string? email)
+
+        public async Task<UserShop> GetProductByUserAndShopItem(ObjectId shopItem, string email)
+        {
+            return await this.UserShopCollection.Find(u => u.Item == shopItem && u.User == email).FirstOrDefaultAsync();
+        }
+        public async Task<List<UserShop>> GetProductByUserEmail(string? email)
         {
             return await this.UserShopCollection.Find(u => u.User == email).ToListAsync();
         }
         public async Task<UserShop> GetProduct(ObjectId id)
         {
             return await this.UserShopCollection.Find(u => u.Id == id).FirstOrDefaultAsync();
+        }
+        
+        public async Task DeleteProductByEmailAndShopId(String email,ObjectId id)
+        {
+             await this.UserShopCollection.DeleteOneAsync(u => u.User == email && u.Item == id);
         }
 
         public async Task<List<UserShop>> GetAllProducts()
@@ -52,9 +104,10 @@ namespace Bixby_web_server.Services
         public async Task<long> GetTotalOrders(ObjectId id)
         {
             var userShop = await GetProduct(id);
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (userShop != null)
             {
-                return userShop.TotalOrders;
+                return userShop.TotalSuccessfulOrders;
             }
             return 0;
         }
@@ -62,6 +115,7 @@ namespace Bixby_web_server.Services
         public async Task<long> GetTotalViews(ObjectId id)
         {
             var userShop = await GetProduct(id);
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (userShop != null)
             {
                 return userShop.TotalViews;

@@ -1,13 +1,12 @@
 ﻿using Bixby_web_server.Models;
-using BixbyShop_LK.Services;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace BixbyShop_LK.Models.Order.Services
+namespace Bixby_web_server.Services
 {
     public class CartAndOrderService
     {
-        private readonly IMongoCollection<CartAndOrder> cartAndOrderCollection;
+        private readonly IMongoCollection<CartAndOrder> _cartAndOrderCollection;
 
         public CartAndOrderService()
         {
@@ -15,31 +14,35 @@ namespace BixbyShop_LK.Models.Order.Services
             var client = new MongoClient(settings);
 
             IMongoDatabase database = client.GetDatabase("BixByApp");
-            this.cartAndOrderCollection = database.GetCollection<CartAndOrder>("CartAndOrder");
+            this._cartAndOrderCollection = database.GetCollection<CartAndOrder>("CartAndOrder");
         }
-        public List<CartAndOrder> GetAllCartAndOrders()
+        public async Task<List<CartAndOrder>> GetAllCartAndOrders()
         {
-            return cartAndOrderCollection.Find(_ => true).ToList();
+            return await _cartAndOrderCollection.Find(_ => true).ToListAsync();
         }
-
-        public CartAndOrder GetCartAndOrderById(ObjectId cartAndOrderId)
+        public async Task<IAsyncCursor<CartAndOrder>> GetAllCartAndOrders(string? email)
         {
-            return cartAndOrderCollection.Find(cartAndOrder => cartAndOrder.Id == cartAndOrderId).FirstOrDefault();
-        }
-
-        public void CreateCartAndOrder(CartAndOrder cartAndOrder)
+            return await _cartAndOrderCollection.FindAsync(cartAndOrder => cartAndOrder.User == email);
+        }   
+        
+        public async Task<CartAndOrder> GetCartAndOrderById(ObjectId cartAndOrderId)
         {
-            cartAndOrderCollection.InsertOne(cartAndOrder);
-        }
-
-        public void UpdateCartAndOrder(ObjectId cartAndOrderId, CartAndOrder updatedCartAndOrder)
-        {
-            cartAndOrderCollection.ReplaceOne(cartAndOrder => cartAndOrder.Id == cartAndOrderId, updatedCartAndOrder);
+            return await _cartAndOrderCollection.Find(cartAndOrder => cartAndOrder.Id == cartAndOrderId).FirstOrDefaultAsync();
         }
 
-        public void DeleteCartAndOrder(ObjectId cartAndOrderId)
+        public async Task CreateCartAndOrder(CartAndOrder cartAndOrder)
         {
-            cartAndOrderCollection.DeleteOne(cartAndOrder => cartAndOrder.Id == cartAndOrderId);
+           await _cartAndOrderCollection.InsertOneAsync(cartAndOrder);
+        }
+
+        public async void UpdateCartAndOrder(ObjectId cartAndOrderId, CartAndOrder updatedCartAndOrder)
+        {
+            await _cartAndOrderCollection.ReplaceOneAsync(cartAndOrder => cartAndOrder.Id == cartAndOrderId, updatedCartAndOrder);
+        }
+
+        public async void DeleteCartAndOrder(ObjectId cartAndOrderId)
+        {
+            await _cartAndOrderCollection.DeleteOneAsync(cartAndOrder => cartAndOrder.Id == cartAndOrderId);
         }
     }
 }

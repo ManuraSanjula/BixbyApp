@@ -1,18 +1,23 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
 using Bixby_web_server.Helpers;
 using MongoDB.Bson;
 using SendGrid.Helpers.Errors.Model;
 
 namespace Bixby_web_server.Controllers
 {
+    public delegate Task MiddlewareFunc(HttpContext context, Func<Task> next);
+
     public class WebServer
     {
         private readonly int port;
         private readonly HttpListener listener;
         private readonly ConcurrentDictionary<HttpListenerContext, Task> activeRequests;
-
         private readonly Dictionary<string, Func<HttpContext, Task>> routeHandlers;
+        private readonly List<MiddlewareFunc> middlewares;
 
         public WebServer(int port)
         {
@@ -20,6 +25,7 @@ namespace Bixby_web_server.Controllers
             listener = new HttpListener();
             activeRequests = new ConcurrentDictionary<HttpListenerContext, Task>();
             routeHandlers = new Dictionary<string, Func<HttpContext, Task>>();
+            middlewares = new List<MiddlewareFunc>();
             ConfigureRoutes();
         }
 
@@ -40,6 +46,11 @@ namespace Bixby_web_server.Controllers
             listener.Stop();
             listener.Close();
             Console.WriteLine("Server stopped");
+        }
+
+        public void UseMiddleware(MiddlewareFunc middleware)
+        {
+            middlewares.Add(middleware);
         }
 
         private async Task EventLoop()
@@ -64,44 +75,56 @@ namespace Bixby_web_server.Controllers
 
                 var httpContext = new HttpContext(request, response);
 
-                var path = request.Url.AbsolutePath;
-                var route = routeHandlers.Keys.FirstOrDefault(route => WildcardMatch(path, route));
-
-                if (route != null && routeHandlers.TryGetValue(route, out var handler))
+                foreach (var middleware in middlewares)
                 {
-                    try
-                    {
-                        httpContext.ExtractDynamicPath(route);
-                        // Call the route handler with the extracted dynamic route name
-                        await handler(httpContext).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Handle exceptions and write appropriate responses
-                        var statusCode = GetStatusCodeFromException(ex);
-                        var res = new
-                        {
-                            message = ex.ToString(),
-                        };
-                        await httpContext.WriteResponse(res.ToJson(), "application/json", statusCode)
-                            .ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    var NotFound = new
-                    {
-                        status = "An error occurred.",
-                        message = "Route not found",
-                    };
-                    await httpContext.WriteResponse(NotFound.ToJson(), "application/json", HttpStatusCode.NotFound)
-                        .ConfigureAwait(false);
+                    var next = new Func<Task>(() => ProcessRouteAsync(httpContext));
+                    await middleware(httpContext, next);
                 }
             }
             finally
             {
                 context.Response.Close();
                 activeRequests.TryRemove(context, out _);
+            }
+        }
+
+        private async Task ProcessRouteAsync(HttpContext httpContext)
+        {
+            var request = httpContext.Request;
+            var response = httpContext.Response;
+
+            var path = request.Url.AbsolutePath;
+            var route = routeHandlers.Keys.FirstOrDefault(route => WildcardMatch(path, route));
+
+            if (route != null && routeHandlers.TryGetValue(route, out var handler))
+            {
+                try
+                {
+                    httpContext.ExtractDynamicPath(route);
+                    // Call the route handler with the extracted dynamic route name
+                    await handler(httpContext).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    // Handle exceptions and write appropriate responses
+                    var statusCode = GetStatusCodeFromException(ex);
+                    var res = new
+                    {
+                        message = ex.Message,
+                    };
+                    await httpContext.WriteResponse(res.ToJson(), "application/json", statusCode)
+                        .ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                var NotFound = new
+                {
+                    status = "An error occurred.",
+                    message = "Route not found",
+                };
+                await httpContext.WriteResponse(NotFound.ToJson(), "application/json", HttpStatusCode.NotFound)
+                    .ConfigureAwait(false);
             }
         }
 
@@ -135,16 +158,27 @@ namespace Bixby_web_server.Controllers
             routeHandlers.Add("/login", UserController.Login);
             routeHandlers.Add("/updateUser/{email}", UserController.HandleUpdateUserRequest);
             routeHandlers.Add("/{email}/products", UserController.GettingAllUserProducts);
+            routeHandlers.Add("/{email}/products/products-orders", UserController.SeePurchase);
             routeHandlers.Add("/{email}/comment", UserController.GetUserComment);
+            routeHandlers.Add("/delete/{email}/product/{shopId}", UserController.RemoveUserProduct);
 
-            routeHandlers.Add("/reset-password-req/{email}", UserController.ResetPasswordReq); //// new
-            routeHandlers.Add("/reset-password/{email}/{token}", UserController.ResetPassword); //// new
-            routeHandlers.Add("/email-verify/{email}/{token}", UserController.email_verify); //// new
+            routeHandlers.Add("/cart/{email}/{shopId}/add/", CartController.AddToCart);
+            routeHandlers.Add("/cart/{email}/view", CartController.SeeAllTheCart);
+            routeHandlers.Add("/cart/{email}/check-out", CartController.CheckOutAllItems);
+
+            routeHandlers.Add("/order/{email}/view", OrderController.SeeAllOrders);
+            routeHandlers.Add("/order/{email}/{orderId}/refund", OrderController.Refund);
+            routeHandlers.Add("/order/{email}/{orderId}/confirm", OrderController.ConfirmTheOrder);
+
+            routeHandlers.Add("/reset-password-req/{email}", UserController.ResetPasswordReq);
+            routeHandlers.Add("/reset-password/{email}/{token}", UserController.ResetPassword);
+            routeHandlers.Add("/email-verify/{email}/{token}", UserController.email_verify);
 
             routeHandlers.Add("/{email}/add-shop-item", ShopController.UploadOneShopItem);
             routeHandlers.Add("/{email}/update-shop-item/{shopId}", ShopController.UpdateOneShopItem);
             routeHandlers.Add("/shopItem/{shopId}/view", ShopController.ViewOneShopItem);
             routeHandlers.Add("/shopItem/{shopId}/comment", ShopController.OneShopItemComment);
+            routeHandlers.Add("/shopItem/{shopId}/buy/{email}", ShopController.BuyItem);
 
             routeHandlers.Add("/", ShopController.GetAllTheShopItems);
         }
@@ -174,10 +208,9 @@ namespace Bixby_web_server.Controllers
         {
             if (patternSegment.StartsWith("{") && patternSegment.EndsWith("}"))
             {
-                return true; // Placeholder segment matches any input segment
+                return true;
             }
-
-            return inputSegment == patternSegment; // Exact match required
+            return inputSegment == patternSegment;
         }
     }
 }

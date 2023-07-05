@@ -112,13 +112,13 @@ namespace Bixby_web_server.Helpers
                         }
                     }
 
-                    if (!NullEmptyChecker.HasNullEmptyValues(u) && u.EmailVerify)
+                    if (!NullEmptyChecker.HasNullEmptyValues(user) && user.EmailVerify)
                     {
                         UserInShopItem userInShopItem = new UserInShopItem();
-                        userInShopItem.FirstName = u.FirstName;
-                        userInShopItem.LastName = u.LastName;
-                        userInShopItem.Email = u.Email;
-                        userInShopItem.Pic = u.Pic;
+                        userInShopItem.FirstName = user.FirstName;
+                        userInShopItem.LastName = user.LastName;
+                        userInShopItem.Email = user.Email;
+                        userInShopItem.Pic = user.Pic;
 
                         ShopItem shopItem = new ShopItem
                         {

@@ -12,7 +12,5 @@ namespace Bixby_web_server.Models
         public long TotalSuccessfulOrders { get; set; } = 0;  // Updated field name
         public long TotalRefunds { get; set; } = 0;
         public long TotalViews { get; set; } = 0;
-        public DateTime LastUpdated { get; set; } = DateTime.Now;
-
     }
 }

@@ -1,14 +1,12 @@
-﻿using SendGrid.Helpers.Mail;
-using SendGrid;
-using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Bixby_web_server.Models;
 using Bixby_web_server.Controllers;
 using Azure.Communication.Email;
 using Azure;
-using Org.BouncyCastle.Cms;
-using SendGrid.Helpers.Mail.Model;
 using Microsoft.IdentityModel.Tokens;
+using Bixby_web_server;
+using MongoDB.Bson;
+using Newtonsoft.Json;
 
 namespace BixbyShop_LK.Services
 {
@@ -48,17 +46,39 @@ namespace BixbyShop_LK.Services
 
         private async static void userUpdate(string? email, string? token)
         {
-            User? user = await userService.GetUserByEmailAsync(email);
+            User? user;
+            user = JsonConvert.DeserializeObject<User>(RedisCache.Get(email));
+            if (user == null)
+            {
+                user = await userService.GetUserByEmailAsync(email);
+                RedisCache.Set(user.Email, user.ToJson());
+            }
+            else
+            {
+                User user_db = await userService.GetUserByEmailAsync(email);
+                if (!user.Equals(user_db))
+                {
+                    user = user_db;
+                    RedisCache.Set(user.Email, user.ToJson());
+                }
+            }
+
             if (user != null)
             {
                 user.AddToken(token, DateTime.Now.ToString());
                 await userService.UpdateUserAsync(user.Id, user);
+                RedisCache.Set(user.Email, user.ToJson());
             }
         }
 
         private static string emailVerificationCode(string code,string path,string? email)
         {
-            string text = Startup.GetFileContent(Startup.ConfirmYourEmail);
+            String text = RedisCache.Get("emailVerificationCode");
+            if(text == null)
+            {
+                text = Startup.GetFileContent(Startup.ConfirmYourEmail);
+                RedisCache.Set("emailVerificationCode", text);
+            }
             return FormatHtml(text, placeholder =>
             {
                 if (placeholder == "VerificationLink")
@@ -75,9 +95,12 @@ namespace BixbyShop_LK.Services
 
         private async static Task<string> forgotPasswordEmailVerification(string code, string path,string? email, User user)
         {
-
-            string text = Startup.GetFileContent(Startup.ResetPasswordReqEmail);
-
+            String text = RedisCache.Get("forgotPasswordEmailVerification");
+            if (text == null)
+            {
+                text = Startup.GetFileContent(Startup.ResetPasswordReqEmail);
+                RedisCache.Set("forgotPasswordEmailVerification", text);
+            }
             return FormatHtml(text, placeholder =>
             {
                 if (placeholder == "VerificationLink")

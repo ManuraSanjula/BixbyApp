@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
-using System.Linq;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using Bixby_web_server;
 using Bixby_web_server.Models;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Newtonsoft.Json;
-using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace BixbyShop_LK.Services
 {
@@ -59,6 +53,7 @@ namespace BixbyShop_LK.Services
                     {
                         if (!loginPath)
                         {
+                            RedisCache.Set(user.Email, user.ToJson());
                             return userToken;
                         }
                         else
@@ -74,6 +69,7 @@ namespace BixbyShop_LK.Services
                     user.UserAuthTokens.Add(userToken);
                     if (await userService.UpdateUserAsync(user.Id, user))
                     {
+                        RedisCache.Set(user.Email, user.ToJson());
                         if (!loginPath)
                         {
                             return userToken;
@@ -103,39 +99,14 @@ namespace BixbyShop_LK.Services
             var email = claims.FirstOrDefault(c => c.Type == "email")?.Value;
             var password = claims.FirstOrDefault(c => c.Type == "password")?.Value;
 
+            User user;
             String cache = RedisCache.Get(email.ToString());
+            user = JsonConvert.DeserializeObject<User>(cache);
 
-            if(cache != null)
+            if (user != null)
             {
-                User cacheUser = JsonConvert.DeserializeObject<User>(cache);
-                if (cacheUser.Password == password && !cacheUser.UserAuthTokens.Contains(jwtToken))
-                {
-                    return null;
-                }
-                else
-                {
-                    if (cacheUser.Password == password)
-                    {
-                        if (allowBoolean)
-                        {
-                            return true;
-                        }
-                        else
-                        {
-                            return cacheUser;
-                        }
-                    }
-                }
-            }
-
-            var user = await userService.GetUserByEmailAsync(email.ToString());
-
-            if (user == null)
-            {
-                return null;
-            }
-            else
-            {
+                user = await userService.GetUserByEmailAsync(email.ToString());
+                RedisCache.Set(user.Email, user.ToJson());
                 if (user.Password == password && !user.UserAuthTokens.Contains(jwtToken))
                 {
                     return null;
@@ -154,8 +125,44 @@ namespace BixbyShop_LK.Services
                         }
                     }
                 }
-                return null;
             }
+            else
+            {
+                User fromDb = await userService.GetUserByEmailAsync(email.ToString());
+                if (!user.Equals(fromDb))
+                {
+                    user = fromDb;
+                    RedisCache.Set(user.Email, user.ToJson());
+                }
+                if (user == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    if (user.Password == password && !user.UserAuthTokens.Contains(jwtToken))
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        if (user.Password == password)
+                        {
+                            if (allowBoolean)
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                return user;
+                            }
+                        }
+                    }
+                    return null;
+                }
+            }
+            return null;
+           
         }
 
         public static async Task<string> tokenCreator(bool loginPath,string path, string? email, string password, User user)

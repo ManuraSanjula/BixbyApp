@@ -4,6 +4,7 @@ using Bixby_web_server.Services;
 using BixbyShop_LK.Services;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
+using Newtonsoft.Json;
 using SendGrid.Helpers.Errors.Model;
 using System.Net;
 using HttpContext = Bixby_web_server.Helpers.HttpContext;
@@ -21,7 +22,23 @@ namespace Bixby_web_server.Controllers
             if (context.Request.HttpMethod != "GET")
                 throw new MethodNotAllowedException(
                     new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-            User? user = await UserService.GetUserByEmailAsync(email);
+
+            User? user;
+            user = JsonConvert.DeserializeObject<User>(RedisCache.Get(email));
+            if (user == null)
+            {
+                user = await UserService.GetUserByEmailAsync(email);
+                RedisCache.Set(user.Email, user.ToJson());
+            }
+            else
+            {
+                User user_db = await UserService.GetUserByEmailAsync(email);
+                if (!user.Equals(user_db))
+                {
+                    user = user_db;
+                    RedisCache.Set(user.Email, user.ToJson());
+                }
+            }
 
             if (NullEmptyChecker.HasNullEmptyValues(user))
                 throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
@@ -80,6 +97,10 @@ namespace Bixby_web_server.Controllers
             CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
             string? email = context.DynamicPath?[0];
 
+            if(RedisCache.Get(email + "-order") != null)
+                await context.WriteResponse(RedisCache.Get(email + "-order"), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+
+
             User? user = await GetUser(checkMiddleWare, email, context);
             List<Order> orders = OrderService.GetAllOrders(user?.Email);
 
@@ -93,6 +114,7 @@ namespace Bixby_web_server.Controllers
                 data = orders.ToArray()
             };
             context.ResponseContent = response.ToJson();
+            RedisCache.Set(email + "-order", response.ToJson());
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
     }

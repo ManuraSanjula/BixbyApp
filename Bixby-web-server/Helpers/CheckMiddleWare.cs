@@ -1,5 +1,4 @@
-﻿using System.Dynamic;
-using System.Net;
+﻿using System.Net;
 using Bixby_web_server.Models;
 using BixbyShop_LK.Services;
 using MongoDB.Bson;
@@ -47,7 +46,23 @@ namespace Bixby_web_server.Helpers
                 }
                 if (dynamic != null && dynamic.Length > 0 && !string.IsNullOrEmpty(dynamic[0]))
                 {
-                    User? user = await UserService.GetUserByEmailAsync(dynamic[0]);
+                    User? user;
+                    user = JsonConvert.DeserializeObject<User>(RedisCache.Get(dynamic[0]));
+                    if (user == null)
+                    {
+                        user = await UserService.GetUserByEmailAsync(dynamic[0]);
+                        RedisCache.Set(user.Email, user.ToJson());
+                    }
+                    else
+                    {
+                        User user_db = await UserService.GetUserByEmailAsync(dynamic[0]);
+                        if (!user.Equals(user_db))
+                        {
+                            user = user_db;
+                            RedisCache.Set(user.Email, user.ToJson());
+                        }
+                    }
+
                     if (user == null && NullEmptyChecker.HasNullEmptyValues(user) && user.EmailVerify)
                     {
                         return Values;
@@ -80,8 +95,23 @@ namespace Bixby_web_server.Helpers
 
                 if (dynamic != null && dynamic.Length > 0)
                 {
-                    User? u = await UserService.GetUserByEmailAsync(dynamic[0]);
-                  
+                    User? user;
+                    user = JsonConvert.DeserializeObject<User>(RedisCache.Get(dynamic[0]));
+                    if (user == null)
+                    {
+                        user = await UserService.GetUserByEmailAsync(dynamic[0]);
+                        RedisCache.Set(user.Email, user.ToJson());
+                    }
+                    else
+                    {
+                        User user_db = await UserService.GetUserByEmailAsync(dynamic[0]);
+                        if (!user.Equals(user_db))
+                        {
+                            user = user_db;
+                            RedisCache.Set(user.Email, user.ToJson());
+                        }
+                    }
+
                     if (!NullEmptyChecker.HasNullEmptyValues(u) && u.EmailVerify)
                     {
                         UserInShopItem userInShopItem = new UserInShopItem();

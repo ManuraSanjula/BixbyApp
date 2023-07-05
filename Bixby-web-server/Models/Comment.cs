@@ -16,6 +16,5 @@ namespace Bixby_web_server.Models
         public string? UserComment { get; set; }
         public ObjectId User { get; set; }
         public ObjectId ShopItem { get; set; }
-        public int rate { get; set; }   
     }
 }

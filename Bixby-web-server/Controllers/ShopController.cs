@@ -23,10 +23,15 @@ namespace Bixby_web_server.Controllers
         private static readonly ProductPurchasesService productPurchasesService = new ProductPurchasesService();
         public static async Task GetAllTheShopItems(HttpContext context)
         {
-            Console.WriteLine(context.Url);
             if (context.Request.HttpMethod != "GET")
                 throw new MethodNotAllowedException(new
                     { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
+            if (RedisCache.Get("all-items") != null)
+            {
+                await context.WriteResponse(RedisCache.Get("all-items"), "application/json", HttpStatusCode.OK)
+                .ConfigureAwait(false);
+            }
 
             var shopItems = await ShopItemService.GetAllShopItemsAsync();
             var convertedItems = shopItems.Select(shop => new ShopAllShopItem
@@ -41,6 +46,7 @@ namespace Bixby_web_server.Controllers
                 status = "Success",
                 body = convertedItems
             };
+            RedisCache.Set("all-items", response.ToJson());
             context.ResponseContent = response.ToJson();
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
                 .ConfigureAwait(false);
@@ -55,7 +61,13 @@ namespace Bixby_web_server.Controllers
 
             if (context.DynamicPath is { Length: > 0 })
             {
-                ShopItem shopItem = await ShopItemService.GetShopItemByIdAsync(context.DynamicPath[0]);
+                if(RedisCache.Get("item-" + context.DynamicPath[0]) != null)
+                {
+                    await context.WriteResponse(RedisCache.Get("item-" + context.DynamicPath[0]), "application/json", HttpStatusCode.OK)
+                        .ConfigureAwait(false);
+                }
+
+               ShopItem shopItem = await ShopItemService.GetShopItemByIdAsync(context.DynamicPath[0]);
                 if (shopItem == null)
                     throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
                         .ToJson());
@@ -69,6 +81,7 @@ namespace Bixby_web_server.Controllers
                         status = "Success",
                         body = shopItem
                     };
+                    RedisCache.Set("item-" + context.DynamicPath[0], response.ToJson());
                     context.ResponseContent = response.ToJson();
                     await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
                         .ConfigureAwait(false);
@@ -82,7 +95,7 @@ namespace Bixby_web_server.Controllers
 
         public static async Task UpdateOneShopItem(HttpContext context)
         {
-            if (context.Request.HttpMethod != "POST")
+            if (context.Request.HttpMethod != "PUT" || context.Request.HttpMethod != "PATCH")
                 throw new MethodNotAllowedException(new
                     { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
@@ -129,13 +142,18 @@ namespace Bixby_web_server.Controllers
                 status = "Success",
                 message = "ShopItem Updated successfully"
             };
-
+            RedisCache.Set("item-" + context.DynamicPath[0], response.ToJson());
+            RedisCache.Remove("all-items");
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
                 .ConfigureAwait(false);
         }
 
         public static async Task UploadOneShopItem(HttpContext context)
         {
+            if (context.Request.HttpMethod != "POST")
+                throw new MethodNotAllowedException(new
+                { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
             var checkMiddleWare = new CheckMiddleWare();
 
             Dictionary<string, object> jwt =
@@ -200,23 +218,19 @@ namespace Bixby_web_server.Controllers
                         if (shop == null)
                             throw new NotFoundException(new
                                 { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+                        User user = (User)value;
                         {
-                            User user = (User)value;
 
                             Comment comment = new Comment();
                             if (commentReq?.UserComment != null) comment.UserComment = commentReq?.UserComment;
                             comment.User = user.Id;
-                            comment.ShopItem = shop.Id;
-                            if (commentReq != null) comment.rate = commentReq.rate;
-                            
+                            comment.ShopItem = shop.Id;                            
 
                             await CommentService.CreateComment(comment);
 
 
                             List<Comment> comments = CommentService.GetAllCommentsByShopItemName(shop.Id);
-                            double rate= CommentService.CalculateTotalRating(comments.ToArray().Length, comment.rate);
                             shop.TotalComments += 1;
-                            shop.Rating = rate;
                             bool isAck = await ShopItemService.UpdateShopItemAsync(shop.Id, shop);
                             if (isAck)
                             {
@@ -228,6 +242,8 @@ namespace Bixby_web_server.Controllers
                             status = "Success",
                             message = "Comment added successfully"
                         };
+                        RedisCache.Remove("comment-user-" + user.Email);
+                        RedisCache.Set("comment-" + shopId.ToString(), response.ToJson());
 
                         await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
                             .ConfigureAwait(false);
@@ -240,6 +256,12 @@ namespace Bixby_web_server.Controllers
                         .ToJson());
                 case "GET":
                 {
+                   if(RedisCache.Get("comment-" + shopId.ToString()) != null)
+                   {
+                     await context.WriteResponse(RedisCache.Get("commend-" + shopId.ToString()), "application/json", HttpStatusCode.OK)
+                           .ConfigureAwait(false);
+                   }
+                   
                     List<Comment> comment = CommentService.GetAllCommentsByShopItemName(shopId) ??
                                             throw new NotFoundException(new
                                                     { status = "An error occurred.", message = "Not Found Exception" }
@@ -254,6 +276,7 @@ namespace Bixby_web_server.Controllers
                         status = "Success",
                         body = comment
                     };
+                    RedisCache.Set("comment-" + shopId.ToString(), response.ToJson());
                     await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
                         .ConfigureAwait(false);
 
@@ -318,6 +341,7 @@ namespace Bixby_web_server.Controllers
             {
                 status = "Success",
             };
+            RedisCache.Remove("User-SeePurchase-" + email);
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
                 .ConfigureAwait(false);
         }

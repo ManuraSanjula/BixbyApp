@@ -1,13 +1,17 @@
 ﻿using System.Net;
+using Amazon.Runtime.Internal.Util;
 using Bixby_web_server.Helpers;
 using Bixby_web_server.Models;
 using Bixby_web_server.Services;
 using BixbyShop_LK.Models.Item.Services;
 using BixbyShop_LK.Services;
+using Braintree;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Newtonsoft.Json;
 using SendGrid.Helpers.Errors.Model;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace Bixby_web_server.Controllers
 {
@@ -38,9 +42,24 @@ namespace Bixby_web_server.Controllers
 
                 checkMiddleWare = new CheckMiddleWare();
                 email = httpContext.DynamicPath?[0];
-                User? user = await UserService.GetUserByEmailAsync(email);
+                User? user;
+                user = JsonConvert.DeserializeObject<User>(RedisCache.Get(email));
+                if (user == null)
+                {
+                    user = await UserService.GetUserByEmailAsync(email);
+                    RedisCache.Set(user.Email, user.ToJson());
+                }
+                else
+                {
+                    User user_db = await UserService.GetUserByEmailAsync(email);
+                    if (!user.Equals(user_db))
+                    {
+                        user = user_db;
+                        RedisCache.Set(user.Email, user.ToJson());
+                    }
+                }
 
-                if (NullEmptyChecker.HasNullEmptyValues(user))
+            if (NullEmptyChecker.HasNullEmptyValues(user))
                     throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
                         .ToJson());
 
@@ -75,6 +94,10 @@ namespace Bixby_web_server.Controllers
                 throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
             string? email = arg.DynamicPath?[0];
+
+            if (RedisCache.Get(email + "-cart") != null)
+                await arg.WriteResponse(RedisCache.Get(email + "-cart"), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+
             CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
 
             CartRes cartAndOrders = await CartAndOrders(arg, checkMiddleWare, email);
@@ -93,6 +116,7 @@ namespace Bixby_web_server.Controllers
                 status = "Success",
                 data = cartAndOrders.cartAndOrder
             };
+            RedisCache.Set(email + "-cart", response.ToJson());
             arg.ResponseContent = response.ToJson();
             await arg.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
@@ -104,8 +128,24 @@ namespace Bixby_web_server.Controllers
             
             string? email = arg.DynamicPath?[0];
             string? shopId = arg.DynamicPath?[1];
-            
-            User? user = await UserService.GetUserByEmailAsync(email);
+
+            User? user;
+            user = JsonConvert.DeserializeObject<User>(RedisCache.Get(email));
+            if (user == null)
+            {
+                user = await UserService.GetUserByEmailAsync(email);
+                RedisCache.Set(user.Email, user.ToJson());
+            }
+            else
+            {
+                User user_db = await UserService.GetUserByEmailAsync(email);
+                if (!user.Equals(user_db))
+                {
+                    user = user_db;
+                    RedisCache.Set(user.Email, user.ToJson());
+                }
+            }
+
             ShopItem? shopItem = await ShopItemService.GetShopItemByIdAsync(shopId);
             
             if(NullEmptyChecker.HasNullEmptyValues(user) || NullEmptyChecker.HasNullEmptyValues(shopItem))
@@ -183,7 +223,7 @@ namespace Bixby_web_server.Controllers
                 status = "Success",
                 message = "Successfully CheckOut"
             };
-
+            RedisCache.Remove("User-SeePurchase-" + email);
             await arg.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
     }

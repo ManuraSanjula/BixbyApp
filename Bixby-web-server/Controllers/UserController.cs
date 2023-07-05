@@ -77,7 +77,7 @@ namespace Bixby_web_server.Controllers
                     var response = await UserService.UpdateUserAsync(user.Id, user)
                         ? new { status = "Success", message = "User updated successfully" }
                         : new { status = "An error occurred.", message = "BadRequest" };
-
+                    RedisCache.Set(user.Email, user.ToJson());
                     await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
                 }
             }
@@ -172,7 +172,7 @@ namespace Bixby_web_server.Controllers
             Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]?.Trim());
 
             if (!jwt.ContainsKey("jwt"))
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }.ToJson());
             
             User result = (User)jwt["jwt"];
 

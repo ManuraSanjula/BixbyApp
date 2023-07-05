@@ -6,9 +6,12 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Bixby_web_server;
 using Bixby_web_server.Models;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson;
 using MongoDB.Driver;
+using Newtonsoft.Json;
 using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace BixbyShop_LK.Services
@@ -99,6 +102,32 @@ namespace BixbyShop_LK.Services
 
             var email = claims.FirstOrDefault(c => c.Type == "email")?.Value;
             var password = claims.FirstOrDefault(c => c.Type == "password")?.Value;
+
+            String cache = RedisCache.Get(email.ToString());
+
+            if(cache != null)
+            {
+                User cacheUser = JsonConvert.DeserializeObject<User>(cache);
+                if (cacheUser.Password == password && !cacheUser.UserAuthTokens.Contains(jwtToken))
+                {
+                    return null;
+                }
+                else
+                {
+                    if (cacheUser.Password == password)
+                    {
+                        if (allowBoolean)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return cacheUser;
+                        }
+                    }
+                }
+            }
+
             var user = await userService.GetUserByEmailAsync(email.ToString());
 
             if (user == null)

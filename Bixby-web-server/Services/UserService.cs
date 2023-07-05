@@ -9,7 +9,7 @@ using Bixby_web_server.Models;
 
 namespace BixbyShop_LK.Services
 {
-    public class EmailServiceHelper : IEmailService
+    public class EmailServiceHelper
     {
         public async static Task<bool> ValidateEmailUsing_Zerobounce(string email)
         {
@@ -110,7 +110,7 @@ namespace BixbyShop_LK.Services
             else
                 return null;
         }
-        public async Task<string?> CreateNewAccountAsync(User? newUser)
+        public async Task<string?> CreateNewAccountAsync(User? newUser, String path)
         {
             if (newUser != null)
             {
@@ -126,7 +126,7 @@ namespace BixbyShop_LK.Services
                     {
                         return null;
                     }
-                    return await TokenService.tokenCreator(createdUser.Email == null ? newUser.Email : createdUser.Email, createdUser.Password == null ? newUser.Password : createdUser.Password, createdUser); ;
+                    return await TokenService.tokenCreator(true,path,createdUser.Email == null ? newUser.Email : createdUser.Email, createdUser.Password == null ? newUser.Password : createdUser.Password, createdUser); ;
                 }
                 else
                 {
@@ -139,7 +139,7 @@ namespace BixbyShop_LK.Services
             }
         }
 
-        public async Task<string?> CreateNewAccountAsync(string? username, string password, string FirstName, string LastName, string Address)
+        public async Task<string?> CreateNewAccountAsync(string? username, string password, string FirstName, string LastName, string Address, string path)
         {
             if (await GetUserByEmailAsync(username) == null)
             {
@@ -162,7 +162,7 @@ namespace BixbyShop_LK.Services
                 {
                     return null;
                 }
-                return await TokenService.tokenCreator(createdUser.Email == null ? username : createdUser.Email, createdUser.Password == null ? newUser.Password : createdUser.Password, createdUser); ;
+                return await TokenService.tokenCreator(true,path, createdUser.Email == null ? username : createdUser.Email, createdUser.Password == null ? newUser.Password : createdUser.Password, createdUser); ;
             }
             else
             {
@@ -170,12 +170,12 @@ namespace BixbyShop_LK.Services
             }
         }
 
-        public async Task<string?> LoginAsync(string? username, string password)
+        public async Task<string?> LoginAsync(string? username, string password, string path)
         {
             User? user = await GetUserByEmailAsync(username.ToString());
             if (user != null && BCryptNet.Verify(password, user.Password) && user.EmailVerify)
             {
-                return  await TokenService.tokenCreator(user.Email == null ? username : user.Email, user.Password, user);
+                return  await TokenService.tokenCreator(false,path, user.Email == null ? username : user.Email, user.Password, user);
             }
 
             return null;

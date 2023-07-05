@@ -1,14 +1,34 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Net;
-using System.Threading.Tasks;
 using Bixby_web_server.Helpers;
 using MongoDB.Bson;
 using SendGrid.Helpers.Errors.Model;
 
 namespace Bixby_web_server.Controllers
 {
+   
+    public static class Startup
+    {
+        public static string ConfirmYourEmail = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "AsEmail", "ConfirmYourEmail.html");
+        public static string ResetPasswordReqEmail = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "AsEmail", "ResetPasswordReqEmail.html");
+
+        public static  string EmailVerificationIsDone = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "EmailVerificationIsDone.html");
+        public static string PasswordReset = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "PasswordReset.html");
+
+
+        public static string GetFileContent(string filePath)
+        {
+            try
+            {
+                return File.ReadAllText(filePath);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+
     public delegate Task MiddlewareFunc(HttpContext context, Func<Task> next);
 
     public class WebServer
@@ -151,13 +171,13 @@ namespace Bixby_web_server.Controllers
 
         private void ConfigureRoutes()
         {
-            routeHandlers.Add("/user/{email}", UserController.GetUser);
-            routeHandlers.Add("/addUser", UserController.AddUser);
-            routeHandlers.Add("/login", UserController.Login);
+            routeHandlers.Add("/user/{email}", UserController.GetUser); // 👌👍🏻👍🏻
+            routeHandlers.Add("/addUser", UserController.AddUser); // 👌👍🏻👍🏻
+            routeHandlers.Add("/login", UserController.Login); // 👌👍🏻👍🏻
             routeHandlers.Add("/updateUser/{email}", UserController.HandleUpdateUserRequest);
             routeHandlers.Add("/{email}/products", UserController.GettingAllUserProducts); // 👌👍🏻👍🏻
             routeHandlers.Add("/{email}/products/products-orders", UserController.SeePurchase); // 👍🏻👌👌
-            routeHandlers.Add("/{email}/comment", UserController.GetUserComment);
+            routeHandlers.Add("/{email}/comment", UserController.GetUserComment); // ====
             routeHandlers.Add("/delete/{email}/product/{shopId}", UserController.RemoveUserProduct);
 
             routeHandlers.Add("/cart/{email}/{shopId}/add", CartController.AddToCart); // 👍🏻👌👌
@@ -168,12 +188,17 @@ namespace Bixby_web_server.Controllers
             routeHandlers.Add("/order/{email}/{orderId}/refund", OrderController.Refund); // ====
             routeHandlers.Add("/order/{email}/{orderId}/confirm", OrderController.ConfirmTheOrder); // 👌👍🏻
 
-            routeHandlers.Add("/reset-password-req/{email}", UserController.ResetPasswordReq);
-            routeHandlers.Add("/reset-password/{email}/{token}", UserController.ResetPassword);
-            routeHandlers.Add("/email-verify/{email}/{token}", UserController.email_verify);
-
+            routeHandlers.Add("/reset-password/{email}/{code}", UserController.ResetPassword); // 👍🏻👍🏻👌👌
+            routeHandlers.Add("/email-verify/{email}/{code}", UserController.email_verify); // 👌👍🏻👍🏻
+            
+            routeHandlers.Add("/reset-password-req/{email}", UserController.ResetPasswordReq); // 👍🏻👌👌
+            routeHandlers.Add("/email-verify-req/{email}", UserController.EmailVerificationReq);
+            
+            routeHandlers.Add("/ui/email-verify", StaticWeb.email_verify); // 👌👌👍🏻👍🏻
+            routeHandlers.Add("/ui/reset-password", StaticWeb.ResetPassword); // 👍🏻👍🏻👌👌
+            
             routeHandlers.Add("/{email}/add-shop-item", ShopController.UploadOneShopItem); // 👌👍🏻
-            routeHandlers.Add("/{email}/update-shop-item/{shopId}", ShopController.UpdateOneShopItem);
+            routeHandlers.Add("/{email}/update-shop-item/{shopId}", ShopController.UpdateOneShopItem); //===
             routeHandlers.Add("/shopItem/{shopId}/view", ShopController.ViewOneShopItem); // 👍🏻👌
             routeHandlers.Add("/shopItem/{shopId}/comment", ShopController.OneShopItemComment); // ====
             routeHandlers.Add("/shopItem/{shopId}/buy/{email}", ShopController.BuyItem); // 👍🏻👌

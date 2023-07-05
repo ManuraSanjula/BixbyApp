@@ -23,6 +23,7 @@ namespace Bixby_web_server.Controllers
         private static readonly ProductPurchasesService productPurchasesService = new ProductPurchasesService();
         public static async Task GetAllTheShopItems(HttpContext context)
         {
+            Console.WriteLine(context.Url);
             if (context.Request.HttpMethod != "GET")
                 throw new MethodNotAllowedException(new
                     { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());

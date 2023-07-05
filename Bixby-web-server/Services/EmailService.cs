@@ -3,22 +3,22 @@ using SendGrid;
 using System;
 using System.Text.RegularExpressions;
 using Bixby_web_server.Models;
+using Bixby_web_server.Controllers;
+using Azure.Communication.Email;
+using Azure;
+using Org.BouncyCastle.Cms;
+using SendGrid.Helpers.Mail.Model;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BixbyShop_LK.Services
 {
-    // Interface
-    public interface IEmailService
-    {
-        void SendEmail(Response response);
-    }
-
     public static class EmailService
     {
         private static readonly UserService userService = new UserService();
         private static readonly string _apiKey = "wN7MBHWLUx+HjnrERSAvVXkZZiUIP2S3T7baXEbONqUHpt3E0TpmtO4KB13HtwtagJ/JjI3Njf9Cd3KbObWYtkTeufvRzNdxZPqB9rDuJs7rUWXBjFw3LDtvb5LCSXXQ";
         private static readonly string fromEmail = "t2rtBrY8JzecZNhvbApQW/q8+ANhkWK+eOTwhDdma2n6N43+8rKtCEV3eHtphgpj";
-        public static IEmailService _emailServiceHelper { get; set; }
 
+        private static readonly EmailClient emailClient = new EmailClient("endpoint=https://email-app.communication.azure.com/;accesskey=X1NP+YmFK423TOrU/2EL0uGUQMLM03IO91bidY1u66NQbUOLPvPGMkW34TgJmlNI5M3bGW13cO4i6lQCGY5lLg==");
         private static string FormatHtml(string input, Func<string, string?> valueProvider)
         {
             string formattedHtml = Regex.Replace(input, @"\{([^{}]+)\}", match =>
@@ -56,17 +56,15 @@ namespace BixbyShop_LK.Services
             }
         }
 
-        private static string emailVerificationCode(string? email)
+        private static string emailVerificationCode(string code,string path,string? email)
         {
-            string text = "<!-- \r\nOnline HTML, CSS and JavaScript editor to run code online.\r\n-->\r\n<!DOCTYPE html>\r\n<html lang=\"en\">\r\n\r\n<head>\r\n  <meta charset=\"UTF-8\" />\r\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n  <link rel=\"stylesheet\" href=\"style.css\" />\r\n  <title>Browser</title>\r\n</head>\r\n\r\n<body>\r\n  <p style=\"text-align:center\"><span style=\"color:#ffffff\"><span style=\"font-family:Comic Sans MS,cursive\"><span style=\"font-size:72px\"><u><strong><span style=\"background-color:#2ecc71\">Welcome to BixbyShop</span></strong></u></span></span></span></p>\r\n\r\n<blockquote>\r\n<p style=\"text-align:center\"><span style=\"font-size:48px\"><span style=\"font-family:Comic Sans MS,cursive\">Your Code is : {VerificationCode}</span></span></p>\r\n\r\n<p style=\"text-align:center\"><span style=\"font-size:48px\"><span style=\"font-family:Comic Sans MS,cursive\">Please Enter our Application</span></span></p>\r\n</blockquote>\r\n\r\n</body>\r\n\r\n</html>";
-
+            string text = Startup.GetFileContent(Startup.ConfirmYourEmail);
             return FormatHtml(text, placeholder =>
             {
-                if (placeholder == "VerificationCode")
+                if (placeholder == "VerificationLink")
                 {
-                    string? code = GenerateVerificationCode(20, email);
-                    userUpdate(email, code);
-                    return code;
+                    String link = path + $"/ui/email-verify/?token={path + $"/email-verify/{email}/{code}"}";
+                    return link;
                 }
                 else
                 {
@@ -75,17 +73,18 @@ namespace BixbyShop_LK.Services
             });
         }
 
-        private static string forgotPasswordEmailVerification(string? email)
+        private async static Task<string> forgotPasswordEmailVerification(string code, string path,string? email, User user)
         {
-            string text = "<!-- \r\nOnline HTML, CSS and JavaScript editor to run code online.\r\n-->\r\n<!DOCTYPE html>\r\n<html lang=\"en\">\r\n\r\n<head>\r\n  <meta charset=\"UTF-8\" />\r\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n  <link rel=\"stylesheet\" href=\"style.css\" />\r\n  <title>Browser</title>\r\n</head>\r\n\r\n<body>\r\n  <p style=\"text-align:center\"><strong><u><span style=\"color:#c0392b\"><span style=\"font-family:Lucida Sans Unicode,Lucida Grande,sans-serif\"><span style=\"font-size:72px\"><span style=\"background-color:#bdc3c7\">We got you Sir/Madam 😊😊</span></span></span></span></u></strong></p>\r\n\r\n<blockquote>\r\n<p style=\"text-align:center\"><span style=\"font-size:48px\"><span style=\"color:#c0392b\"><span style=\"font-family:Lucida Sans Unicode,Lucida Grande,sans-serif\">If you forgot your password that&#39;s okay here is the code {VerificationCode} to reset your password.</span></span></span></p>\r\n\r\n<p style=\"text-align:center\"><span style=\"font-size:48px\"><span style=\"color:#c0392b\"><span style=\"font-family:Lucida Sans Unicode,Lucida Grande,sans-serif\">Please enter the code in our app&nbsp;</span></span></span></p>\r\n</blockquote>\r\n</body>\r\n\r\n</html>";
+
+            string text = Startup.GetFileContent(Startup.ResetPasswordReqEmail);
 
             return FormatHtml(text, placeholder =>
             {
-                if (placeholder == "VerificationCode")
+                if (placeholder == "VerificationLink")
                 {
-                    string? code = GenerateVerificationCode(20, email);
-                    userUpdate(email, code);
-                    return code;
+                    string tken = path + $"/reset-password/{user.Email}/{code}";
+                    String link = path + $"/ui/reset-password/?token={Bixby_web_server.Helpers.EncryptionHelper.Encrypt(tken, 3)}";
+                    return link;
                 }
                 else
                 {
@@ -101,33 +100,44 @@ namespace BixbyShop_LK.Services
             return text;
         }
 
-        public static async Task SendEmail(string? toEmail, string subject, int i)
+        public static async Task SendEmail(string path,string? toEmail, string subject, int i, User user)
         {
-            var client = new SendGridClient(EncryptionHelper.Decrypt(_apiKey));
-            var from = new EmailAddress(EncryptionHelper.Decrypt(fromEmail));
-            var to = new EmailAddress(toEmail);
-            SendGridMessage message = null;
-            if (i == 0)
-            {
-                message = MailHelper.CreateSingleEmail(from, to, subject, emailVerificationCode(toEmail), emailVerificationCode(toEmail));
-            }
-            if (i == 1)
-            {
-                message = MailHelper.CreateSingleEmail(from, to, subject, forgotPasswordEmailVerification(toEmail), forgotPasswordEmailVerification(toEmail));
-            }
-            if (i == 2)
-            {
-                message = MailHelper.CreateSingleEmail(from, to, subject, successfullyResetThePassword(toEmail), successfullyResetThePassword(toEmail));
-            }
-            var response = await client.SendEmailAsync(message);
 
-            if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
-            {
-                _emailServiceHelper.SendEmail(response);
-            }
+            string? code = GenerateVerificationCode(20, toEmail);
+            var htmlContent = "";
+            var sender = "donotreply@022abdd1-f446-43c9-ad7e-1331fdb3a116.azurecomm.net";
+            if (i == 0)
+                htmlContent = emailVerificationCode(code, path, toEmail);
+            else if (i == 1)
+                htmlContent = await forgotPasswordEmailVerification(code, path, toEmail, user);
             else
+                htmlContent = successfullyResetThePassword(toEmail);
+
+            if (htmlContent.IsNullOrEmpty())
+                return;
+
+            try
             {
-                // Handle the error case here
+                Console.WriteLine("Sending email...");
+                EmailSendOperation emailSendOperation = await emailClient.SendAsync(
+                    Azure.WaitUntil.Completed,
+                    sender,
+                    toEmail,
+                    subject,
+                    htmlContent);
+                EmailSendResult statusMonitor = emailSendOperation.Value;
+
+                Console.WriteLine($"Email Sent. Status = {emailSendOperation.Value.Status}");
+
+                /// Get the OperationId so that it can be used for tracking the message for troubleshooting
+                string operationId = emailSendOperation.Id;
+                Console.WriteLine($"Email operation id = {operationId}");
+                userUpdate(toEmail, code);
+            }
+            catch (RequestFailedException ex)
+            {
+                /// OperationID is contained in the exception message and can be used for troubleshooting purposes
+                Console.WriteLine($"Email send operation failed with error code: {ex.ErrorCode}, message: {ex.Message}");
             }
         }
     }

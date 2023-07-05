@@ -91,6 +91,8 @@ namespace Bixby_web_server.Controllers
 
         public static async Task AddUser(HttpContext context)
         {
+            Console.WriteLine(context.Url);
+
             if (context.Request.HttpMethod != "POST")
                 throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
@@ -111,7 +113,7 @@ namespace Bixby_web_server.Controllers
             if(userReqForSignUp == null)
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-            var token = await UserService.CreateNewAccountAsync(userReqForSignUp.Email, userReqForSignUp.Password, userReqForSignUp.FirstName, userReqForSignUp.LastName, userReqForSignUp.Address);
+            var token = await UserService.CreateNewAccountAsync(userReqForSignUp.Email, userReqForSignUp.Password, userReqForSignUp.FirstName, userReqForSignUp.LastName, userReqForSignUp.Address, context.Url);
 
             if (string.IsNullOrEmpty(token))
                 throw new BadRequestException(new { status = "An error occurred.", message = "Empty Body" }.ToJson());
@@ -212,7 +214,7 @@ namespace Bixby_web_server.Controllers
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
             UserLoginReq user = (UserLoginReq)result["User"];
-            string? token = await UserService.LoginAsync(user.email, user.secret);
+            string? token = await UserService.LoginAsync(user.email, user.secret, context.Url);
 
             if (string.IsNullOrEmpty(token))
                 throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }.ToJson());
@@ -237,9 +239,7 @@ namespace Bixby_web_server.Controllers
             if(user == null)
                 throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
 
-            IEmailService emailService = new EmailServiceHelper();
-            EmailService._emailServiceHelper = emailService;
-            await EmailService.SendEmail(user.Email, "Forgot Password EmailVerification to Reset Password in your Account 🙂🙂", 1);
+            await EmailService.SendEmail(context.Url,user.Email, "Forgot Password EmailVerification to Reset Password in your Account 🙂🙂", 1, user);
 
             var response = new
             {
@@ -259,7 +259,7 @@ namespace Bixby_web_server.Controllers
 
             User? user = await UserService.GetUserByEmailAsync(email);
 
-            if(user == null)
+            if (user == null)
             {
                 throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
             }
@@ -271,7 +271,10 @@ namespace Bixby_web_server.Controllers
             }
 
             string? password = context.Request.Headers["password"];
-            string? confirmPassword = context.Request.Headers["conform_password"];
+            string? confirmPassword = context.Request.Headers["confirmPassword"];
+
+            Console.WriteLine(password);
+            Console.WriteLine(confirmPassword);
 
             if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword))
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
@@ -298,9 +301,7 @@ namespace Bixby_web_server.Controllers
 
             var response = new { status = "Success" };
 
-            IEmailService emailService = new EmailServiceHelper();
-            EmailService._emailServiceHelper = emailService;
-            await EmailService.SendEmail(user.Email, "Successfully Reset The Password of Your Account 🙂🙂", 2);
+            await EmailService.SendEmail(context.Url,user.Email, "Successfully Reset The Password of Your Account 🙂🙂", 2, user);
 
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
@@ -421,6 +422,26 @@ namespace Bixby_web_server.Controllers
                 productPurchases
             };
             context.ResponseContent = response.ToJson();
+            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+        }
+
+        internal static async Task EmailVerificationReq(HttpContext context)
+        {
+            if (context.Request.HttpMethod != "GET")
+                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
+            User user = await UserService.GetUserByEmailAsync(context.DynamicPath[0]);
+
+            if (user == null)
+                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+
+            await EmailService.SendEmail(context.Url,user.Email, "Email Verification Code for Your Account 🙂🙂", 0, user);
+
+            var response = new
+            {
+                status = "Success"
+            };
+
             await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
         }
     }

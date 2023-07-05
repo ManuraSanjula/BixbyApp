@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -8,23 +9,25 @@ namespace Bixby_web_server.Helpers
     {
         public HttpListenerRequest Request { get; }
         public HttpListenerResponse Response { get; }
-        public string?[]? DynamicPath { get; private set; } = { }; // Variable to store the dynamic path
+        public string Url { get; } // Variable to store the URL
+        public string[] DynamicPath { get; private set; } = { }; // Variable to store the dynamic path
         public string ResponseContent { get; set; } // Property to store the response content
 
         public HttpContext(HttpListenerRequest request, HttpListenerResponse response)
         {
             Request = request;
             Response = response;
+            Url = $"{request.Url.Scheme}://{request.Url.Authority}";
         }
 
         public void ExtractDynamicPath(string pattern)
         {
-            string? path = Request.RawUrl;
-            string[]? pathSegments = path?.Split('/');
+            string path = Request.Url.LocalPath;
+            string[] pathSegments = path.Split('/');
             string[] patternSegments = pattern.Split('/');
             List<string> dynamicSegments = new List<string>();
 
-            if (pathSegments != null && pathSegments.Length == patternSegments.Length)
+            if (pathSegments.Length == patternSegments.Length)
             {
                 for (int i = 0; i < pathSegments.Length; i++)
                 {

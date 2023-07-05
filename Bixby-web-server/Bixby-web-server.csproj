@@ -9,12 +9,28 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="wwwroot\AsEmail\ConfirmYourEmail.html" />
+    <None Remove="wwwroot\AsEmail\ResetPasswordReqEmail.html" />
+    <None Remove="wwwroot\EmailVerificationIsDone.html" />
+    <None Remove="wwwroot\PasswordReset.html" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="wwwroot\AsEmail\ConfirmYourEmail.html" />
+    <Content Include="wwwroot\AsEmail\ResetPasswordReqEmail.html" />
+    <Content Include="wwwroot\EmailVerificationIsDone.html" />
+    <Content Include="wwwroot\PasswordReset.html" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="Azure.Communication.Email" Version="1.0.0" />
     <PackageReference Include="BCrypt" Version="1.0.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Braintree" Version="5.18.0" />
     <PackageReference Include="MailKit" Version="4.1.0" />
     <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />

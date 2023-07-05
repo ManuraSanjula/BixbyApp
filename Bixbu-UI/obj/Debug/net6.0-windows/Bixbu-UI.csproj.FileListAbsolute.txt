@@ -1,0 +1,15 @@
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\bin\Debug\net6.0-windows\Bixbu-UI.exe
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\bin\Debug\net6.0-windows\Bixbu-UI.deps.json
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\bin\Debug\net6.0-windows\Bixbu-UI.runtimeconfig.json
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\bin\Debug\net6.0-windows\Bixbu-UI.dll
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\bin\Debug\net6.0-windows\Bixbu-UI.pdb
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Debug\net6.0-windows\Bixbu-UI.csproj.AssemblyReference.cache
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Debug\net6.0-windows\Bixbu-UI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Debug\net6.0-windows\Bixbu-UI.AssemblyInfoInputs.cache
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Debug\net6.0-windows\Bixbu-UI.AssemblyInfo.cs
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Debug\net6.0-windows\Bixbu-UI.csproj.CoreCompileInputs.cache
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Debug\net6.0-windows\Bixbu-UI.dll
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Debug\net6.0-windows\refint\Bixbu-UI.dll
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Debug\net6.0-windows\Bixbu-UI.pdb
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Debug\net6.0-windows\Bixbu-UI.genruntimeconfig.cache
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Debug\net6.0-windows\ref\Bixbu-UI.dll

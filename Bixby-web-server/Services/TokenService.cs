@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using Bixby_web_server.Models;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace BixbyShop_LK.Services
 {
@@ -20,8 +22,9 @@ namespace BixbyShop_LK.Services
         private static string audience = "Manura Sanjula";
         private static UserService userService = new UserService();
 
-        private static async Task<string> GenerateJwtToken(string secretKey, string issuer, string audience, int expiryMinutes, string? email, string password, User user)
+        private static async Task<string> GenerateJwtToken(bool loginPath,string path, string secretKey, string issuer, string audience, int expiryMinutes, string? email, string password, User user)
         {
+           
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
@@ -51,10 +54,16 @@ namespace BixbyShop_LK.Services
 
                     if (await userService.UpdateUserAsync(user.Id, user))
                     {
-                        IEmailService emailService = new EmailServiceHelper();
-                        EmailService._emailServiceHelper = emailService;
-                        _ = EmailService.SendEmail(user.Email, "Email Verification Code for Your Account 🙂🙂", 0);
-                        return userToken;
+                        if (!loginPath)
+                        {
+                            return userToken;
+                        }
+                        else
+                        {
+                            _ = EmailService.SendEmail(path, user.Email, "Email Verification Code for Your Account 🙂🙂", 0, user);
+                            return userToken;
+                        }
+                     
                     }
                 }
                 else
@@ -62,10 +71,15 @@ namespace BixbyShop_LK.Services
                     user.UserAuthTokens.Add(userToken);
                     if (await userService.UpdateUserAsync(user.Id, user))
                     {
-                        IEmailService emailService = new EmailServiceHelper();
-                        EmailService._emailServiceHelper = emailService;
-                        _ = EmailService.SendEmail(user.Email, "Email Verification Code for Your Account 🙂🙂", 0);
-                        return userToken;
+                        if (!loginPath)
+                        {
+                            return userToken;
+                        }
+                        else
+                        {
+                            _ = EmailService.SendEmail(path, user.Email, "Email Verification Code for Your Account 🙂🙂", 0, user);
+                            return userToken;
+                        }
                     }
                     else
                     {
@@ -74,7 +88,7 @@ namespace BixbyShop_LK.Services
                 }
             }
 
-            return null;
+            return userToken;
         }
 
         private static async Task<dynamic> ExtractCustomClaim(string jwtToken, bool allowBoolean)
@@ -115,14 +129,14 @@ namespace BixbyShop_LK.Services
             }
         }
 
-        public static async Task<string> tokenCreator(string? email, string password, User user)
+        public static async Task<string> tokenCreator(bool loginPath,string path, string? email, string password, User user)
         {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
                 return null;
             }
             int expiryMinutes = 10000;
-            return await GenerateJwtToken(secretKey, issuer, audience, expiryMinutes, email, password, user);
+            return await GenerateJwtToken(loginPath,path, secretKey, issuer, audience, expiryMinutes, email, password, user);
         }
 
         public async static Task<dynamic> ValidateJwtToken(string token, bool allowBoolean = false)

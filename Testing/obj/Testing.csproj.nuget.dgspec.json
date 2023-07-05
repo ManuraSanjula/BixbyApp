@@ -44,6 +44,10 @@
               "target": "Package",
               "version": "[12.0.1, )"
             },
+            "Azure.Communication.Email": {
+              "target": "Package",
+              "version": "[1.0.0, )"
+            },
             "BCrypt": {
               "target": "Package",
               "version": "[1.0.0, )"
@@ -63,6 +67,10 @@
             "Microsoft.AspNetCore": {
               "target": "Package",
               "version": "[2.2.0, )"
+            },
+            "Microsoft.AspNetCore.Hosting": {
+              "target": "Package",
+              "version": "[2.2.7, )"
             },
             "Microsoft.AspNetCore.Http": {
               "target": "Package",

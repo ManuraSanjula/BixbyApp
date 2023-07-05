@@ -1,4 +1,5 @@
-﻿using System.Timers;
+﻿using System.Net;
+using System.Timers;
 using Bixby_web_server.Controllers;
 using StackExchange.Redis;
 using Timer = System.Timers.Timer;
@@ -7,24 +8,24 @@ namespace Bixby_web_server
 {
     public static class Redis
     {
-        static ConfigurationOptions _configuration = new ConfigurationOptions
+        static readonly ConfigurationOptions Configuration = new ConfigurationOptions
         {
-            EndPoints = { "redis-15956.c212.ap-south-1-1.ec2.cloud.redislabs.com:15956" },
-            Password = "yHZJh3rRKvU1HJ7bCB8f886VOyZJV8qw",
-            AllowAdmin = true
+            /*EndPoints = { "master.test-redis-2.a0xdu9.aps1.cache.amazonaws.com:6379" },
+            Password = "manurasanjula12345",
+            AllowAdmin = true*/
         };
         public delegate void SetRedis(string key, string value);
         public delegate string GetRedis(string key);
 
-        public static readonly ConnectionMultiplexer RedisServer = ConnectionMultiplexer.Connect(_configuration);
-        public static IDatabase Db = RedisServer.GetDatabase();
+        private static readonly ConnectionMultiplexer RedisServer = ConnectionMultiplexer.Connect(Configuration);
+        private static readonly IDatabase Db = RedisServer.GetDatabase();
 
         public static readonly SetRedis Set = (key, value) => Db.StringSet(key, value);
-        public static readonly GetRedis Get = key => Db.StringGet(key);
+        public static readonly GetRedis Get = key => Db.StringGet(key)!;
 
         public static void ConfigureAdminPassword()
         {
-            RedisServer.GetDatabase().Execute("AUTH", "yHZJh3rRKvU1HJ7bCB8f886VOyZJV8qw"); // Authenticate using your admin password
+            RedisServer.GetDatabase().Execute("AUTH", "manurasanjula12345"); // Authenticate using your admin password
         }
         
         public static void FlushRedisDatabase()
@@ -59,7 +60,7 @@ namespace Bixby_web_server
 
         static void ExecuteTask()
         {
-            /*Redis.FlushRedisDatabase();*/
+            //Redis.FlushRedisDatabase();
         }
 
         public static void Main(string[] args)
@@ -69,14 +70,14 @@ namespace Bixby_web_server
 
             Thread thread = new Thread(RunEvery15Minutes);
             thread.Start();
-
+            
             _webServer.UseMiddleware(async (context, next) =>
             {
-                /*var request = context.Request;
+                var request = context.Request;
                 var path = request.Url?.AbsolutePath;
                 var route = _webServer.routeHandlers.Keys.FirstOrDefault(key => WebServer.WildcardMatch(path, key));
 
-                if (route is "/user/{email}" ||
+                /*if (route is "/user/{email}" ||
                     route == "/{email}/products/products-orders" ||
                     route == "/{email}/comment" ||
                     route == "/cart/{email}/view" ||
@@ -95,8 +96,7 @@ namespace Bixby_web_server
                         context.ResponseContent = res;
                         await context.WriteResponse(res, "application/json", HttpStatusCode.OK).ConfigureAwait(false);
                     }
-                }
-                */
+                }*/
                
                 await next();
             });

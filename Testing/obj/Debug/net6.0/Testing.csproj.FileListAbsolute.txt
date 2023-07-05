@@ -115,3 +115,5 @@ C:\Users\MSI\source\repos\Bixby-web-server\Testing\bin\Debug\net6.0\Microsoft.Id
 C:\Users\MSI\source\repos\Bixby-web-server\Testing\bin\Debug\net6.0\Microsoft.IdentityModel.ManagedKeyVaultSecurityKey.dll
 C:\Users\MSI\source\repos\Bixby-web-server\Testing\bin\Debug\net6.0\Microsoft.Rest.ClientRuntime.dll
 C:\Users\MSI\source\repos\Bixby-web-server\Testing\bin\Debug\net6.0\Microsoft.Rest.ClientRuntime.Azure.dll
+C:\Users\MSI\source\repos\Bixby-web-server\Testing\bin\Debug\net6.0\Pipelines.Sockets.Unofficial.dll
+C:\Users\MSI\source\repos\Bixby-web-server\Testing\bin\Debug\net6.0\StackExchange.Redis.dll

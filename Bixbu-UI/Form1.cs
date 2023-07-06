@@ -4,14 +4,13 @@ using Bixbu_UI.User;
 using Bixby_web_server.Models;
 using MaterialSkin.Controls;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
-
+using Newtonsoft.Json;
 
 namespace Bixbu_UI;
 
 public partial class BixbyApp : MaterialForm
 {
+    public UserInformation userData;
     private static readonly HttpClient client = new();
     private PictureBox pb;
 
@@ -31,7 +30,21 @@ public partial class BixbyApp : MaterialForm
         return responseBody;
     }
 
-    private async void UserAccount(String email, String token)
+    public bool DictionaryHasNullOrEmpty(Dictionary<string, object> dictionary)
+    {
+        foreach (var kvp in dictionary)
+        {
+            if (string.IsNullOrEmpty(kvp.Key) || kvp.Value == null || string.IsNullOrEmpty(kvp.Value.ToString()))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    private async void UserAccount(string email, string token)
     {
         try
         {
@@ -45,21 +58,33 @@ public partial class BixbyApp : MaterialForm
 
                 if (httpResponseMessage.IsSuccessStatusCode)
                 {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    dynamic json = JsonConvert.DeserializeObject(responseBody);
+                    string bodyKey = json["body"].ToString(); // Replace "key" with the actual key you want to extract
+                    Dictionary<string, object> userDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(bodyKey);
+
+                    bool hasNullOrEmpty = DictionaryHasNullOrEmpty(userDict);
+                    if (!hasNullOrEmpty)
+                    {
+                        Email.Text = userDict["Email"].ToString();
+                        FirstName_txt.Text = userDict["FirstName"].ToString();
+                        LastName.Text = userDict["LastName"].ToString();
+                        Address.Text = userDict["Address"].ToString();
+                    }
 
                 }
                 else
                 {
                     MessageBox.Show(response.ToString());
-
                 }
             }
-
         }
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message);
         }
     }
+
 
     private void Blur()
     {
@@ -88,21 +113,7 @@ public partial class BixbyApp : MaterialForm
 
     private void RefreshAccountTab()
     {
-        String token = Properties.Settings.Default.TokenValue;
 
-        String email = Properties.Settings.Default.Email;
-
-        if (!token.IsNullOrEmpty() || !email.IsNullOrEmpty())
-        {
-            panel1.Visible = false;
-            panel3.Visible = true;
-            UserAccount(token, email);
-        }
-        else
-        {
-            panel1.Visible = true;
-            panel3.Visible = false;
-        }
     }
 
     private async void Form1_Load(object sender, EventArgs e)
@@ -119,6 +130,19 @@ public partial class BixbyApp : MaterialForm
 
         //===========================================================================================
 
+        String token = Properties.Settings.Default.TokenValue;
+        String email = Properties.Settings.Default.Email;
+
+        if (!token.IsNullOrEmpty() || !email.IsNullOrEmpty())
+        {
+            UserAccount(email, token);
+        }
+        else
+        {
+            panel1.Visible = true;
+            panel3.Visible = false;
+        }
+
         //-------------------------------------------------------------------------------------------
         var url = "http://localhost:8080/home";
         var response = await SendGetRequestAsync(url);
@@ -129,7 +153,7 @@ public partial class BixbyApp : MaterialForm
         if (rootElement.GetProperty("body").ValueKind == JsonValueKind.Array)
             foreach (var element in rootElement.GetProperty("body").EnumerateArray())
             {
-                var customObject = JsonSerializer.Deserialize<ShopAllShopItem>(element.GetRawText());
+                var customObject = System.Text.Json.JsonSerializer.Deserialize<ShopAllShopItem>(element.GetRawText());
                 shopAllShopItems.Add(customObject);
             }
 
@@ -301,6 +325,16 @@ public class BitmapFilter
         }
     }
 }
+
+public class UserInformation
+{
+    public String FirstName { get; set; }
+    public String LastName { get; set; }
+    public String Address { get; set; }
+    public String EmailVerify { get; set; }
+    public String Email { get; set; }
+}
+
 
 internal class Screenshot
 {

@@ -139,7 +139,6 @@ public class CheckMiddleWare
     {
         var request = context.Request;
         var jwtUser = await GetTheUserFromToken(request);
-        Console.WriteLine(jwtUser.ToJson());
         if (jwtUser != null && jwtUser.EmailVerify && string.Equals(jwtUser.Email, dynamicName))
         {
             Values.Add("jwt", jwtUser);

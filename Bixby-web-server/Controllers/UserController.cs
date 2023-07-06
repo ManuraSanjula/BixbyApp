@@ -89,7 +89,6 @@ public abstract class UserController
         var userCheckResult = await checkMiddleWare.CheckUserReq<UserReqForSignUp>(json, context.DynamicPath);
 
         var userReqForSignUp = (UserReqForSignUp)userCheckResult["User"];
-        Console.WriteLine("uschwhwwbhwvgchvjwfjvjdbvjdbvjbhvvw");
 
 
         if (NullEmptyChecker.HasNullEmptyValues(userReqForSignUp) ||
@@ -159,13 +158,11 @@ public abstract class UserController
 
         var checkMiddleWare = new CheckMiddleWare();
         var jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]?.Trim());
-
         if (!jwt.ContainsKey("jwt"))
             throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
                 .ToJson());
 
         var result = (User)jwt["jwt"];
-        Console.WriteLine(result);
 
         if (!NullEmptyChecker.HasNullEmptyValues(result))
             throw new NotFoundException(new
@@ -266,9 +263,6 @@ public abstract class UserController
 
         var password = context.Request.Headers["password"];
         var confirmPassword = context.Request.Headers["confirmPassword"];
-
-        Console.WriteLine(password);
-        Console.WriteLine(confirmPassword);
 
         if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword))
             throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());

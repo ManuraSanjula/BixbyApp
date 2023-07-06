@@ -79,5 +79,16 @@ namespace Bixbu_UI.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap user_icon_in_trendy_flat_style_isolated_on_grey_background_user_symbol_for_your_web_site_design_logo_app_ui_illustration_eps10_free_vector {
+            get {
+                object obj = ResourceManager.GetObject("user-icon-in-trendy-flat-style-isolated-on-grey-background-user-symbol-for-your-w" +
+                        "eb-site-design-logo-app-ui-illustration-eps10-free-vector", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

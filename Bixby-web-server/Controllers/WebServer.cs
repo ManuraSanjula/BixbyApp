@@ -165,6 +165,7 @@ public class WebServer
     private void ConfigureRoutes()
     {
         routeHandlers.Add("/user/{email}", UserController.GetUser); // 👌👍🏻👍🏻
+        routeHandlers.Add("/user/{email}/add/image", UserController.AddImage); // 👌👍🏻👍🏻
         routeHandlers.Add("/addUser", UserController.AddUser); // 👌👍🏻👍🏻
         routeHandlers.Add("/login", UserController.Login); // 👌👍🏻👍🏻
         routeHandlers.Add("/updateUser/{email}", UserController.HandleUpdateUserRequest);

@@ -33,7 +33,7 @@ public class User : IEquatable<User>
 
     public static IEqualityComparer<User> UserComparer { get; } = new UserEqualityComparer();
 
-    [JsonProperty("pic")] public string Pic { get; set; } = "default";
+    [JsonProperty("pic")] public string? Pic { get; set; } = "default";
 
     public bool EmailVerify { get; set; }
     public Dictionary<string?, VerficationCode> Tokens { get; set; }

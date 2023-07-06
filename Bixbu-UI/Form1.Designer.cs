@@ -36,6 +36,7 @@ partial class BixbyApp
         Account = new TabPage();
         panel1 = new Panel();
         panel3 = new Panel();
+        metroButton2 = new MetroFramework.Controls.MetroButton();
         metroButton1 = new MetroFramework.Controls.MetroButton();
         materialTextBox23 = new MaterialSkin.Controls.MaterialTextBox2();
         materialTextBox22 = new MaterialSkin.Controls.MaterialTextBox2();
@@ -61,7 +62,6 @@ partial class BixbyApp
         button1 = new Button();
         button2 = new Button();
         Settings = new TabPage();
-        openFileDialog1 = new OpenFileDialog();
         materialTabControl1.SuspendLayout();
         Home.SuspendLayout();
         panel2.SuspendLayout();
@@ -86,7 +86,7 @@ partial class BixbyApp
         materialTabControl1.Multiline = true;
         materialTabControl1.Name = "materialTabControl1";
         materialTabControl1.SelectedIndex = 0;
-        materialTabControl1.Size = new Size(1781, 1015);
+        materialTabControl1.Size = new Size(1934, 1050);
         materialTabControl1.SizeMode = TabSizeMode.Fixed;
         materialTabControl1.TabIndex = 0;
         // 
@@ -96,7 +96,7 @@ partial class BixbyApp
         Home.Location = new Point(4, 24);
         Home.Margin = new Padding(3, 2, 3, 2);
         Home.Name = "Home";
-        Home.Size = new Size(1773, 987);
+        Home.Size = new Size(1926, 1022);
         Home.TabIndex = 3;
         Home.Text = "Home";
         Home.UseVisualStyleBackColor = true;
@@ -107,7 +107,7 @@ partial class BixbyApp
         panel2.Dock = DockStyle.Fill;
         panel2.Location = new Point(0, 0);
         panel2.Name = "panel2";
-        panel2.Size = new Size(1773, 987);
+        panel2.Size = new Size(1926, 1022);
         panel2.TabIndex = 0;
         // 
         // pictureBox2
@@ -117,7 +117,7 @@ partial class BixbyApp
         pictureBox2.Image = Properties.Resources.ezgif_com_webp_to_jpg;
         pictureBox2.Location = new Point(0, 0);
         pictureBox2.Name = "pictureBox2";
-        pictureBox2.Size = new Size(1773, 987);
+        pictureBox2.Size = new Size(1926, 1022);
         pictureBox2.SizeMode = PictureBoxSizeMode.CenterImage;
         pictureBox2.TabIndex = 0;
         pictureBox2.TabStop = false;
@@ -130,7 +130,7 @@ partial class BixbyApp
         Account.Margin = new Padding(3, 2, 3, 2);
         Account.Name = "Account";
         Account.Padding = new Padding(3, 2, 3, 2);
-        Account.Size = new Size(1773, 987);
+        Account.Size = new Size(1926, 1022);
         Account.TabIndex = 1;
         Account.Text = "Account";
         Account.UseVisualStyleBackColor = true;
@@ -145,11 +145,12 @@ partial class BixbyApp
         panel1.Dock = DockStyle.Fill;
         panel1.Location = new Point(3, 2);
         panel1.Name = "panel1";
-        panel1.Size = new Size(1767, 983);
+        panel1.Size = new Size(1920, 1018);
         panel1.TabIndex = 2;
         // 
         // panel3
         // 
+        panel3.Controls.Add(metroButton2);
         panel3.Controls.Add(metroButton1);
         panel3.Controls.Add(materialTextBox23);
         panel3.Controls.Add(materialTextBox22);
@@ -174,8 +175,24 @@ partial class BixbyApp
         panel3.Dock = DockStyle.Fill;
         panel3.Location = new Point(0, 0);
         panel3.Name = "panel3";
-        panel3.Size = new Size(1767, 983);
+        panel3.Size = new Size(1920, 1018);
         panel3.TabIndex = 3;
+        // 
+        // metroButton2
+        // 
+        metroButton2.FontSize = MetroFramework.MetroButtonSize.Tall;
+        metroButton2.Highlight = true;
+        metroButton2.Location = new Point(758, 672);
+        metroButton2.Name = "metroButton2";
+        metroButton2.Size = new Size(190, 36);
+        metroButton2.Style = MetroFramework.MetroColorStyle.Blue;
+        metroButton2.TabIndex = 23;
+        metroButton2.Text = "LogOut";
+        metroButton2.UseCustomBackColor = true;
+        metroButton2.UseCustomForeColor = true;
+        metroButton2.UseSelectable = true;
+        metroButton2.UseStyleColors = true;
+        metroButton2.Click += metroButton2_Click;
         // 
         // metroButton1
         // 
@@ -363,6 +380,7 @@ partial class BixbyApp
         materialButton3.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
         materialButton3.UseAccentColor = false;
         materialButton3.UseVisualStyleBackColor = true;
+        materialButton3.Click += materialButton3_Click;
         // 
         // materialButton2
         // 
@@ -401,6 +419,7 @@ partial class BixbyApp
         materialButton1.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
         materialButton1.UseAccentColor = false;
         materialButton1.UseVisualStyleBackColor = true;
+        materialButton1.Click += materialButton1_Click_1;
         // 
         // Address
         // 
@@ -609,26 +628,20 @@ partial class BixbyApp
         Settings.Location = new Point(4, 24);
         Settings.Margin = new Padding(3, 2, 3, 2);
         Settings.Name = "Settings";
-        Settings.Size = new Size(1757, 948);
+        Settings.Size = new Size(1926, 1022);
         Settings.TabIndex = 2;
         Settings.Text = "Settings";
         Settings.UseVisualStyleBackColor = true;
         // 
-        // openFileDialog1
-        // 
-        openFileDialog1.FileName = "openFileDialog1";
-        // 
         // BixbyApp
         // 
-        AutoScaleMode = AutoScaleMode.None;
-        ClientSize = new Size(1787, 1065);
+        AutoSize = true;
+        ClientSize = new Size(1940, 1100);
         Controls.Add(materialTabControl1);
         DrawerTabControl = materialTabControl1;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
         Margin = new Padding(3, 2, 3, 2);
         Name = "BixbyApp";
         Padding = new Padding(3, 48, 3, 2);
-        Sizable = false;
         StartPosition = FormStartPosition.CenterScreen;
         Text = "BixbyApp";
         Load += Form1_Load;
@@ -669,7 +682,6 @@ partial class BixbyApp
     private MaterialSkin.Controls.MaterialTextBox2 FirstName_txt;
     private MaterialSkin.Controls.MaterialButton materialButton2;
     private MaterialSkin.Controls.MaterialButton materialButton1;
-    private OpenFileDialog openFileDialog1;
     private MaterialSkin.Controls.MaterialButton materialButton3;
     private MetroFramework.Controls.MetroLabel metroLabel4;
     private HScrollBar hScrollBar1;
@@ -681,4 +693,5 @@ partial class BixbyApp
     private MetroFramework.Controls.MetroLabel metroLabel6;
     private MetroFramework.Controls.MetroLabel metroLabel5;
     private MetroFramework.Controls.MetroButton metroButton1;
+    private MetroFramework.Controls.MetroButton metroButton2;
 }

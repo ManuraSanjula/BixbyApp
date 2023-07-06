@@ -174,7 +174,8 @@ public abstract class UserController
         user.LastName = result.LastName;
         user.Address = result.Address;
         user.EmailVerify = result.EmailVerify;
-
+        user.Pic = result.Pic;
+        
         var response = new
         {
             status = "Success",
@@ -445,5 +446,27 @@ public abstract class UserController
         };
 
         await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
+
+    public static async Task AddImage(HttpContext arg)
+    {
+        if (arg.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
+        var email = arg.DynamicPath?[0];
+
+        User? user = await UserService.GetUserByEmailAsync(email);
+        var authorizationHeader = arg.Request.Headers["img"];
+        if (user != null)
+        {
+            user.Pic = authorizationHeader?.ToString();
+            await UserService.UpdateUserAsync(user.Id, user);
+        }
+        var response = new
+        {
+            status = "Success"
+        };
+        RedisCache.Remove(email);
+        await arg.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
     }
 }

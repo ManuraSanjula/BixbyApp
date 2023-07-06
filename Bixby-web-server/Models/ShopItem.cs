@@ -21,7 +21,7 @@ public class UserInShopItem
 
     public string? Email { get; set; }
 
-    public string Pic { get; set; }
+    public string? Pic { get; set; }
 }
 
 public class ShopAllShopItem

@@ -8,6 +8,7 @@
     ".NETCoreApp,Version=v6.0": {
       "Bixby-UI/1.0.0": {
         "dependencies": {
+          "AWSSDK.S3": "3.7.107.2",
           "Bixby-web-server": "1.0.0",
           "Dapper": "2.0.143",
           "EntityFramework": "6.4.4",
@@ -32,17 +33,28 @@
           }
         }
       },
-      "AWSSDK.Core/3.7.100.14": {
+      "AWSSDK.Core/3.7.107.11": {
         "runtime": {
           "lib/netcoreapp3.1/AWSSDK.Core.dll": {
             "assemblyVersion": "3.3.0.0",
-            "fileVersion": "3.7.100.14"
+            "fileVersion": "3.7.107.11"
+          }
+        }
+      },
+      "AWSSDK.S3/3.7.107.2": {
+        "dependencies": {
+          "AWSSDK.Core": "3.7.107.11"
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/AWSSDK.S3.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.107.2"
           }
         }
       },
       "AWSSDK.SecurityToken/3.7.100.14": {
         "dependencies": {
-          "AWSSDK.Core": "3.7.100.14"
+          "AWSSDK.Core": "3.7.107.11"
         },
         "runtime": {
           "lib/netcoreapp3.1/AWSSDK.SecurityToken.dll": {
@@ -2263,12 +2275,19 @@
       "path": "automapper/12.0.1",
       "hashPath": "automapper.12.0.1.nupkg.sha512"
     },
-    "AWSSDK.Core/3.7.100.14": {
+    "AWSSDK.Core/3.7.107.11": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-gnEgxBlk4PFEfdPE8Lkf4+D16MZFYSaW7/o6Wwe5e035QWUkTJX0Dn4LfTCdV5QSEL/fOFxu+yCAm55eIIBgog==",
-      "path": "awssdk.core/3.7.100.14",
-      "hashPath": "awssdk.core.3.7.100.14.nupkg.sha512"
+      "sha512": "sha512-2ZFjgXpbYHCq/KbarjPGJbfUQL2K+IaXJh/qKb40MZ46gW1E2TQQzktSukYhLk9l7bFdUjOxiAqYhsW9WfUXkA==",
+      "path": "awssdk.core/3.7.107.11",
+      "hashPath": "awssdk.core.3.7.107.11.nupkg.sha512"
+    },
+    "AWSSDK.S3/3.7.107.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-G2ScMEzmtF6KkQDPGFgXixPPnLtrMeb6JXQxfGDsutanXv1NDDUsQAJCdXqGrdXK3yUcR3aoIKTIapumrGATZg==",
+      "path": "awssdk.s3/3.7.107.2",
+      "hashPath": "awssdk.s3.3.7.107.2.nupkg.sha512"
     },
     "AWSSDK.SecurityToken/3.7.100.14": {
       "type": "package",

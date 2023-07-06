@@ -1,15 +1,28 @@
 using System.Drawing.Imaging;
 using System.Text.Json;
+using Amazon.S3.Transfer;
+using Amazon.S3;
 using Bixbu_UI.User;
 using Bixby_web_server.Models;
 using MaterialSkin.Controls;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using System.Drawing.Drawing2D;
+using Newtonsoft.Json.Linq;
+using Amazon.S3.Model;
+using System.Windows.Forms;
 
 namespace Bixbu_UI;
 
 public partial class BixbyApp : MaterialForm
 {
+
+    private const string AccessKey = "AKIASULOPD3USE5RVZCQ";
+    private const string SecretKey = "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";
+    private const string BucketName = "bixby-app-nibm";
+
+    private OpenFileDialog openFileDialog = new OpenFileDialog();
+
     public UserInformation userData;
     private static readonly HttpClient client = new();
     private PictureBox pb;
@@ -28,6 +41,15 @@ public partial class BixbyApp : MaterialForm
 
         var responseBody = await response.Content.ReadAsStringAsync();
         return responseBody;
+    }
+
+    private void InitializeUI()
+    {
+        openFileDialog = new OpenFileDialog();
+        // Set up the OpenFileDialog
+        openFileDialog.Filter = "Image Files (*.jpg, *.jpeg, *.png)|*.jpg;*.jpeg;*.png";
+        openFileDialog.Title = "Select an image";
+        openFileDialog.Multiselect = false;
     }
 
     public bool DictionaryHasNullOrEmpty(Dictionary<string, object> dictionary)
@@ -70,6 +92,14 @@ public partial class BixbyApp : MaterialForm
                         FirstName_txt.Text = userDict["FirstName"].ToString();
                         LastName.Text = userDict["LastName"].ToString();
                         Address.Text = userDict["Address"].ToString();
+
+                        string url = userDict["Pic"].ToString();
+                        if (!url.Equals("default"))
+                        {
+                            string filename = Path.GetFileName(url);
+                            RetrieveImageFromS3(filename);
+                        }
+
                     }
 
                 }
@@ -82,6 +112,8 @@ public partial class BixbyApp : MaterialForm
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message);
+            panel1.Visible = true;
+            panel3.Visible = false;
         }
     }
 
@@ -89,7 +121,7 @@ public partial class BixbyApp : MaterialForm
     private void Blur()
     {
         var bmp = Screenshot.TakeSnapshot(panel1);
-        BitmapFilter.GaussianBlur(bmp, 4);
+        BitmapFilter.GaussianBlur(bmp, 10);
 
         pb.Image = bmp;
         pb.BringToFront();
@@ -118,8 +150,11 @@ public partial class BixbyApp : MaterialForm
 
     private async void Form1_Load(object sender, EventArgs e)
     {
-        AutoSizeMode = AutoSizeMode.GrowOnly;
-        FormBorderStyle = FormBorderStyle.FixedSingle;
+        this.WindowState = FormWindowState.Minimized;
+
+        // To maximize the form
+        this.WindowState = FormWindowState.Maximized;
+        this.WindowState = FormWindowState.Normal;
 
         materialTabControl1.Selecting += tabControl1_Selecting;
         materialTabControl1.SelectedIndexChanged += tabControl1_Selecting;
@@ -144,25 +179,34 @@ public partial class BixbyApp : MaterialForm
         }
 
         //-------------------------------------------------------------------------------------------
-        var url = "http://localhost:8080/home";
-        var response = await SendGetRequestAsync(url);
 
-        var jsonDocument = JsonDocument.Parse(response);
-        var rootElement = jsonDocument.RootElement;
-
-        if (rootElement.GetProperty("body").ValueKind == JsonValueKind.Array)
-            foreach (var element in rootElement.GetProperty("body").EnumerateArray())
-            {
-                var customObject = System.Text.Json.JsonSerializer.Deserialize<ShopAllShopItem>(element.GetRawText());
-                shopAllShopItems.Add(customObject);
-            }
-
-        if (shopAllShopItems.Count > 0)
+        try
         {
-            shopAllShopItems.ForEach(item =>
+            var url = "http://localhost:8080/home";
+            var response = await SendGetRequestAsync(url);
+
+            var jsonDocument = JsonDocument.Parse(response);
+            var rootElement = jsonDocument.RootElement;
+
+            if (rootElement.GetProperty("body").ValueKind == JsonValueKind.Array)
+                foreach (var element in rootElement.GetProperty("body").EnumerateArray())
+                {
+                    var customObject = System.Text.Json.JsonSerializer.Deserialize<ShopAllShopItem>(element.GetRawText());
+                    shopAllShopItems.Add(customObject);
+                }
+
+            if (shopAllShopItems.Count > 0)
             {
-                //flowLayoutPanel1.Controls.Add(new WellComeItem());
-            });
+                shopAllShopItems.ForEach(item =>
+                {
+                    //flowLayoutPanel1.Controls.Add(new WellComeItem());
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            panel1.Visible = true;
+            panel3.Visible = false;
         }
     }
 
@@ -212,8 +256,209 @@ public partial class BixbyApp : MaterialForm
         UnBlur();
     }
 
+    private async void RetrieveImageFromS3(string key)
+    {
+        var s3Client = new AmazonS3Client(AccessKey, SecretKey, Amazon.RegionEndpoint.APSouth1);
+
+        var request = new GetObjectRequest
+        {
+            BucketName = BucketName,
+            Key = key
+        };
+
+        try
+        {
+            using (GetObjectResponse response = await s3Client.GetObjectAsync(request))
+            {
+                using (Stream responseStream = response.ResponseStream)
+                {
+                    // Create a temporary file path to save the retrieved image
+                    string tempFilePath = Path.GetTempFileName();
+
+                    using (FileStream fileStream = File.Create(tempFilePath))
+                    {
+                        responseStream.CopyTo(fileStream);
+                    }
+
+                    // Update the PictureBox with the retrieved image
+                    UpdatePictureBox(tempFilePath);
+                }
+            }
+
+            MessageBox.Show($"Image retrieved successfully.");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error retrieving image: {ex.Message}");
+        }
+    }
+
+    private void UpdatePictureBox(string imagePath)
+    {
+        Image image = Image.FromFile(imagePath);
+        pictureBox4.Image = image;
+
+    }
+
     private void pictureBox2_Click(object sender, EventArgs e)
     {
+    }
+
+    private void materialButton3_Click(object sender, EventArgs e)
+    {
+        if (openFileDialog.ShowDialog() == DialogResult.OK)
+        {
+            string filePath = openFileDialog.FileName;
+            Image selectedImage = Image.FromFile(filePath);
+            metroLabel4.Text = filePath;
+        }
+    }
+
+    private void materialButton1_Click_1(object sender, EventArgs e)
+    {
+        string filePath = openFileDialog.FileName;
+        if (filePath == null)
+        {
+            MessageBox.Show("Pick a image");
+            return;
+        }
+        string resizedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "resized_" + Path.GetFileName(filePath));
+
+        // Resize the image
+        ResizeImage(filePath, resizedFilePath, 800, 600);
+
+        // Upload the resized image to S3
+        UploadToS3(resizedFilePath);
+
+        // Clean up
+        File.Delete(resizedFilePath);
+    }
+
+    private async void UploadToS3(string filePath)
+    {
+        var s3Client = new AmazonS3Client(AccessKey, SecretKey, Amazon.RegionEndpoint.APSouth1);
+
+        // Generate a unique key for the uploaded image
+        string key = Guid.NewGuid().ToString() + Path.GetExtension(filePath);
+
+        // Set up the transfer utility
+        var transferUtility = new TransferUtility(s3Client);
+        var transferUtilityRequest = new TransferUtilityUploadRequest
+        {
+            BucketName = BucketName,
+            FilePath = filePath,
+            Key = key
+        };
+
+        try
+        {
+            // Upload the image to S3
+            transferUtility.Upload(transferUtilityRequest);
+
+            // Get the URL of the uploaded image
+            string imageUrl = $"https://{BucketName}.s3.amazonaws.com/{key}";
+
+            var client = new HttpClient();
+            String email = Properties.Settings.Default.Email;
+            var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/user/{email}/add/image");
+            request.Headers.Add("img", $"{imageUrl}");
+            var response = await client.SendAsync(request);
+            HttpResponseMessage httpResponseMessage = response.EnsureSuccessStatusCode();
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                MessageBox.Show("Okay");
+            }
+            else
+            {
+                MessageBox.Show("Not Okay");
+            }
+
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error uploading image: {ex.Message}");
+        }
+    }
+
+    private void ResizeImage(string sourceFilePath, string destFilePath, int maxWidth, int maxHeight)
+    {
+        using (Image sourceImage = Image.FromFile(sourceFilePath))
+        {
+            int width = sourceImage.Width;
+            int height = sourceImage.Height;
+
+            // Calculate the new dimensions while preserving the aspect ratio
+            if (width > maxWidth || height > maxHeight)
+            {
+                double aspectRatio = (double)width / height;
+                if (width > height)
+                {
+                    width = maxWidth;
+                    height = (int)(width / aspectRatio);
+                }
+                else
+                {
+                    height = maxHeight;
+                    width = (int)(height * aspectRatio);
+                }
+            }
+
+            using (Bitmap resizedImage = new Bitmap(width, height))
+            {
+                using (Graphics graphics = Graphics.FromImage(resizedImage))
+                {
+                    graphics.CompositingQuality = CompositingQuality.HighQuality;
+                    graphics.SmoothingMode = SmoothingMode.HighQuality;
+                    graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+
+                    graphics.DrawImage(sourceImage, 0, 0, width, height);
+                }
+
+                // Save the resized image to the specified file path
+                resizedImage.Save(destFilePath, ImageFormat.Jpeg);
+            }
+        }
+    }
+
+    private void ProcessAndUploadImage(string filePath)
+    {
+        // Create a temporary file path for the processed image
+        string processedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "processed_" + Path.GetFileName(filePath));
+
+        try
+        {
+            // Apply low-quality blur effect to the image
+            using (Image originalImage = Image.FromFile(filePath))
+            {
+                using (Bitmap processedImage = new Bitmap(originalImage.Width, originalImage.Height))
+                {
+                    using (Graphics graphics = Graphics.FromImage(processedImage))
+                    {
+                        graphics.SmoothingMode = SmoothingMode.HighSpeed;
+                        graphics.InterpolationMode = InterpolationMode.Low;
+                        graphics.DrawImage(originalImage, new Rectangle(0, 0, processedImage.Width, processedImage.Height));
+                    }
+
+                    // Save the processed image to the temporary file path
+                    processedImage.Save(processedFilePath, ImageFormat.Jpeg);
+                }
+            }
+
+            // Upload the processed image to AWS S3
+            UploadToS3(processedFilePath);
+
+            // Clean up the processed image file
+            File.Delete(processedFilePath);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error processing and uploading image: {ex.Message}");
+        }
+    }
+
+    private void metroButton2_Click(object sender, EventArgs e)
+    {
+
     }
 }
 

@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "kPnJAqQ5Fbyp6R1HdZUkl5Py2TXNZBLlevjUZ9hlt6OepKAbJ/hLCyENZfxDbsmCmkgv+IcRRkBSHH3T/aIIUw==",
+  "dgSpecHash": "7uOMjXQh/bvwtvzKZd0rX/OIaqbpC8fBiDVXXFAWSIwTVQtuvO/5R39i46Qo7OuGdAVD7jUR93HyXqVaxd3ilw==",
   "success": true,
   "projectFilePath": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Bixbu-UI\\Bixby-UI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\MSI\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
-    "C:\\Users\\MSI\\.nuget\\packages\\awssdk.core\\3.7.100.14\\awssdk.core.3.7.100.14.nupkg.sha512",
+    "C:\\Users\\MSI\\.nuget\\packages\\awssdk.core\\3.7.107.11\\awssdk.core.3.7.107.11.nupkg.sha512",
+    "C:\\Users\\MSI\\.nuget\\packages\\awssdk.s3\\3.7.107.2\\awssdk.s3.3.7.107.2.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\awssdk.securitytoken\\3.7.100.14\\awssdk.securitytoken.3.7.100.14.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\azure.communication.email\\1.0.0\\azure.communication.email.1.0.0.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\azure.core\\1.30.0\\azure.core.1.30.0.nupkg.sha512",

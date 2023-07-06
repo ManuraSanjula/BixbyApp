@@ -8,342 +8,335 @@ using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using SendGrid.Helpers.Errors.Model;
-using System.Net;
-using HttpContext = Bixby_web_server.Helpers.HttpContext;
 
-namespace Bixby_web_server.Controllers
+namespace Bixby_web_server.Controllers;
+
+public abstract class ShopController
 {
-    public abstract class ShopController
+    private static readonly ShopItemService ShopItemService = new();
+    private static readonly UserShopService UserShopService = new();
+    private static readonly CommentService CommentService = new();
+    private static readonly OrderService OrderService = new();
+    private static readonly UserService UserService = new();
+    private static readonly ProductPurchasesService productPurchasesService = new();
+
+    public static async Task GetAllTheShopItems(HttpContext context)
     {
-        private static readonly ShopItemService ShopItemService = new ShopItemService();
-        private static readonly UserShopService UserShopService = new UserShopService();
-        private static readonly CommentService CommentService = new CommentService();
-        private static readonly OrderService OrderService = new OrderService();
-        private static readonly UserService UserService = new UserService();
-        private static readonly ProductPurchasesService productPurchasesService = new ProductPurchasesService();
-        public static async Task GetAllTheShopItems(HttpContext context)
-        {
-            if (context.Request.HttpMethod != "GET")
-                throw new MethodNotAllowedException(new
-                    { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-            if (RedisCache.Get("all-items") != null)
-            {
-                await context.WriteResponse(RedisCache.Get("all-items"), "application/json", HttpStatusCode.OK)
-                .ConfigureAwait(false);
-            }
-
-            var shopItems = await ShopItemService.GetAllShopItemsAsync();
-            var convertedItems = shopItems.Select(shop => new ShopAllShopItem
-            {
-                Id = shop.Id,
-                Name = shop.Name,
-                PicLowRes = shop.PicLowRes
-            }).ToList();
-
-            var response = new
-            {
-                status = "Success",
-                body = convertedItems
-            };
-            RedisCache.Set("all-items", response.ToJson());
-            context.ResponseContent = response.ToJson();
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
-                .ConfigureAwait(false);
-        }
-
-
-        public static async Task ViewOneShopItem(HttpContext context)
-        {
-            if (context.Request.HttpMethod != "GET")
-                throw new MethodNotAllowedException(new
-                    { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-            if (context.DynamicPath is { Length: > 0 })
-            {
-                if(RedisCache.Get("item-" + context.DynamicPath[0]) != null)
-                {
-                    await context.WriteResponse(RedisCache.Get("item-" + context.DynamicPath[0]), "application/json", HttpStatusCode.OK)
-                        .ConfigureAwait(false);
-                }
-
-               ShopItem shopItem = await ShopItemService.GetShopItemByIdAsync(context.DynamicPath[0]);
-                if (shopItem == null)
-                    throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
-                        .ToJson());
-
-                {
-                    UserShop userShop = await UserShopService.GetProductByItemId(shopItem.Id);
-                    userShop.TotalViews += 1;
-                    await UserShopService.ProductUpdateByItemId(userShop.Id, userShop);
-                    var response = new
-                    {
-                        status = "Success",
-                        body = shopItem
-                    };
-                    RedisCache.Set("item-" + context.DynamicPath[0], response.ToJson());
-                    context.ResponseContent = response.ToJson();
-                    await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
-                        .ConfigureAwait(false);
-                }
-            }
-            else
-            {
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-            }
-        }
-
-        public static async Task UpdateOneShopItem(HttpContext context)
-        {
-            if (context.Request.HttpMethod != "PUT" || context.Request.HttpMethod != "PATCH")
-                throw new MethodNotAllowedException(new
-                    { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-            var checkMiddleWare = new CheckMiddleWare();
-            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]);
-
-            if (!jwt.ContainsKey("jwt"))
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
-                    .ToJson());
-
-            if (NullEmptyChecker.HasNullEmptyValues(jwt["jwt"]))
-                throw new UnauthorizedException(
-                    new { status = "An error occurred.", message = "Unauthorized" }.ToJson());
-
-            string json = await new StreamReader(context.Request.InputStream, context.Request.ContentEncoding)
-                .ReadToEndAsync().ConfigureAwait(false);
-            
-            Dictionary<string, object> validateResult =
-                await checkMiddleWare.CheckUserReq<ShopItemeq>(json, context.DynamicPath);
-
-            ShopItem shopItem = (ShopItem)validateResult["data"];
-
-            if (!NullEmptyChecker.HasNullEmptyValues(shopItem))
-                throw new BadRequestException(
-                    new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-            
-            ShopItem shopItemByReqId = await ShopItemService.GetShopItemByIdAsync(context.DynamicPath?[1]);
-            
-            if (shopItemByReqId == null)
-                throw new NotFoundException(new
-                    { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
-
-            shopItemByReqId.Name = shopItem.Name;
-            shopItemByReqId.Description = shopItem.Description;
-            shopItemByReqId.Price = shopItem.Price;
-
-            bool isUpdate = await ShopItemService.UpdateShopItemAsync(shopItemByReqId.Id, shopItemByReqId);
-            if (!isUpdate)
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }
-                    .ToJson());
-            
-            var response = new
-            {
-                status = "Success",
-                message = "ShopItem Updated successfully"
-            };
-            RedisCache.Set("item-" + context.DynamicPath[0], response.ToJson());
-            RedisCache.Remove("all-items");
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
-                .ConfigureAwait(false);
-        }
-
-        public static async Task UploadOneShopItem(HttpContext context)
-        {
-            if (context.Request.HttpMethod != "POST")
-                throw new MethodNotAllowedException(new
+        if (context.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new
                 { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
-            var checkMiddleWare = new CheckMiddleWare();
+        if (RedisCache.Get("all-items") != null)
+            await context.WriteResponse(RedisCache.Get("all-items"), "application/json")
+                .ConfigureAwait(false);
 
-            Dictionary<string, object> jwt =
-                await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]);
+        var shopItems = await ShopItemService.GetAllShopItemsAsync();
+        var convertedItems = shopItems.Select(shop => new ShopAllShopItem
+        {
+            Id = shop.Id,
+            Name = shop.Name,
+            PicLowRes = shop.PicLowRes
+        }).ToList();
 
-            if (!jwt.ContainsKey("jwt"))
+        var response = new
+        {
+            status = "Success",
+            body = convertedItems
+        };
+        RedisCache.Set("all-items", response.ToJson());
+        context.ResponseContent = response.ToJson();
+        await context.WriteResponse(response.ToJson(), "application/json")
+            .ConfigureAwait(false);
+    }
+
+
+    public static async Task ViewOneShopItem(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new
+                { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
+        if (context.DynamicPath is { Length: > 0 })
+        {
+            if (RedisCache.Get("item-" + context.DynamicPath[0]) != null)
+                await context.WriteResponse(RedisCache.Get("item-" + context.DynamicPath[0]), "application/json")
+                    .ConfigureAwait(false);
+
+            var shopItem = await ShopItemService.GetShopItemByIdAsync(context.DynamicPath[0]);
+            if (shopItem == null)
                 throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
                     .ToJson());
 
-            if (NullEmptyChecker.HasNullEmptyValues(jwt["jwt"]))
-                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }
-                    .ToJson());
-            
-            string json = await new StreamReader(context.Request.InputStream, context.Request.ContentEncoding)
-                .ReadToEndAsync().ConfigureAwait(false);
-            Dictionary<string, object> validateResult =
-                await checkMiddleWare.CheckUserReq<ShopItemeq>(json, context.DynamicPath);
-
-            ShopItem shopItem = (ShopItem)validateResult["data"];
-
-            if (NullEmptyChecker.HasNullEmptyValues(shopItem))
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }
-                    .ToJson());
-            
-            await ShopItemService.CreateShopItemAsync(shopItem);
-
-            await UserShopService.AddProduct(shopItem.publish.Email, shopItem.Id);
-
-            var response = new
             {
-                status = "Success",
-                message = "ShopItem added successfully"
-            };
-
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
-                .ConfigureAwait(false);
+                var userShop = await UserShopService.GetProductByItemId(shopItem.Id);
+                userShop.TotalViews += 1;
+                await UserShopService.ProductUpdateByItemId(userShop.Id, userShop);
+                var response = new
+                {
+                    status = "Success",
+                    body = shopItem
+                };
+                RedisCache.Set("item-" + context.DynamicPath[0], response.ToJson());
+                context.ResponseContent = response.ToJson();
+                await context.WriteResponse(response.ToJson(), "application/json")
+                    .ConfigureAwait(false);
+            }
         }
-
-        public static async Task OneShopItemComment(HttpContext context)
+        else
         {
-            var checkMiddleWare = new CheckMiddleWare();
-            var request = context.Request;
-            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJwt(context);
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+        }
+    }
+
+    public static async Task UpdateOneShopItem(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "PUT" || context.Request.HttpMethod != "PATCH")
+            throw new MethodNotAllowedException(new
+                { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
+        var checkMiddleWare = new CheckMiddleWare();
+        var jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]);
+
+        if (!jwt.ContainsKey("jwt"))
+            throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
+                .ToJson());
+
+        if (NullEmptyChecker.HasNullEmptyValues(jwt["jwt"]))
+            throw new UnauthorizedException(
+                new { status = "An error occurred.", message = "Unauthorized" }.ToJson());
+
+        var json = await new StreamReader(context.Request.InputStream, context.Request.ContentEncoding)
+            .ReadToEndAsync().ConfigureAwait(false);
+
+        var validateResult =
+            await checkMiddleWare.CheckUserReq<ShopItemeq>(json, context.DynamicPath);
+
+        var shopItem = (ShopItem)validateResult["data"];
+
+        if (!NullEmptyChecker.HasNullEmptyValues(shopItem))
+            throw new BadRequestException(
+                new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        var shopItemByReqId = await ShopItemService.GetShopItemByIdAsync(context.DynamicPath?[1]);
+
+        if (shopItemByReqId == null)
+            throw new NotFoundException(new
+                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+
+        shopItemByReqId.Name = shopItem.Name;
+        shopItemByReqId.Description = shopItem.Description;
+        shopItemByReqId.Price = shopItem.Price;
+
+        var isUpdate = await ShopItemService.UpdateShopItemAsync(shopItemByReqId.Id, shopItemByReqId);
+        if (!isUpdate)
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }
+                .ToJson());
+
+        var response = new
+        {
+            status = "Success",
+            message = "ShopItem Updated successfully"
+        };
+        RedisCache.Set("item-" + context.DynamicPath[0], response.ToJson());
+        RedisCache.Remove("all-items");
+        await context.WriteResponse(response.ToJson(), "application/json")
+            .ConfigureAwait(false);
+    }
+
+    public static async Task UploadOneShopItem(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "POST")
+            throw new MethodNotAllowedException(new
+                { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+
+        var checkMiddleWare = new CheckMiddleWare();
+
+        var jwt =
+            await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]);
+
+        if (!jwt.ContainsKey("jwt"))
+            throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
+                .ToJson());
+
+        if (NullEmptyChecker.HasNullEmptyValues(jwt["jwt"]))
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }
+                .ToJson());
+
+        var json = await new StreamReader(context.Request.InputStream, context.Request.ContentEncoding)
+            .ReadToEndAsync().ConfigureAwait(false);
+        var validateResult =
+            await checkMiddleWare.CheckUserReq<ShopItemeq>(json, context.DynamicPath);
+
+        var shopItem = (ShopItem)validateResult["data"];
+
+        if (NullEmptyChecker.HasNullEmptyValues(shopItem))
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }
+                .ToJson());
+
+        await ShopItemService.CreateShopItemAsync(shopItem);
+
+        await UserShopService.AddProduct(shopItem.publish.Email, shopItem.Id);
+
+        var response = new
+        {
+            status = "Success",
+            message = "ShopItem added successfully"
+        };
+
+        await context.WriteResponse(response.ToJson(), "application/json")
+            .ConfigureAwait(false);
+    }
+
+    public static async Task OneShopItemComment(HttpContext context)
+    {
+        var checkMiddleWare = new CheckMiddleWare();
+        var request = context.Request;
+        var jwt = await checkMiddleWare.CheckMiddleWareJwt(context);
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-            var shopId = new ObjectId(context.DynamicPath[0]);
+        var shopId = new ObjectId(context.DynamicPath[0]);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 
-            switch (context.Request.HttpMethod)
+        switch (context.Request.HttpMethod)
+        {
+            case "POST" when jwt.TryGetValue("jwt", out var value):
             {
-                case "POST" when jwt.TryGetValue("jwt", out var value):
+                using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
                 {
-                    using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                    var settings = new JsonSerializerSettings
                     {
-                        JsonSerializerSettings? settings = new JsonSerializerSettings
+                        NullValueHandling = NullValueHandling.Ignore
+                    };
+                    var json = await reader.ReadToEndAsync().ConfigureAwait(false);
+                    var commentReq = JsonConvert.DeserializeObject<CommentReq>(json, settings);
+                    var shop = await ShopItemService.GetShopItemByIdAsync(shopId);
+                    if (shop == null)
+                        throw new NotFoundException(new
+                            { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+                    var user = (User)value;
+                    {
+                        var comment = new Comment();
+                        if (commentReq?.UserComment != null) comment.UserComment = commentReq?.UserComment;
+                        comment.User = user.Id;
+                        comment.ShopItem = shop.Id;
+
+                        await CommentService.CreateComment(comment);
+
+
+                        var comments = CommentService.GetAllCommentsByShopItemName(shop.Id);
+                        shop.TotalComments += 1;
+                        var isAck = await ShopItemService.UpdateShopItemAsync(shop.Id, shop);
+                        if (isAck)
                         {
-                            NullValueHandling = NullValueHandling.Ignore
-                        };
-                        string json = await reader.ReadToEndAsync().ConfigureAwait(false);
-                        var commentReq = JsonConvert.DeserializeObject<CommentReq>(json, settings);
-                        ShopItem shop = await ShopItemService.GetShopItemByIdAsync(shopId);
-                        if (shop == null)
-                            throw new NotFoundException(new
-                                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
-                        User user = (User)value;
-                        {
-
-                            Comment comment = new Comment();
-                            if (commentReq?.UserComment != null) comment.UserComment = commentReq?.UserComment;
-                            comment.User = user.Id;
-                            comment.ShopItem = shop.Id;                            
-
-                            await CommentService.CreateComment(comment);
-
-
-                            List<Comment> comments = CommentService.GetAllCommentsByShopItemName(shop.Id);
-                            shop.TotalComments += 1;
-                            bool isAck = await ShopItemService.UpdateShopItemAsync(shop.Id, shop);
-                            if (isAck)
-                            {
-                            }
                         }
-
-                        var response = new
-                        {
-                            status = "Success",
-                            message = "Comment added successfully"
-                        };
-                        RedisCache.Remove("comment-user-" + user.Email);
-                        RedisCache.Set("comment-" + shopId.ToString(), response.ToJson());
-
-                        await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
-                            .ConfigureAwait(false);
                     }
 
-                    break;
-                }
-                case "POST":
-                    throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }
-                        .ToJson());
-                case "GET":
-                {
-                   if(RedisCache.Get("comment-" + shopId.ToString()) != null)
-                   {
-                     await context.WriteResponse(RedisCache.Get("commend-" + shopId.ToString()), "application/json", HttpStatusCode.OK)
-                           .ConfigureAwait(false);
-                   }
-                   
-                    List<Comment> comment = CommentService.GetAllCommentsByShopItemName(shopId) ??
-                                            throw new NotFoundException(new
-                                                    { status = "An error occurred.", message = "Not Found Exception" }
-                                                .ToJson());
-
-                    if (comment.IsNullOrEmpty())
-                        throw new NotFoundException(
-                            new { status = "An error occurred.", message = "Not Found" }.ToJson());
-                    
                     var response = new
                     {
                         status = "Success",
-                        body = comment
+                        message = "Comment added successfully"
                     };
-                    RedisCache.Set("comment-" + shopId.ToString(), response.ToJson());
-                    await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
+                    RedisCache.Remove("comment-user-" + user.Email);
+                    RedisCache.Set("comment-" + shopId, response.ToJson());
+
+                    await context.WriteResponse(response.ToJson(), "application/json")
+                        .ConfigureAwait(false);
+                }
+
+                break;
+            }
+            case "POST":
+                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }
+                    .ToJson());
+            case "GET":
+            {
+                if (RedisCache.Get("comment-" + shopId) != null)
+                    await context.WriteResponse(RedisCache.Get("commend-" + shopId), "application/json")
                         .ConfigureAwait(false);
 
-                    break;
-                }
-                default:
-                    throw new MethodNotAllowedException(new
-                        { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+                var comment = CommentService.GetAllCommentsByShopItemName(shopId) ??
+                              throw new NotFoundException(new
+                                      { status = "An error occurred.", message = "Not Found Exception" }
+                                  .ToJson());
+
+                if (comment.IsNullOrEmpty())
+                    throw new NotFoundException(
+                        new { status = "An error occurred.", message = "Not Found" }.ToJson());
+
+                var response = new
+                {
+                    status = "Success",
+                    body = comment
+                };
+                RedisCache.Set("comment-" + shopId, response.ToJson());
+                await context.WriteResponse(response.ToJson(), "application/json")
+                    .ConfigureAwait(false);
+
+                break;
             }
+            default:
+                throw new MethodNotAllowedException(new
+                    { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
         }
+    }
 
-        internal static async Task BuyItem(HttpContext context)
-        {
-            CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
-            String? shopId = context.DynamicPath?[0];
-            String? email = context.DynamicPath?[1];
+    internal static async Task BuyItem(HttpContext context)
+    {
+        var checkMiddleWare = new CheckMiddleWare();
+        var shopId = context.DynamicPath?[0];
+        var email = context.DynamicPath?[1];
 
-            User? user = await UserService.GetUserByEmailAsync(email);
+        var user = await UserService.GetUserByEmailAsync(email);
 
-            if (NullEmptyChecker.HasNullEmptyValues(user))
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
-                    .ToJson());
+        if (NullEmptyChecker.HasNullEmptyValues(user))
+            throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
+                .ToJson());
 
-            Dictionary<string, object> jwt =
+        var jwt =
             await checkMiddleWare.CheckMiddleWareJwt(context, email?.Trim());
 
-            if (!jwt.ContainsKey("jwt"))
-                throw new UnauthorizedAccessException(new { status = "An error occurred.", message = "Unauthorized Access Exception" }
+        if (!jwt.ContainsKey("jwt"))
+            throw new UnauthorizedAccessException(
+                new { status = "An error occurred.", message = "Unauthorized Access Exception" }
                     .ToJson());
 
-            User result = (User)jwt["jwt"];
+        var result = (User)jwt["jwt"];
 
-            if (NullEmptyChecker.HasNullEmptyValues(result))
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
-                    .ToJson());
+        if (NullEmptyChecker.HasNullEmptyValues(result))
+            throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
+                .ToJson());
 
-            ShopItem shopItem = await ShopItemService.GetShopItemByIdAsync(shopId);
+        var shopItem = await ShopItemService.GetShopItemByIdAsync(shopId);
 
-            ObjectId[] items = { shopItem.Id };
+        ObjectId[] items = { shopItem.Id };
 
-            Order order = new Order {
-                Items = items,
-                Price = shopItem.Price,
-                User = user.Email,
-                Confirm = false
-            };
+        var order = new Order
+        {
+            Items = items,
+            Price = shopItem.Price,
+            User = user.Email,
+            Confirm = false
+        };
 
-            await OrderService.CreateOrder(order);
+        await OrderService.CreateOrder(order);
 
 #pragma warning disable CS8601 // Possible null reference assignment.
-            ProductPurchases productPurchases = new ProductPurchases
-            {
-                orderId = order.Id,
-                cutomerId = user.Id,
-                ownerId = shopItem.publish.Email
-            };
+        var productPurchases = new ProductPurchases
+        {
+            orderId = order.Id,
+            cutomerId = user.Id,
+            ownerId = shopItem.publish.Email
+        };
 #pragma warning restore CS8601 // Possible null reference assignment.
 
-           await productPurchasesService.CreateProductPurchaseAsync(productPurchases);
+        await productPurchasesService.CreateProductPurchaseAsync(productPurchases);
 
-            var response = new
-            {
-                status = "Success",
-            };
-            RedisCache.Remove("User-SeePurchase-" + email);
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK)
-                .ConfigureAwait(false);
-        }
+        var response = new
+        {
+            status = "Success"
+        };
+        RedisCache.Remove("User-SeePurchase-" + email);
+        await context.WriteResponse(response.ToJson(), "application/json")
+            .ConfigureAwait(false);
     }
 }

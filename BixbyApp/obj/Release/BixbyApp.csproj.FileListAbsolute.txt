@@ -1,0 +1,2 @@
+C:\Users\MSI\source\repos\Bixby-web-server\BixbyApp\obj\Release\BixbyApp.csproj.AssemblyReference.cache
+C:\Users\MSI\source\repos\Bixby-web-server\BixbyApp\obj\Release\BixbyApp.csproj.SuggestedBindingRedirects.cache

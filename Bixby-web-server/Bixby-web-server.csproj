@@ -1,46 +1,46 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>Bixby_web_server</RootNamespace>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <RootNamespace>Bixby_web_server</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="wwwroot\AsEmail\ConfirmYourEmail.html" />
-    <None Remove="wwwroot\AsEmail\ResetPasswordReqEmail.html" />
-    <None Remove="wwwroot\EmailVerificationIsDone.html" />
-    <None Remove="wwwroot\PasswordReset.html" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Remove="wwwroot\AsEmail\ConfirmYourEmail.html"/>
+        <None Remove="wwwroot\AsEmail\ResetPasswordReqEmail.html"/>
+        <None Remove="wwwroot\EmailVerificationIsDone.html"/>
+        <None Remove="wwwroot\PasswordReset.html"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="wwwroot\AsEmail\ConfirmYourEmail.html" />
-    <Content Include="wwwroot\AsEmail\ResetPasswordReqEmail.html" />
-    <Content Include="wwwroot\EmailVerificationIsDone.html" />
-    <Content Include="wwwroot\PasswordReset.html" />
-  </ItemGroup>
+    <ItemGroup>
+        <Content Include="wwwroot\AsEmail\ConfirmYourEmail.html"/>
+        <Content Include="wwwroot\AsEmail\ResetPasswordReqEmail.html"/>
+        <Content Include="wwwroot\EmailVerificationIsDone.html"/>
+        <Content Include="wwwroot\PasswordReset.html"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="12.0.1" />
-    <PackageReference Include="Azure.Communication.Email" Version="1.0.0" />
-    <PackageReference Include="BCrypt" Version="1.0.0" />
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="Braintree" Version="5.18.0" />
-    <PackageReference Include="MailKit" Version="4.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
-    <PackageReference Include="Microsoft.IdentityModel.ManagedKeyVaultSecurityKey" Version="6.31.0" />
-    <PackageReference Include="MimeKit" Version="4.1.0" />
-    <PackageReference Include="MongoDB.Driver" Version="2.20.0" />
-    <PackageReference Include="MongoDB.Driver.Core" Version="2.20.0" />
-    <PackageReference Include="SendGrid" Version="9.28.1" />
-    <PackageReference Include="StackExchange.Redis" Version="2.6.116" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.31.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="AutoMapper" Version="12.0.1"/>
+        <PackageReference Include="Azure.Communication.Email" Version="1.0.0"/>
+        <PackageReference Include="BCrypt" Version="1.0.0"/>
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
+        <PackageReference Include="Braintree" Version="5.18.0"/>
+        <PackageReference Include="MailKit" Version="4.1.0"/>
+        <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7"/>
+        <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2"/>
+        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17"/>
+        <PackageReference Include="Microsoft.IdentityModel.ManagedKeyVaultSecurityKey" Version="6.31.0"/>
+        <PackageReference Include="MimeKit" Version="4.1.0"/>
+        <PackageReference Include="MongoDB.Driver" Version="2.20.0"/>
+        <PackageReference Include="MongoDB.Driver.Core" Version="2.20.0"/>
+        <PackageReference Include="SendGrid" Version="9.28.1"/>
+        <PackageReference Include="StackExchange.Redis" Version="2.6.116"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.31.0"/>
+    </ItemGroup>
 
 </Project>

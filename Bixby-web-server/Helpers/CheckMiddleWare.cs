@@ -4,191 +4,161 @@ using BixbyShop_LK.Services;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 
-namespace Bixby_web_server.Helpers
+namespace Bixby_web_server.Helpers;
+
+public class CheckMiddleWare
 {
-    public class CheckMiddleWare
+    private UserService UserService { get; } = new();
+
+    public Dictionary<string, object> Values { get; set; } = new();
+
+    private static async Task<User?> GetTheUserFromToken(HttpListenerRequest request)
     {
-        private UserService UserService { get; } = new UserService();
+        var authorizationHeader = request.Headers["Authorization"];
+        if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer ")) return null;
 
-        public Dictionary<string, object> Values { get; set; } = new Dictionary<string, object>();
-        private static async Task<User?> GetTheUserFromToken(HttpListenerRequest request)
+        var jwtToken = authorizationHeader.Substring("Bearer ".Length);
+        User? jwtUser = await TokenService.ValidateJwtToken(jwtToken);
+        return jwtUser;
+    }
+
+
+    public async Task<Dictionary<string, object>> CheckUserReq<T>(string jsonString, string?[]? dynamic)
+    {
+        if (string.IsNullOrEmpty(jsonString)) return Values;
+
+        var settings = new JsonSerializerSettings
         {
-            var authorizationHeader = request.Headers["Authorization"];
-            if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
-            {
-                return null;
-            }
+            NullValueHandling = NullValueHandling.Ignore
+        };
 
-            var jwtToken = authorizationHeader.Substring("Bearer ".Length);
-            User? jwtUser = await TokenService.ValidateJwtToken(jwtToken);
-            return jwtUser;
-        }
-
-
-        public async Task<Dictionary<string, object>> CheckUserReq<T>(string jsonString, string?[]? dynamic)
+        if (typeof(T) == typeof(UserReqForUpdate))
         {
-            if (string.IsNullOrEmpty(jsonString))
+            var userReq = JsonConvert.DeserializeObject<UserReqForUpdate>(jsonString, settings);
+            if (userReq == null && NullEmptyChecker.HasNullEmptyValues(userReq)) return Values;
+            if (dynamic != null && dynamic.Length > 0 && !string.IsNullOrEmpty(dynamic[0]))
             {
-                return Values;
-            }
-
-            JsonSerializerSettings? settings = new JsonSerializerSettings
-            {
-                NullValueHandling = NullValueHandling.Ignore
-            };
-
-            if (typeof(T) == typeof(UserReqForUpdate))
-            {
-                UserReqForUpdate? userReq = JsonConvert.DeserializeObject<UserReqForUpdate>(jsonString, settings);
-                if (userReq == null && NullEmptyChecker.HasNullEmptyValues(userReq))
+                User? user;
+                user = JsonConvert.DeserializeObject<User>(RedisCache.Get(dynamic[0]));
+                if (user == null)
                 {
-                    return Values;
-                }
-                if (dynamic != null && dynamic.Length > 0 && !string.IsNullOrEmpty(dynamic[0]))
-                {
-                    User? user;
-                    user = JsonConvert.DeserializeObject<User>(RedisCache.Get(dynamic[0]));
-                    if (user == null)
-                    {
-                        user = await UserService.GetUserByEmailAsync(dynamic[0]);
-                        RedisCache.Set(user.Email, user.ToJson());
-                    }
-                    else
-                    {
-                        User user_db = await UserService.GetUserByEmailAsync(dynamic[0]);
-                        if (!user.Equals(user_db))
-                        {
-                            user = user_db;
-                            RedisCache.Set(user.Email, user.ToJson());
-                        }
-                    }
-
-                    if (user == null && NullEmptyChecker.HasNullEmptyValues(user) && user.EmailVerify)
-                    {
-                        return Values;
-                    }
-
-                    if (userReq != null) Values.Add("UserReqForUpdate", userReq);
-                    if (user != null) Values.Add("User", user);
-                    return Values;
+                    user = await UserService.GetUserByEmailAsync(dynamic[0]);
+                    RedisCache.Set(user.Email, user.ToJson());
                 }
                 else
                 {
-                    return Values;
-                }
-            }
-            else if (typeof(T) == typeof(UserLoginReq))
-            {
-                return CheckUserLoginReq(jsonString, settings);
-
-            }else if (typeof(T) == typeof(UserReqForSignUp))
-            {
-                return CheckUserReqForSignUp(jsonString, settings);
-            }
-            else if (typeof(T) == typeof(ShopItemeq))
-            {
-                ShopItemeq? shopItemReq = JsonConvert.DeserializeObject<ShopItemeq>(jsonString, settings);
-                if (shopItemReq == null || NullEmptyChecker.HasNullEmptyValues(shopItemReq))
-                {
-                    return Values;
-                }
-
-                if (dynamic != null && dynamic.Length > 0)
-                {
-                    User? user;
-                    user = JsonConvert.DeserializeObject<User>(RedisCache.Get(dynamic[0]));
-                    if (user == null)
+                    var user_db = await UserService.GetUserByEmailAsync(dynamic[0]);
+                    if (!user.Equals(user_db))
                     {
-                        user = await UserService.GetUserByEmailAsync(dynamic[0]);
+                        user = user_db;
                         RedisCache.Set(user.Email, user.ToJson());
                     }
-                    else
-                    {
-                        User user_db = await UserService.GetUserByEmailAsync(dynamic[0]);
-                        if (!user.Equals(user_db))
-                        {
-                            user = user_db;
-                            RedisCache.Set(user.Email, user.ToJson());
-                        }
-                    }
+                }
 
-                    if (!NullEmptyChecker.HasNullEmptyValues(user) && user.EmailVerify)
-                    {
-                        UserInShopItem userInShopItem = new UserInShopItem();
-                        userInShopItem.FirstName = user.FirstName;
-                        userInShopItem.LastName = user.LastName;
-                        userInShopItem.Email = user.Email;
-                        userInShopItem.Pic = user.Pic;
+                if (user == null && NullEmptyChecker.HasNullEmptyValues(user) && user.EmailVerify) return Values;
 
-                        ShopItem shopItem = new ShopItem
-                        {
-                            Name = shopItemReq.Name,
-                            Price = shopItemReq.Price,
-                            publish = userInShopItem,
-                            Description = shopItemReq.Description
-                        };
-                        
-                        Values.Add("data", shopItem);
-                        return Values;
+                if (userReq != null) Values.Add("UserReqForUpdate", userReq);
+                if (user != null) Values.Add("User", user);
+                return Values;
+            }
+
+            return Values;
+        }
+
+        if (typeof(T) == typeof(UserLoginReq)) return CheckUserLoginReq(jsonString, settings);
+        if (typeof(T) == typeof(UserReqForSignUp)) return CheckUserReqForSignUp(jsonString, settings);
+
+        if (typeof(T) == typeof(ShopItemeq))
+        {
+            var shopItemReq = JsonConvert.DeserializeObject<ShopItemeq>(jsonString, settings);
+            if (shopItemReq == null || NullEmptyChecker.HasNullEmptyValues(shopItemReq)) return Values;
+
+            if (dynamic != null && dynamic.Length > 0)
+            {
+                User? user;
+                user = JsonConvert.DeserializeObject<User>(RedisCache.Get(dynamic[0]));
+                if (user == null)
+                {
+                    user = await UserService.GetUserByEmailAsync(dynamic[0]);
+                    RedisCache.Set(user.Email, user.ToJson());
+                }
+                else
+                {
+                    var user_db = await UserService.GetUserByEmailAsync(dynamic[0]);
+                    if (!user.Equals(user_db))
+                    {
+                        user = user_db;
+                        RedisCache.Set(user.Email, user.ToJson());
                     }
                 }
 
-                return Values;
-            }
-            else
-            {
-                return Values;
-            }
-        }
+                if (!NullEmptyChecker.HasNullEmptyValues(user) && user.EmailVerify)
+                {
+                    var userInShopItem = new UserInShopItem();
+                    userInShopItem.FirstName = user.FirstName;
+                    userInShopItem.LastName = user.LastName;
+                    userInShopItem.Email = user.Email;
+                    userInShopItem.Pic = user.Pic;
 
-        private Dictionary<string, object> CheckUserReqForSignUp(string jsonString, JsonSerializerSettings settings)
-        {
-            UserReqForSignUp? userReq = JsonConvert.DeserializeObject<UserReqForSignUp>(jsonString, settings);
-            if (userReq == null || NullEmptyChecker.HasNullEmptyValues(userReq))
-            {
-                return Values;
+                    var shopItem = new ShopItem
+                    {
+                        Name = shopItemReq.Name,
+                        Price = shopItemReq.Price,
+                        publish = userInShopItem,
+                        Description = shopItemReq.Description
+                    };
+
+                    Values.Add("data", shopItem);
+                    return Values;
+                }
             }
-            Values.Add("User", userReq);
-            return Values;
-        }
-        private Dictionary<string, object> CheckUserLoginReq(string jsonString, JsonSerializerSettings? settings)
-        {
-            UserLoginReq? user = JsonConvert.DeserializeObject<UserLoginReq>(jsonString, settings);
-            if (user == null)
-            {
-                return Values;
-            }
-            Values.Add("User", user);
+
             return Values;
         }
 
-        public async Task<Dictionary<string, object>> CheckMiddleWareJwt(HttpContext context, string? dynamicName)
+        return Values;
+    }
+
+    private Dictionary<string, object> CheckUserReqForSignUp(string jsonString, JsonSerializerSettings settings)
+    {
+        var userReq = JsonConvert.DeserializeObject<UserReqForSignUp>(jsonString, settings);
+        if (userReq == null || NullEmptyChecker.HasNullEmptyValues(userReq)) return Values;
+        Values.Add("User", userReq);
+        return Values;
+    }
+
+    private Dictionary<string, object> CheckUserLoginReq(string jsonString, JsonSerializerSettings? settings)
+    {
+        var user = JsonConvert.DeserializeObject<UserLoginReq>(jsonString, settings);
+        if (user == null) return Values;
+        Values.Add("User", user);
+        return Values;
+    }
+
+    public async Task<Dictionary<string, object>> CheckMiddleWareJwt(HttpContext context, string? dynamicName)
+    {
+        var request = context.Request;
+        var jwtUser = await GetTheUserFromToken(request);
+        Console.WriteLine(jwtUser.ToJson());
+        if (jwtUser != null && jwtUser.EmailVerify && string.Equals(jwtUser.Email, dynamicName))
         {
-            var request = context.Request;
-            User? jwtUser = await GetTheUserFromToken(request);
-            if (jwtUser != null && jwtUser.EmailVerify && string.Equals(jwtUser.Email, dynamicName))
-            {
-                Values.Add("jwt", jwtUser);
-                return Values;
-            }
-            else
-            {
-                return Values;
-            }
+            Values.Add("jwt", jwtUser);
+            return Values;
         }
-        public async Task<Dictionary<string, object>> CheckMiddleWareJwt(HttpContext context)
+
+        return Values;
+    }
+
+    public async Task<Dictionary<string, object>> CheckMiddleWareJwt(HttpContext context)
+    {
+        var request = context.Request;
+        var jwtUser = await GetTheUserFromToken(request);
+        if (jwtUser != null && jwtUser.EmailVerify)
         {
-            var request = context.Request;
-            User? jwtUser = await GetTheUserFromToken(request);
-            if (jwtUser != null && jwtUser.EmailVerify)
-            {
-                Values.Add("jwt", jwtUser);
-                return Values;
-            }
-            else
-            {
-                return Values;
-            }
+            Values.Add("jwt", jwtUser);
+            return Values;
         }
+
+        return Values;
     }
 }

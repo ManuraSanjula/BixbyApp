@@ -1,79 +1,69 @@
-﻿namespace Bixby_web_server.Helpers
+﻿using System.Collections;
+
+namespace Bixby_web_server.Helpers;
+
+public static class NullEmptyChecker
 {
-    using System;
-    using System.Collections;
-
-    public static class NullEmptyChecker
+    public static bool HasNullEmptyValues(object? obj)
     {
-        public static bool HasNullEmptyValues(object? obj)
+        if (obj == null)
+            return true;
+
+        var type = obj.GetType();
+
+        if (type.IsClass)
         {
-            if (obj == null)
-                return true;
-
-            Type type = obj.GetType();
-
-            if (type.IsClass)
-            {
-                // Check class attributes
-                foreach (var property in type.GetProperties())
+            // Check class attributes
+            foreach (var property in type.GetProperties())
+                if (property.CanRead)
                 {
-                    if (property.CanRead)
-                    {
-                        var value = property.GetValue(obj);
-                        if (value == null || IsNullOrEmpty(value))
-                            return true;
-                    }
+                    var value = property.GetValue(obj);
+                    if (value == null || IsNullOrEmpty(value))
+                        return true;
                 }
 
-                // Check arrays
-                foreach (var field in type.GetFields())
+            // Check arrays
+            foreach (var field in type.GetFields())
+                if (field.FieldType.IsArray)
                 {
-                    if (field.FieldType.IsArray)
-                    {
-                        var array = field.GetValue(obj) as Array;
-                        if (array == null || array.Length == 0)
-                            return true;
-                    }
+                    var array = field.GetValue(obj) as Array;
+                    if (array == null || array.Length == 0)
+                        return true;
                 }
 
-                // Check dictionaries
-                foreach (var field in type.GetFields())
+            // Check dictionaries
+            foreach (var field in type.GetFields())
+                if (typeof(IDictionary).IsAssignableFrom(field.FieldType))
                 {
-                    if (typeof(IDictionary).IsAssignableFrom(field.FieldType))
-                    {
-                        var dictionary = field.GetValue(obj) as IDictionary;
-                        if (dictionary == null || dictionary.Count == 0)
-                            return true;
-                    }
+                    var dictionary = field.GetValue(obj) as IDictionary;
+                    if (dictionary == null || dictionary.Count == 0)
+                        return true;
                 }
 
-                // Check nested classes
-                foreach (var field in type.GetFields())
+            // Check nested classes
+            foreach (var field in type.GetFields())
+                if (field.FieldType.IsClass)
                 {
-                    if (field.FieldType.IsClass)
-                    {
-                        var nestedObj = field.GetValue(obj);
-                        if (HasNullEmptyValues(nestedObj))
-                            return true;
-                    }
+                    var nestedObj = field.GetValue(obj);
+                    if (HasNullEmptyValues(nestedObj))
+                        return true;
                 }
-            }
-
-            return false;
         }
 
-        private static bool IsNullOrEmpty(object value)
-        {
-            if (value == null)
-                return true;
+        return false;
+    }
 
-            if (value is string str)
-                return string.IsNullOrEmpty(str);
+    private static bool IsNullOrEmpty(object value)
+    {
+        if (value == null)
+            return true;
 
-            if (value is ICollection collection)
-                return collection.Count == 0;
+        if (value is string str)
+            return string.IsNullOrEmpty(str);
 
-            return false;
-        }
+        if (value is ICollection collection)
+            return collection.Count == 0;
+
+        return false;
     }
 }

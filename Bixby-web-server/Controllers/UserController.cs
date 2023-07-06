@@ -1,458 +1,455 @@
-﻿using Bixby_web_server.Helpers;
+﻿using System.Dynamic;
+using Bixby_web_server.Helpers;
 using Bixby_web_server.Models;
 using Bixby_web_server.Services;
+using BixbyShop_LK.Models.Comments.Services;
+using BixbyShop_LK.Models.Item.Services;
 using BixbyShop_LK.Services;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using SendGrid.Helpers.Errors.Model;
-using System.Dynamic;
-using System.Net;
-using BixbyShop_LK.Models.Comments.Services;
 using BCryptNet = BCrypt.Net.BCrypt;
-using HttpContext = Bixby_web_server.Helpers.HttpContext;
-using BixbyShop_LK.Models.Item.Services;
 
-namespace Bixby_web_server.Controllers
+namespace Bixby_web_server.Controllers;
+
+public abstract class UserController
 {
-    public abstract class UserController
+    private static readonly UserService UserService = new();
+    private static readonly ShopItemService ShopItemService = new();
+    private static readonly CommentService CommentService = new();
+    private static readonly UserShopService UserShopService = new();
+    private static readonly ProductPurchasesService productPurchasesService = new();
+
+    public static async Task HandleUpdateUserRequest(HttpContext context)
     {
-        private static readonly UserService UserService = new UserService();
-        private static readonly ShopItemService ShopItemService = new ShopItemService();
-        private static readonly CommentService CommentService = new CommentService();
-        private static readonly UserShopService UserShopService = new UserShopService();
-        private static readonly ProductPurchasesService productPurchasesService = new ProductPurchasesService();
+        if (context.Request.HttpMethod != "PUT" && context.Request.HttpMethod != "PATCH")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
 
-        public static async Task HandleUpdateUserRequest(HttpContext context)
+        var request = context.Request;
+        var checkMiddleWare = new CheckMiddleWare();
+        var jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]);
+
+        if (!jwt.ContainsKey("jwt"))
+            throw new NotFoundException(new
+                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+
+        var result = (User)jwt["jwt"];
+        if (NullEmptyChecker.HasNullEmptyValues(result))
+            throw new NotFoundException(new
+                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+
+        using var reader = new StreamReader(request.InputStream, request.ContentEncoding);
+        if (reader == null)
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        var json = await reader.ReadToEndAsync().ConfigureAwait(false);
+
+        var validateResult = await checkMiddleWare.CheckUserReq<UserReqForUpdate>(json, context.DynamicPath);
+
+        if (validateResult.ContainsKey("UserReqForUpdate") && validateResult.TryGetValue("User", out var value))
         {
-            if (context.Request.HttpMethod != "PUT" && context.Request.HttpMethod != "PATCH")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-            var request = context.Request;
-            var checkMiddleWare = new CheckMiddleWare();
-            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]);
-            
-            if (!jwt.ContainsKey("jwt")){
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
-            }
-
-            User result = (User)jwt["jwt"];
-            if (NullEmptyChecker.HasNullEmptyValues(result))
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
-
-            using var reader = new StreamReader(request.InputStream, request.ContentEncoding);
-            if(reader == null)
+            var user = (User)value;
+            if (user == null)
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-            string json = await reader.ReadToEndAsync().ConfigureAwait(false);
-
-            Dictionary<string, object> validateResult = await checkMiddleWare.CheckUserReq<UserReqForUpdate>(json, context.DynamicPath);
-
-            if (validateResult.ContainsKey("UserReqForUpdate") && validateResult.TryGetValue("User", out var value))
-            {
-                {
-                    User user = (User)value;
-                    if (user == null)
-                        throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-
-                    UserReqForUpdate userReqAndRes = (UserReqForUpdate)validateResult["UserReqForUpdate"];
-                    if (userReqAndRes == null)
-                        throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-
-                    if (!string.IsNullOrEmpty(userReqAndRes.FirstName))
-                    {
-                        user.FirstName = userReqAndRes.FirstName;
-
-                    }
-                    if (!string.IsNullOrEmpty(userReqAndRes.LastName))
-                    {
-                        user.LastName = userReqAndRes.LastName;
-
-                    }
-                    if (!string.IsNullOrEmpty(userReqAndRes.Address))
-                    {
-                        user.Address = userReqAndRes.Address;
-
-                    }
-
-                    var response = await UserService.UpdateUserAsync(user.Id, user)
-                        ? new { status = "Success", message = "User updated successfully" }
-                        : new { status = "An error occurred.", message = "BadRequest" };
-                    RedisCache.Set(user.Email, user.ToJson());
-                    await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-                }
-            }
-            else
-            {
+            var userReqAndRes = (UserReqForUpdate)validateResult["UserReqForUpdate"];
+            if (userReqAndRes == null)
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-            }
 
+            if (!string.IsNullOrEmpty(userReqAndRes.FirstName)) user.FirstName = userReqAndRes.FirstName;
+            if (!string.IsNullOrEmpty(userReqAndRes.LastName)) user.LastName = userReqAndRes.LastName;
+            if (!string.IsNullOrEmpty(userReqAndRes.Address)) user.Address = userReqAndRes.Address;
+
+            var response = await UserService.UpdateUserAsync(user.Id, user)
+                ? new { status = "Success", message = "User updated successfully" }
+                : new { status = "An error occurred.", message = "BadRequest" };
+            RedisCache.Set(user.Email, user.ToJson());
+            await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+        }
+        else
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+    }
+
+    public static async Task AddUser(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "POST")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
+
+        using var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding);
+        if (reader == null)
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        var checkMiddleWare = new CheckMiddleWare();
+        var json = await reader.ReadToEndAsync().ConfigureAwait(false);
+
+        var userCheckResult = await checkMiddleWare.CheckUserReq<UserReqForSignUp>(json, context.DynamicPath);
+
+        var userReqForSignUp = (UserReqForSignUp)userCheckResult["User"];
+        Console.WriteLine("uschwhwwbhwvgchvjwfjvjdbvjdbvjbhvvw");
+
+
+        if (NullEmptyChecker.HasNullEmptyValues(userReqForSignUp) ||
+            !userReqForSignUp.Password.Equals(userReqForSignUp.confirmNewPassword))
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        if (userReqForSignUp == null)
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        var token = await UserService.CreateNewAccountAsync(userReqForSignUp.Email, userReqForSignUp.Password,
+            userReqForSignUp.FirstName, userReqForSignUp.LastName, userReqForSignUp.Address, context.Url);
+
+        if (string.IsNullOrEmpty(token))
+            throw new BadRequestException(new { status = "An error occurred.", message = "Empty Body" }.ToJson());
+
+        var response = new
+        {
+            status = "Success",
+            message = "User added successfully",
+            token
+        };
+
+        await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
+
+    public static async Task email_verify(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
+
+        var email = context.DynamicPath?[0];
+        var token = context.DynamicPath?[1];
+
+        var user = await UserService.GetUserByEmailAsync(email);
+        if (user != null && !user.IsTokenExpired(token))
+        {
+            user.EmailVerify = true;
+            user.Tokens[token].valid = false;
+            user.Tokens.Remove(token);
+        }
+        else
+        {
+            user?.Tokens.Remove(token);
             throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
         }
 
-        public static async Task AddUser(HttpContext context)
+        if (await UserService.UpdateUserAsync(user.Id, user))
         {
-            Console.WriteLine(context.Url);
-
-            if (context.Request.HttpMethod != "POST")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-            using var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding);
-            if(reader == null)
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-
-            var checkMiddleWare = new CheckMiddleWare();
-            var json = await reader.ReadToEndAsync().ConfigureAwait(false);
-
-            Dictionary<string, object> userCheckResult = await checkMiddleWare.CheckUserReq<UserReqForSignUp>(json, context.DynamicPath);
-
-            UserReqForSignUp userReqForSignUp = (UserReqForSignUp)userCheckResult["User"];
-
-            if (NullEmptyChecker.HasNullEmptyValues(userReqForSignUp) || !userReqForSignUp.Password.Equals(userReqForSignUp.confirmNewPassword))
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-            
-            if(userReqForSignUp == null)
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-
-            var token = await UserService.CreateNewAccountAsync(userReqForSignUp.Email, userReqForSignUp.Password, userReqForSignUp.FirstName, userReqForSignUp.LastName, userReqForSignUp.Address, context.Url);
-
-            if (string.IsNullOrEmpty(token))
-                throw new BadRequestException(new { status = "An error occurred.", message = "Empty Body" }.ToJson());
-
-            var response = new
-            {
-                status = "Success",
-                message = "User added successfully",
-                token
-            };
-
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-        }
-
-        public static async Task email_verify(HttpContext context)
-        {
-            if (context.Request.HttpMethod != "GET")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-            string? email = context.DynamicPath?[0];
-            string? token = context.DynamicPath?[1];
-
-            User? user = await UserService.GetUserByEmailAsync(email);
-            if (user != null && !user.IsTokenExpired(token))
-            {
-                user.EmailVerify = true;
-                user.Tokens[token].valid = false;
-                user.Tokens.Remove(token);
-            }
-            else
-            {
-                user?.Tokens.Remove(token);
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-            }
-
-            if (await UserService.UpdateUserAsync(user.Id, user))
-            {
-                var response = new
-                {
-                    status = "Success"
-                };
-                await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-            }
-            else
-            {
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-            }
-        }
-
-        public static async Task GetUser(HttpContext context)
-        {
-            if (context.Request.HttpMethod != "GET")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-            CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
-            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]?.Trim());
-
-            if (!jwt.ContainsKey("jwt"))
-                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }.ToJson());
-            
-            User result = (User)jwt["jwt"];
-
-            if (NullEmptyChecker.HasNullEmptyValues(result))
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
-
-            dynamic user = new ExpandoObject();
-            if (result.Email != null) user.Email = result.Email;
-            user.FirstName = result.FirstName;
-            user.LastName = result.LastName;
-            user.Address = result.Address;
-            user.EmailVerify = result.EmailVerify;
-
-            var response = new
-            {
-                status = "Success",
-                body = user
-            };
-            context.ResponseContent = response.ToJson();
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-        }
-
-        public static async Task Login(HttpContext context)
-        {
-            if (context.Request.HttpMethod != "POST")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-            using var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding);
-            if(reader == null)
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-
-            string json = await reader.ReadToEndAsync().ConfigureAwait(false);
-
-            CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
-
-            Dictionary<string, object> result = await checkMiddleWare.CheckUserReq<UserLoginReq>(json, context.DynamicPath);
-
-            if (NullEmptyChecker.HasNullEmptyValues(result["User"]))
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-
-            UserLoginReq user = (UserLoginReq)result["User"];
-            string? token = await UserService.LoginAsync(user.email, user.secret, context.Url);
-
-            if (string.IsNullOrEmpty(token))
-                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }.ToJson());
-
-            var response = new
-            {
-                status = "Success",
-                message = "User logged in successfully",
-                token
-            };
-
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-        }
-
-        public static async Task ResetPasswordReq(HttpContext context)
-        {
-            if (context.Request.HttpMethod != "GET")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-            User user = await UserService.GetUserByEmailAsync(context.DynamicPath[0]);
-
-            if(user == null)
-                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
-
-            await EmailService.SendEmail(context.Url,user.Email, "Forgot Password EmailVerification to Reset Password in your Account 🙂🙂", 1, user);
-
             var response = new
             {
                 status = "Success"
             };
-
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+            await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
         }
-
-        public static async Task ResetPassword(HttpContext context)
+        else
         {
-            if (context.Request.HttpMethod != "GET")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+        }
+    }
 
-            string? email = context.DynamicPath?[0];
-            string? token = context.DynamicPath?[1];
+    public static async Task GetUser(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
 
-            User? user = await UserService.GetUserByEmailAsync(email);
+        var checkMiddleWare = new CheckMiddleWare();
+        var jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]?.Trim());
 
-            if (user == null)
-            {
-                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
-            }
+        if (!jwt.ContainsKey("jwt"))
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
+                .ToJson());
 
-            if (user.IsTokenExpired(token))
-            {
-                user.Tokens.Remove(token);
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-            }
+        var result = (User)jwt["jwt"];
+        Console.WriteLine(result);
 
-            string? password = context.Request.Headers["password"];
-            string? confirmPassword = context.Request.Headers["confirmPassword"];
+        if (!NullEmptyChecker.HasNullEmptyValues(result))
+            throw new NotFoundException(new
+                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
 
-            Console.WriteLine(password);
-            Console.WriteLine(confirmPassword);
+        dynamic user = new ExpandoObject();
+        if (result.Email != null) user.Email = result.Email;
+        user.FirstName = result.FirstName;
+        user.LastName = result.LastName;
+        user.Address = result.Address;
+        user.EmailVerify = result.EmailVerify;
 
-            if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword))
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+        var response = new
+        {
+            status = "Success",
+            body = user
+        };
+        context.ResponseContent = response.ToJson();
+        await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
 
-            if (!string.Equals(password, confirmPassword))
-            {
-                user.Tokens.Remove(token);
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-            }
+    public static async Task Login(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "POST")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
 
-            string encryptedPassword = BCryptNet.HashPassword(password);
+        using var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding);
+        if (reader == null)
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
-            if (!BCryptNet.Verify(password, encryptedPassword))
-            {
-                user.Tokens.Remove(token);
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-            }
+        var json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
-            user.Password = encryptedPassword;
+        var checkMiddleWare = new CheckMiddleWare();
+
+        var result = await checkMiddleWare.CheckUserReq<UserLoginReq>(json, context.DynamicPath);
+
+        if (NullEmptyChecker.HasNullEmptyValues(result["User"]))
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        var user = (UserLoginReq)result["User"];
+        var token = await UserService.LoginAsync(user.email, user.secret, context.Url);
+
+        if (string.IsNullOrEmpty(token))
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }.ToJson());
+
+        var response = new
+        {
+            status = "Success",
+            message = "User logged in successfully",
+            token
+        };
+
+        await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
+
+    public static async Task ResetPasswordReq(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
+
+        var user = await UserService.GetUserByEmailAsync(context.DynamicPath[0]);
+
+        if (user == null)
+            throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+
+        await EmailService.SendEmail(context.Url, user.Email,
+            "Forgot Password EmailVerification to Reset Password in your Account 🙂🙂", 1, user);
+
+        var response = new
+        {
+            status = "Success"
+        };
+
+        await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
+
+    public static async Task ResetPassword(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
+
+        var email = context.DynamicPath?[0];
+        var token = context.DynamicPath?[1];
+
+        var user = await UserService.GetUserByEmailAsync(email);
+
+        if (user == null)
+            throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+
+        if (user.IsTokenExpired(token))
+        {
             user.Tokens.Remove(token);
-
-            if (await UserService.UpdateUserAsync(user.Id, user) == false)
-                throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-
-            var response = new { status = "Success" };
-
-            await EmailService.SendEmail(context.Url,user.Email, "Successfully Reset The Password of Your Account 🙂🙂", 2, user);
-
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
         }
 
-        internal static async Task GettingAllUserProducts(HttpContext context)
+        var password = context.Request.Headers["password"];
+        var confirmPassword = context.Request.Headers["confirmPassword"];
+
+        Console.WriteLine(password);
+        Console.WriteLine(confirmPassword);
+
+        if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword))
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        if (!string.Equals(password, confirmPassword))
         {
-            if (context.Request.HttpMethod != "GET")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-            
-            string? email = context.DynamicPath?[0];
-            User? user = await UserService.GetUserByEmailAsync(email);
-
-            if (user == null)
-            {
-                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
-            }
-            List<UserShop> userProducts = await UserShopService.GetProductByUserEmail(user.Email);
-            if(userProducts.IsNullOrEmpty())
-            {
-                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
-            }
-            
-            var response = new {
-                status = "Success",
-                allTheProducts = userProducts
-            };
-            context.ResponseContent = response.ToJson();
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-
+            user.Tokens.Remove(token);
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
         }
 
-        public static async Task GetUserComment(HttpContext context)
+        var encryptedPassword = BCryptNet.HashPassword(password);
+
+        if (!BCryptNet.Verify(password, encryptedPassword))
         {
-            if (context.Request.HttpMethod != "GET")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-            
-            string? email = context.DynamicPath?[0];
-            if(RedisCache.Get("comment-user-" + email) !=null)
-                await context.WriteResponse(RedisCache.Get("comment-user-" + email), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-
-            User? user = await UserService.GetUserByEmailAsync(email);
-
-            if (user == null)
-            {
-                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
-            }
-
-            List<Comment> comments = CommentService.GetAllCommentsByUserName(user.Id);
-            if(comments.IsNullOrEmpty())
-            {
-                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
-            }
-            var response = new {
-                status = "Success",
-                comments
-            };
-            context.ResponseContent = response.ToJson();
-            RedisCache.Set("comment-user-" + user.Email, response.ToJson());
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+            user.Tokens.Remove(token);
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
         }
 
-        public static async Task RemoveUserProduct(HttpContext context)
+        user.Password = encryptedPassword;
+        user.Tokens.Remove(token);
+
+        if (await UserService.UpdateUserAsync(user.Id, user) == false)
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        var response = new { status = "Success" };
+
+        await EmailService.SendEmail(context.Url, user.Email, "Successfully Reset The Password of Your Account 🙂🙂", 2,
+            user);
+
+        await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
+
+    internal static async Task GettingAllUserProducts(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
+
+        var email = context.DynamicPath?[0];
+        var user = await UserService.GetUserByEmailAsync(email);
+
+        if (user == null)
+            throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+        var userProducts = await UserShopService.GetProductByUserEmail(user.Email);
+        if (userProducts.IsNullOrEmpty())
+            throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+
+        var response = new
         {
-            if (context.Request.HttpMethod != "DELETE")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
+            status = "Success",
+            allTheProducts = userProducts
+        };
+        context.ResponseContent = response.ToJson();
+        await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
 
-            string? email = context.DynamicPath?[0];
-            string? shopId = context.DynamicPath?[1];
+    public static async Task GetUserComment(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
 
-            CheckMiddleWare checkMiddleWare = new CheckMiddleWare();
-            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJwt(context, email?.Trim());
+        var email = context.DynamicPath?[0];
+        if (RedisCache.Get("comment-user-" + email) != null)
+            await context.WriteResponse(RedisCache.Get("comment-user-" + email), "application/json")
+                .ConfigureAwait(false);
 
-            if (!jwt.ContainsKey("jwt"))
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+        var user = await UserService.GetUserByEmailAsync(email);
 
-            User result = (User)jwt["jwt"];
-            ShopItem shopItem = await ShopItemService.GetShopItemByIdAsync(new ObjectId(shopId));
-            if (shopItem == null) throw new NotFoundException(new { status = "An error occurred.", message = "NotFound Exception" }.ToJson());
+        if (user == null)
+            throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
 
-            var user = await UserService.GetUserByEmailAsync(email);
-            if (user == null) throw new NotFoundException(new { status = "An error occurred.", message = "NotFound Exception" }.ToJson());
-
-            if (NullEmptyChecker.HasNullEmptyValues(result))
-                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
-                    .ToJson());
-
-            if (!object.Equals(user, result))
-                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
-                    .ToJson());
-
-            if (user.Email != null && shopItem.Id != null)
-            {
-                await UserShopService.DeleteProductByEmailAndShopId(user.Email, shopItem.Id);
-                await ShopItemService.DeleteShopItemAsync(shopItem.Id);
-            }
-
-            var response = new {
-                status = "Success",
-            };
-            RedisCache.Remove("all-items");
-            RedisCache.Remove("item-" + shopId);
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-        }
-
-        public static async Task SeePurchase(HttpContext context)
+        var comments = CommentService.GetAllCommentsByUserName(user.Id);
+        if (comments.IsNullOrEmpty())
+            throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+        var response = new
         {
-            var request = context.Request;
-            var checkMiddleWare = new CheckMiddleWare();
-            Dictionary<string, object> jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]);
+            status = "Success",
+            comments
+        };
+        context.ResponseContent = response.ToJson();
+        RedisCache.Set("comment-user-" + user.Email, response.ToJson());
+        await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
 
-            if (!jwt.ContainsKey("jwt"))
-            {
-                throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }.ToJson());
-            }
+    public static async Task RemoveUserProduct(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "DELETE")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
 
-            User result = (User)jwt["jwt"];
-            if (NullEmptyChecker.HasNullEmptyValues(result))
-                throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+        var email = context.DynamicPath?[0];
+        var shopId = context.DynamicPath?[1];
 
-            if(RedisCache.Get("User-SeePurchase-" + result.Email) != null)
-                await context.WriteResponse(RedisCache.Get("User-SeePurchase-" + result.Email), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+        var checkMiddleWare = new CheckMiddleWare();
+        var jwt = await checkMiddleWare.CheckMiddleWareJwt(context, email?.Trim());
 
-            List<ProductPurchases> productPurchases = await productPurchasesService.GetProductPurchasesByOwnerIdAsync(result.Email);
-            var response = new
-            {
-                status = "Success",
-                productPurchases
-            };
-            context.ResponseContent = response.ToJson();
-            RedisCache.Set("User-SeePurchase-" + result.Email, response.ToJson());
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
-        }
+        if (!jwt.ContainsKey("jwt"))
+            throw new NotFoundException(new
+                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
 
-        internal static async Task EmailVerificationReq(HttpContext context)
+        var result = (User)jwt["jwt"];
+        var shopItem = await ShopItemService.GetShopItemByIdAsync(new ObjectId(shopId));
+        if (shopItem == null)
+            throw new NotFoundException(new { status = "An error occurred.", message = "NotFound Exception" }.ToJson());
+
+        var user = await UserService.GetUserByEmailAsync(email);
+        if (user == null)
+            throw new NotFoundException(new { status = "An error occurred.", message = "NotFound Exception" }.ToJson());
+
+        if (NullEmptyChecker.HasNullEmptyValues(result))
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
+                .ToJson());
+
+        if (!Equals(user, result))
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
+                .ToJson());
+
+        if (user.Email != null && shopItem.Id != null)
         {
-            if (context.Request.HttpMethod != "GET")
-                throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-            User user = await UserService.GetUserByEmailAsync(context.DynamicPath[0]);
-
-            if (user == null)
-                throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
-
-            await EmailService.SendEmail(context.Url,user.Email, "Email Verification Code for Your Account 🙂🙂", 0, user);
-
-            var response = new
-            {
-                status = "Success"
-            };
-
-            await context.WriteResponse(response.ToJson(), "application/json", HttpStatusCode.OK).ConfigureAwait(false);
+            await UserShopService.DeleteProductByEmailAndShopId(user.Email, shopItem.Id);
+            await ShopItemService.DeleteShopItemAsync(shopItem.Id);
         }
+
+        var response = new
+        {
+            status = "Success"
+        };
+        RedisCache.Remove("all-items");
+        RedisCache.Remove("item-" + shopId);
+        await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
+
+    public static async Task SeePurchase(HttpContext context)
+    {
+        var request = context.Request;
+        var checkMiddleWare = new CheckMiddleWare();
+        var jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]);
+
+        if (!jwt.ContainsKey("jwt"))
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
+                .ToJson());
+
+        var result = (User)jwt["jwt"];
+        if (NullEmptyChecker.HasNullEmptyValues(result))
+            throw new NotFoundException(new
+                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+
+        if (RedisCache.Get("User-SeePurchase-" + result.Email) != null)
+            await context.WriteResponse(RedisCache.Get("User-SeePurchase-" + result.Email), "application/json")
+                .ConfigureAwait(false);
+
+        var productPurchases = await productPurchasesService.GetProductPurchasesByOwnerIdAsync(result.Email);
+        var response = new
+        {
+            status = "Success",
+            productPurchases
+        };
+        context.ResponseContent = response.ToJson();
+        RedisCache.Set("User-SeePurchase-" + result.Email, response.ToJson());
+        await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
+
+    internal static async Task EmailVerificationReq(HttpContext context)
+    {
+        if (context.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
+
+        var user = await UserService.GetUserByEmailAsync(context.DynamicPath[0]);
+
+        if (user == null)
+            throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+
+        await EmailService.SendEmail(context.Url, user.Email, "Email Verification Code for Your Account 🙂🙂", 0, user);
+
+        var response = new
+        {
+            status = "Success"
+        };
+
+        await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
     }
 }

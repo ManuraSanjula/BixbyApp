@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "7uOMjXQh/bvwtvzKZd0rX/OIaqbpC8fBiDVXXFAWSIwTVQtuvO/5R39i46Qo7OuGdAVD7jUR93HyXqVaxd3ilw==",
+  "dgSpecHash": "d1Nes47FNtFpsI+pWELK9rNVSm9C6jnC+rnxk3vmMTQpWtmok91bwcRpjsozuCIp512HBMTM09yP7D30dneZqA==",
   "success": true,
   "projectFilePath": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Bixbu-UI\\Bixby-UI.csproj",
   "expectedPackageFiles": [
@@ -17,6 +17,7 @@
     "C:\\Users\\MSI\\.nuget\\packages\\dapper\\2.0.143\\dapper.2.0.143.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\dnsclient\\1.6.1\\dnsclient.1.6.1.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\entityframework\\6.4.4\\entityframework.6.4.4.nupkg.sha512",
+    "C:\\Users\\MSI\\.nuget\\packages\\imageresizer\\4.2.8\\imageresizer.4.2.8.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\mailkit\\4.1.0\\mailkit.4.1.0.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\materialskin.2\\2.3.1\\materialskin.2.2.3.1.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\metromodernui\\1.4.0\\metromodernui.1.4.0.nupkg.sha512",
@@ -221,6 +222,16 @@
       "warningLevel": 1,
       "message": "Package 'BCrypt 1.0.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net6.0-windows7.0'. This package may not be fully compatible with your project.",
       "libraryId": "BCrypt",
+      "targetGraphs": [
+        "net6.0-windows7.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'ImageResizer 4.2.8' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net6.0-windows7.0'. This package may not be fully compatible with your project.",
+      "libraryId": "ImageResizer",
       "targetGraphs": [
         "net6.0-windows7.0"
       ]

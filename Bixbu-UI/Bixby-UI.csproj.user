@@ -4,7 +4,7 @@
     <Compile Update="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Image.cs">
+    <Compile Update="ImageDetail.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Update="LoadingScreen\LoadingForm.cs">

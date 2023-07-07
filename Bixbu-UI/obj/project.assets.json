@@ -209,6 +209,19 @@
           "buildTransitive/netcoreapp3.0/EntityFramework.targets": {}
         }
       },
+      "ImageResizer/4.2.8": {
+        "type": "package",
+        "compile": {
+          "lib/net45/ImageResizer.dll": {
+            "related": ".XML"
+          }
+        },
+        "runtime": {
+          "lib/net45/ImageResizer.dll": {
+            "related": ".XML"
+          }
+        }
+      },
       "MailKit/4.1.0": {
         "type": "package",
         "dependencies": {
@@ -3988,6 +4001,19 @@
         "tools/netcoreapp3.0/any/ef6.dll",
         "tools/netcoreapp3.0/any/ef6.pdb",
         "tools/netcoreapp3.0/any/ef6.runtimeconfig.json"
+      ]
+    },
+    "ImageResizer/4.2.8": {
+      "sha512": "3OZKxlsyYr9Zxsz0KwXJ5S749azmjcPV4B344ssR/3oneEY6ZdTawDPochD4Z4RHBs4bYBf592lVhmEngxtZ7g==",
+      "type": "package",
+      "path": "imageresizer/4.2.8",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "imageresizer.4.2.8.nupkg.sha512",
+        "imageresizer.nuspec",
+        "lib/net45/ImageResizer.XML",
+        "lib/net45/ImageResizer.dll"
       ]
     },
     "MailKit/4.1.0": {
@@ -10254,6 +10280,7 @@
       "Bixby-web-server >= 1.0.0",
       "Dapper >= 2.0.143",
       "EntityFramework >= 6.4.4",
+      "ImageResizer >= 4.2.8",
       "MaterialSkin.2 >= 2.3.1",
       "MetroModernUI >= 1.4.0",
       "System.Data.SQLite >= 1.0.118",
@@ -10321,6 +10348,10 @@
             "target": "Package",
             "version": "[6.4.4, )"
           },
+          "ImageResizer": {
+            "target": "Package",
+            "version": "[4.2.8, )"
+          },
           "MaterialSkin.2": {
             "target": "Package",
             "version": "[2.3.1, )"
@@ -10372,6 +10403,16 @@
       "warningLevel": 1,
       "message": "Package 'BCrypt 1.0.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net6.0-windows7.0'. This package may not be fully compatible with your project.",
       "libraryId": "BCrypt",
+      "targetGraphs": [
+        "net6.0-windows7.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'ImageResizer 4.2.8' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net6.0-windows7.0'. This package may not be fully compatible with your project.",
+      "libraryId": "ImageResizer",
       "targetGraphs": [
         "net6.0-windows7.0"
       ]

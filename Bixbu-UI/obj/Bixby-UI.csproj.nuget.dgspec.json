@@ -60,6 +60,10 @@
               "target": "Package",
               "version": "[6.4.4, )"
             },
+            "ImageResizer": {
+              "target": "Package",
+              "version": "[4.2.8, )"
+            },
             "MaterialSkin.2": {
               "target": "Package",
               "version": "[2.3.1, )"

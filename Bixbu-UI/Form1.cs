@@ -12,6 +12,8 @@ using Amazon.S3.Model;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using Bixbu_UI.LoadingScreen;
+using System.Windows.Forms;
+using Braintree;
 
 namespace Bixbu_UI;
 
@@ -29,7 +31,8 @@ public partial class BixbyApp : MaterialForm
     private PictureBox pb;
 
     private readonly List<ShopAllShopItem> shopAllShopItems = new();
-
+    private List<String> re_sized_images = new List<string>();
+    private List<String> original_images = new List<string>();
     public BixbyApp()
     {
         InitializeComponent();
@@ -159,36 +162,6 @@ public partial class BixbyApp : MaterialForm
     {
         base.OnResize(e);
         this.Size = new System.Drawing.Size(1268, 758);
-    }
-
-
-    private void Button_MouseClick(object sender, MouseEventArgs e)
-    {
-        if (e.Button == MouseButtons.Right)
-        {
-            CustomImage button = (CustomImage)sender;
-
-            // Create a ContextMenuStrip
-            ContextMenuStrip contextMenuStrip = new ContextMenuStrip();
-
-            // Add menu items
-            ToolStripMenuItem menuItem1 = new ToolStripMenuItem("Menu Item 1");
-            ToolStripMenuItem menuItem2 = new ToolStripMenuItem("Menu Item 2");
-            ToolStripMenuItem menuItem3 = new ToolStripMenuItem("Menu Item 3");
-
-            // Attach click event handlers for the menu items
-            menuItem1.Click += MenuItem_Click;
-            menuItem2.Click += MenuItem_Click;
-            menuItem3.Click += MenuItem_Click;
-
-            // Add menu items to the ContextMenuStrip
-            contextMenuStrip.Items.Add(menuItem1);
-            contextMenuStrip.Items.Add(menuItem2);
-            contextMenuStrip.Items.Add(menuItem3);
-
-            // Show the ContextMenuStrip at the mouse position
-            contextMenuStrip.Show(button, e.Location);
-        }
     }
 
     private void MenuItem_Click(object sender, EventArgs e)
@@ -368,7 +341,7 @@ public partial class BixbyApp : MaterialForm
     {
     }
 
-    private async void UploadToS3(string filePath)
+    private async void UploadToS3(string filePath, string type, List<String> images)
     {
         var s3Client = new AmazonS3Client(AccessKey, SecretKey, Amazon.RegionEndpoint.APSouth1);
 
@@ -392,20 +365,27 @@ public partial class BixbyApp : MaterialForm
             // Get the URL of the uploaded image
             string imageUrl = $"https://{BucketName}.s3.amazonaws.com/{key}";
 
-            var client = new HttpClient();
-            String email = Properties.Settings.Default.Email;
-            var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/user/{email}/add/image");
-            request.Headers.Add("img", $"{imageUrl}");
-            var response = await client.SendAsync(request);
-            HttpResponseMessage httpResponseMessage = response.EnsureSuccessStatusCode();
-            if (httpResponseMessage.IsSuccessStatusCode)
+            if (type == "user")
             {
-                MessageBox.Show("Okay");
-                materialTabControl1.SelectedIndex = 0;
+                var client = new HttpClient();
+                String email = Properties.Settings.Default.Email;
+                var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/user/{email}/add/image");
+                request.Headers.Add("img", $"{imageUrl}");
+                var response = await client.SendAsync(request);
+                HttpResponseMessage httpResponseMessage = response.EnsureSuccessStatusCode();
+                if (httpResponseMessage.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Okay");
+                    materialTabControl1.SelectedIndex = 0;
+                }
+                else
+                {
+                    MessageBox.Show("Not Okay");
+                }
             }
-            else
+            else if (type == "food-images")
             {
-                MessageBox.Show("Not Okay");
+                images.Add(imageUrl);
             }
 
         }
@@ -415,7 +395,7 @@ public partial class BixbyApp : MaterialForm
         }
     }
 
-    private void ResizeImage(string sourceFilePath, string destFilePath, int maxWidth, int maxHeight)
+    public void ResizeImage(string sourceFilePath, string destFilePath, int maxWidth, int maxHeight)
     {
         using (Image sourceImage = Image.FromFile(sourceFilePath))
         {
@@ -480,7 +460,7 @@ public partial class BixbyApp : MaterialForm
             }
 
             // Upload the processed image to AWS S3
-            UploadToS3(processedFilePath);
+            UploadToS3(processedFilePath, "user", null);
 
             // Clean up the processed image file
             File.Delete(processedFilePath);
@@ -522,7 +502,7 @@ public partial class BixbyApp : MaterialForm
         ResizeImage(filePath, resizedFilePath, 800, 600);
 
         // Upload the resized image to S3
-        UploadToS3(resizedFilePath);
+        UploadToS3(resizedFilePath, "user", null);
 
         // Clean up
         File.Delete(resizedFilePath);
@@ -627,6 +607,123 @@ public partial class BixbyApp : MaterialForm
         Blur();
         SingUp.Show();
         UnBlur();
+    }
+
+    private void UploadImages_Click(object sender, EventArgs e)
+    {
+        openFileDialog.Multiselect = true;
+        openFileDialog.Filter = "Image Files (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png";
+
+        if (openFileDialog.ShowDialog() == DialogResult.OK)
+        {
+            string[] imagePaths = openFileDialog.FileNames;
+
+            DisplayImages(imagePaths);
+        }
+    }
+
+    private void DisplayImages(string[] imagePaths)
+    {
+        flowLayoutPanel1.AutoScroll = true;
+        flowLayoutPanel1.WrapContents = false;
+        flowLayoutPanel1.Padding = new Padding(10);
+        flowLayoutPanel1.FlowDirection = FlowDirection.LeftToRight;
+
+        foreach (string imagePath in imagePaths)
+        {
+            String resizedFilePath = Path.Combine(Path.GetDirectoryName(imagePath), "resized_" + Path.GetFileName(imagePath));
+            ResizeImage(imagePath, resizedFilePath, 404, 251);
+            flowLayoutPanel1.Controls.Add(new ImageDetail(resizedFilePath));
+            re_sized_images.Add(resizedFilePath);
+            original_images.Add(imagePath);
+        }
+    }
+
+    private async void Save_Click(object sender, EventArgs e)
+    {
+      /*  if (re_sized_images.IsNullOrEmpty() || original_images.IsNullOrEmpty())
+        {
+            return;
+        }
+        List<string> re_sized_imagesDeepCopy = new List<string>();
+        List<string> original_imagesDeepCopy = new List<string>();*/
+        //        File.Delete(resizedFilePath);
+
+       /* re_sized_images.ForEach(image =>
+        {
+            UploadToS3(image, "food-images", re_sized_imagesDeepCopy);
+        });
+
+        original_images.ForEach(image =>
+        {
+            UploadToS3(image, "food-images", original_imagesDeepCopy);
+        });*/
+
+        String token = Properties.Settings.Default.TokenValue;
+        String email = Properties.Settings.Default.Email;
+
+        try
+        {
+
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Post, $"http://localhost:8080/{email}/add-shop-item");
+            request.Headers.Add("Authorization", $"Bearer {token}");
+
+            String item_name = ItemName.Text;
+            String description = Description.Text;
+            int price = int.Parse(Price.Text);
+
+            var content = new
+            {
+                name = item_name,
+                description,
+                price,
+               /* picsLowRes = re_sized_imagesDeepCopy.ToArray(),
+                picsHighRes = original_imagesDeepCopy.ToArray(),*/
+            };
+
+            var json = JsonConvert.SerializeObject(content);
+            var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
+            request.Content = stringContent;
+
+            var response = await client.SendAsync(request);
+            HttpResponseMessage httpResponseMessage = response.EnsureSuccessStatusCode();
+
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                var jsonResult = await response.Content.ReadAsStringAsync();
+                var jObject = JObject.Parse(jsonResult);
+                var status = jObject["status"]?.Value<string>();
+
+                if (status != null)
+                    switch (status)
+                    {
+                        case "Success":
+                            Invoke(() =>
+                            {
+                                MessageBox.Show("Success");
+                                materialTabControl1.SelectedIndex = 0;
+                            });
+                            break;
+                        case "An error occurred.":
+                            Invoke(new Action(() => MessageBox.Show("Try Again FUCK ING "))); // Invoke on UI thread
+                            break;
+                    }
+                else
+                    Invoke(new Action(() => MessageBox.Show("Try Again FUCK")));
+                return;
+            }
+            else
+            {
+                Invoke(new Action(() => MessageBox.Show("Try Again FUCK 2")));
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Invoke(new Action(() => MessageBox.Show(ex.Message)));
+            return;
+        }
     }
 }
 

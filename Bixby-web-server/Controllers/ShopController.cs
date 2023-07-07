@@ -150,20 +150,21 @@ public abstract class ShopController
                 { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
         var checkMiddleWare = new CheckMiddleWare();
-
-        var jwt =
-            await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]);
-
+        var jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]?.Trim());
         if (!jwt.ContainsKey("jwt"))
-            throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
                 .ToJson());
 
-        if (NullEmptyChecker.HasNullEmptyValues(jwt["jwt"]))
-            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized" }
-                .ToJson());
+        var result = (User)jwt["jwt"];
+
+        if (!NullEmptyChecker.HasNullEmptyValues(result))
+            throw new NotFoundException(new
+                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+
 
         var json = await new StreamReader(context.Request.InputStream, context.Request.ContentEncoding)
             .ReadToEndAsync().ConfigureAwait(false);
+        
         var validateResult =
             await checkMiddleWare.CheckUserReq<ShopItemeq>(json, context.DynamicPath);
 

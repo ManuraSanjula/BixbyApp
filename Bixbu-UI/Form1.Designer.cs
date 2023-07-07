@@ -62,13 +62,13 @@ partial class BixbyApp
         flowLayoutPanel1 = new FlowLayoutPanel();
         metroLabel7 = new MetroFramework.Controls.MetroLabel();
         metroLabel6 = new MetroFramework.Controls.MetroLabel();
-        metroLabel5 = new MetroFramework.Controls.MetroLabel();
         Price = new MaterialSkin.Controls.MaterialTextBox2();
         Description = new MaterialSkin.Controls.MaterialTextBox2();
         ItemName = new MaterialSkin.Controls.MaterialTextBox2();
         pictureBox5 = new PictureBox();
         button3 = new Button();
         button4 = new Button();
+        metroLabel5 = new MetroFramework.Controls.MetroLabel();
         materialTabControl1.SuspendLayout();
         Home.SuspendLayout();
         panel2.SuspendLayout();
@@ -516,12 +516,12 @@ partial class BixbyApp
         // 
         // panel5
         // 
+        panel5.Controls.Add(metroLabel5);
         panel5.Controls.Add(Save);
         panel5.Controls.Add(UploadImages);
         panel5.Controls.Add(flowLayoutPanel1);
         panel5.Controls.Add(metroLabel7);
         panel5.Controls.Add(metroLabel6);
-        panel5.Controls.Add(metroLabel5);
         panel5.Controls.Add(Price);
         panel5.Controls.Add(Description);
         panel5.Controls.Add(ItemName);
@@ -544,6 +544,7 @@ partial class BixbyApp
         Save.UseCustomForeColor = true;
         Save.UseSelectable = true;
         Save.UseStyleColors = true;
+        Save.Click += Save_Click;
         // 
         // UploadImages
         // 
@@ -558,6 +559,7 @@ partial class BixbyApp
         UploadImages.UseCustomForeColor = true;
         UploadImages.UseSelectable = true;
         UploadImages.UseStyleColors = true;
+        UploadImages.Click += UploadImages_Click;
         // 
         // flowLayoutPanel1
         // 
@@ -575,12 +577,8 @@ partial class BixbyApp
         metroLabel7.Location = new Point(62, 238);
         metroLabel7.Name = "metroLabel7";
         metroLabel7.Size = new Size(54, 25);
-        metroLabel7.Style = MetroFramework.MetroColorStyle.Blue;
         metroLabel7.TabIndex = 5;
         metroLabel7.Text = "Price";
-        metroLabel7.UseCustomBackColor = true;
-        metroLabel7.UseCustomForeColor = true;
-        metroLabel7.UseStyleColors = true;
         // 
         // metroLabel6
         // 
@@ -591,28 +589,8 @@ partial class BixbyApp
         metroLabel6.Location = new Point(62, 133);
         metroLabel6.Name = "metroLabel6";
         metroLabel6.Size = new Size(153, 25);
-        metroLabel6.Style = MetroFramework.MetroColorStyle.Blue;
         metroLabel6.TabIndex = 4;
         metroLabel6.Text = "Item Description";
-        metroLabel6.UseCustomBackColor = true;
-        metroLabel6.UseCustomForeColor = true;
-        metroLabel6.UseStyleColors = true;
-        // 
-        // metroLabel5
-        // 
-        metroLabel5.AutoSize = true;
-        metroLabel5.FontSize = MetroFramework.MetroLabelSize.Tall;
-        metroLabel5.FontWeight = MetroFramework.MetroLabelWeight.Bold;
-        metroLabel5.LabelMode = MetroFramework.Controls.MetroLabelMode.Selectable;
-        metroLabel5.Location = new Point(62, 28);
-        metroLabel5.Name = "metroLabel5";
-        metroLabel5.Size = new Size(98, 25);
-        metroLabel5.Style = MetroFramework.MetroColorStyle.Blue;
-        metroLabel5.TabIndex = 3;
-        metroLabel5.Text = "Item Price";
-        metroLabel5.UseCustomBackColor = true;
-        metroLabel5.UseCustomForeColor = true;
-        metroLabel5.UseStyleColors = true;
         // 
         // Price
         // 
@@ -740,6 +718,17 @@ partial class BixbyApp
         button4.UseVisualStyleBackColor = true;
         button4.Click += button4_Click;
         // 
+        // metroLabel5
+        // 
+        metroLabel5.AutoSize = true;
+        metroLabel5.FontSize = MetroFramework.MetroLabelSize.Tall;
+        metroLabel5.FontWeight = MetroFramework.MetroLabelWeight.Bold;
+        metroLabel5.Location = new Point(62, 28);
+        metroLabel5.Name = "metroLabel5";
+        metroLabel5.Size = new Size(106, 25);
+        metroLabel5.TabIndex = 9;
+        metroLabel5.Text = "Item Name";
+        // 
         // BixbyApp
         // 
         AutoScaleMode = AutoScaleMode.None;
@@ -809,8 +798,8 @@ partial class BixbyApp
     private MaterialSkin.Controls.MaterialTextBox2 Description;
     private MetroFramework.Controls.MetroLabel metroLabel7;
     private MetroFramework.Controls.MetroLabel metroLabel6;
-    private MetroFramework.Controls.MetroLabel metroLabel5;
     private FlowLayoutPanel flowLayoutPanel1;
     private MetroFramework.Controls.MetroButton Save;
     private MetroFramework.Controls.MetroButton UploadImages;
+    private MetroFramework.Controls.MetroLabel metroLabel5;
 }

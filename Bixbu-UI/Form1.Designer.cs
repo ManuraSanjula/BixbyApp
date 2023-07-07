@@ -54,6 +54,21 @@ partial class BixbyApp
         button1 = new Button();
         button2 = new Button();
         Settings = new TabPage();
+        AddProducts = new TabPage();
+        panel4 = new Panel();
+        panel5 = new Panel();
+        Save = new MetroFramework.Controls.MetroButton();
+        UploadImages = new MetroFramework.Controls.MetroButton();
+        flowLayoutPanel1 = new FlowLayoutPanel();
+        metroLabel7 = new MetroFramework.Controls.MetroLabel();
+        metroLabel6 = new MetroFramework.Controls.MetroLabel();
+        metroLabel5 = new MetroFramework.Controls.MetroLabel();
+        Price = new MaterialSkin.Controls.MaterialTextBox2();
+        Description = new MaterialSkin.Controls.MaterialTextBox2();
+        ItemName = new MaterialSkin.Controls.MaterialTextBox2();
+        pictureBox5 = new PictureBox();
+        button3 = new Button();
+        button4 = new Button();
         materialTabControl1.SuspendLayout();
         Home.SuspendLayout();
         panel2.SuspendLayout();
@@ -63,6 +78,10 @@ partial class BixbyApp
         panel3.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)pictureBox4).BeginInit();
         ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+        AddProducts.SuspendLayout();
+        panel4.SuspendLayout();
+        panel5.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)pictureBox5).BeginInit();
         SuspendLayout();
         // 
         // materialTabControl1
@@ -70,6 +89,7 @@ partial class BixbyApp
         materialTabControl1.Controls.Add(Home);
         materialTabControl1.Controls.Add(Account);
         materialTabControl1.Controls.Add(Settings);
+        materialTabControl1.Controls.Add(AddProducts);
         materialTabControl1.Depth = 0;
         materialTabControl1.Dock = DockStyle.Fill;
         materialTabControl1.Location = new Point(3, 64);
@@ -470,6 +490,256 @@ partial class BixbyApp
         Settings.Text = "Settings";
         Settings.UseVisualStyleBackColor = true;
         // 
+        // AddProducts
+        // 
+        AddProducts.Controls.Add(panel4);
+        AddProducts.Location = new Point(4, 24);
+        AddProducts.Name = "AddProducts";
+        AddProducts.Padding = new Padding(3);
+        AddProducts.Size = new Size(1252, 664);
+        AddProducts.TabIndex = 4;
+        AddProducts.Text = "Add Products";
+        AddProducts.UseVisualStyleBackColor = true;
+        // 
+        // panel4
+        // 
+        panel4.BackColor = Color.White;
+        panel4.Controls.Add(panel5);
+        panel4.Controls.Add(pictureBox5);
+        panel4.Controls.Add(button3);
+        panel4.Controls.Add(button4);
+        panel4.Dock = DockStyle.Fill;
+        panel4.Location = new Point(3, 3);
+        panel4.Name = "panel4";
+        panel4.Size = new Size(1246, 658);
+        panel4.TabIndex = 3;
+        // 
+        // panel5
+        // 
+        panel5.Controls.Add(Save);
+        panel5.Controls.Add(UploadImages);
+        panel5.Controls.Add(flowLayoutPanel1);
+        panel5.Controls.Add(metroLabel7);
+        panel5.Controls.Add(metroLabel6);
+        panel5.Controls.Add(metroLabel5);
+        panel5.Controls.Add(Price);
+        panel5.Controls.Add(Description);
+        panel5.Controls.Add(ItemName);
+        panel5.Dock = DockStyle.Fill;
+        panel5.Location = new Point(0, 0);
+        panel5.Name = "panel5";
+        panel5.Size = new Size(1246, 658);
+        panel5.TabIndex = 3;
+        // 
+        // Save
+        // 
+        Save.Highlight = true;
+        Save.Location = new Point(882, 47);
+        Save.Name = "Save";
+        Save.Size = new Size(153, 36);
+        Save.Style = MetroFramework.MetroColorStyle.Blue;
+        Save.TabIndex = 8;
+        Save.Text = "Save";
+        Save.UseCustomBackColor = true;
+        Save.UseCustomForeColor = true;
+        Save.UseSelectable = true;
+        Save.UseStyleColors = true;
+        // 
+        // UploadImages
+        // 
+        UploadImages.Highlight = true;
+        UploadImages.Location = new Point(1076, 47);
+        UploadImages.Name = "UploadImages";
+        UploadImages.Size = new Size(153, 36);
+        UploadImages.Style = MetroFramework.MetroColorStyle.Blue;
+        UploadImages.TabIndex = 7;
+        UploadImages.Text = "UploadImages";
+        UploadImages.UseCustomBackColor = true;
+        UploadImages.UseCustomForeColor = true;
+        UploadImages.UseSelectable = true;
+        UploadImages.UseStyleColors = true;
+        // 
+        // flowLayoutPanel1
+        // 
+        flowLayoutPanel1.Location = new Point(51, 330);
+        flowLayoutPanel1.Name = "flowLayoutPanel1";
+        flowLayoutPanel1.Size = new Size(1167, 304);
+        flowLayoutPanel1.TabIndex = 6;
+        // 
+        // metroLabel7
+        // 
+        metroLabel7.AutoSize = true;
+        metroLabel7.FontSize = MetroFramework.MetroLabelSize.Tall;
+        metroLabel7.FontWeight = MetroFramework.MetroLabelWeight.Bold;
+        metroLabel7.LabelMode = MetroFramework.Controls.MetroLabelMode.Selectable;
+        metroLabel7.Location = new Point(62, 238);
+        metroLabel7.Name = "metroLabel7";
+        metroLabel7.Size = new Size(54, 25);
+        metroLabel7.Style = MetroFramework.MetroColorStyle.Blue;
+        metroLabel7.TabIndex = 5;
+        metroLabel7.Text = "Price";
+        metroLabel7.UseCustomBackColor = true;
+        metroLabel7.UseCustomForeColor = true;
+        metroLabel7.UseStyleColors = true;
+        // 
+        // metroLabel6
+        // 
+        metroLabel6.AutoSize = true;
+        metroLabel6.FontSize = MetroFramework.MetroLabelSize.Tall;
+        metroLabel6.FontWeight = MetroFramework.MetroLabelWeight.Bold;
+        metroLabel6.LabelMode = MetroFramework.Controls.MetroLabelMode.Selectable;
+        metroLabel6.Location = new Point(62, 133);
+        metroLabel6.Name = "metroLabel6";
+        metroLabel6.Size = new Size(153, 25);
+        metroLabel6.Style = MetroFramework.MetroColorStyle.Blue;
+        metroLabel6.TabIndex = 4;
+        metroLabel6.Text = "Item Description";
+        metroLabel6.UseCustomBackColor = true;
+        metroLabel6.UseCustomForeColor = true;
+        metroLabel6.UseStyleColors = true;
+        // 
+        // metroLabel5
+        // 
+        metroLabel5.AutoSize = true;
+        metroLabel5.FontSize = MetroFramework.MetroLabelSize.Tall;
+        metroLabel5.FontWeight = MetroFramework.MetroLabelWeight.Bold;
+        metroLabel5.LabelMode = MetroFramework.Controls.MetroLabelMode.Selectable;
+        metroLabel5.Location = new Point(62, 28);
+        metroLabel5.Name = "metroLabel5";
+        metroLabel5.Size = new Size(98, 25);
+        metroLabel5.Style = MetroFramework.MetroColorStyle.Blue;
+        metroLabel5.TabIndex = 3;
+        metroLabel5.Text = "Item Price";
+        metroLabel5.UseCustomBackColor = true;
+        metroLabel5.UseCustomForeColor = true;
+        metroLabel5.UseStyleColors = true;
+        // 
+        // Price
+        // 
+        Price.AnimateReadOnly = true;
+        Price.BackgroundImageLayout = ImageLayout.None;
+        Price.CharacterCasing = CharacterCasing.Normal;
+        Price.Depth = 0;
+        Price.Font = new Font("Microsoft Sans Serif", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
+        Price.HideSelection = true;
+        Price.LeadingIcon = null;
+        Price.Location = new Point(62, 283);
+        Price.MaxLength = 32767;
+        Price.MouseState = MaterialSkin.MouseState.OUT;
+        Price.Name = "Price";
+        Price.PasswordChar = '\0';
+        Price.PrefixSuffixText = null;
+        Price.ReadOnly = false;
+        Price.RightToLeft = RightToLeft.No;
+        Price.SelectedText = "";
+        Price.SelectionLength = 0;
+        Price.SelectionStart = 0;
+        Price.ShortcutsEnabled = true;
+        Price.ShowAssistiveText = true;
+        Price.Size = new Size(185, 52);
+        Price.TabIndex = 2;
+        Price.TabStop = false;
+        Price.Text = "Price";
+        Price.TextAlign = HorizontalAlignment.Left;
+        Price.TrailingIcon = null;
+        Price.UseAccent = false;
+        Price.UseSystemPasswordChar = false;
+        Price.UseTallSize = false;
+        // 
+        // Description
+        // 
+        Description.AnimateReadOnly = true;
+        Description.BackgroundImageLayout = ImageLayout.None;
+        Description.CharacterCasing = CharacterCasing.Normal;
+        Description.Depth = 0;
+        Description.Font = new Font("Microsoft Sans Serif", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
+        Description.HideSelection = true;
+        Description.LeadingIcon = null;
+        Description.Location = new Point(62, 169);
+        Description.MaxLength = 32767;
+        Description.MouseState = MaterialSkin.MouseState.OUT;
+        Description.Name = "Description";
+        Description.PasswordChar = '\0';
+        Description.PrefixSuffixText = null;
+        Description.ReadOnly = false;
+        Description.RightToLeft = RightToLeft.No;
+        Description.SelectedText = "";
+        Description.SelectionLength = 0;
+        Description.SelectionStart = 0;
+        Description.ShortcutsEnabled = true;
+        Description.ShowAssistiveText = true;
+        Description.Size = new Size(731, 52);
+        Description.TabIndex = 1;
+        Description.TabStop = false;
+        Description.Text = "Description";
+        Description.TextAlign = HorizontalAlignment.Left;
+        Description.TrailingIcon = null;
+        Description.UseAccent = false;
+        Description.UseSystemPasswordChar = false;
+        Description.UseTallSize = false;
+        // 
+        // ItemName
+        // 
+        ItemName.AnimateReadOnly = true;
+        ItemName.BackgroundImageLayout = ImageLayout.None;
+        ItemName.CharacterCasing = CharacterCasing.Normal;
+        ItemName.Depth = 0;
+        ItemName.Font = new Font("Microsoft Sans Serif", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
+        ItemName.HideSelection = true;
+        ItemName.LeadingIcon = null;
+        ItemName.Location = new Point(62, 69);
+        ItemName.MaxLength = 32767;
+        ItemName.MouseState = MaterialSkin.MouseState.OUT;
+        ItemName.Name = "ItemName";
+        ItemName.PasswordChar = '\0';
+        ItemName.PrefixSuffixText = null;
+        ItemName.ReadOnly = false;
+        ItemName.RightToLeft = RightToLeft.No;
+        ItemName.SelectedText = "";
+        ItemName.SelectionLength = 0;
+        ItemName.SelectionStart = 0;
+        ItemName.ShortcutsEnabled = true;
+        ItemName.ShowAssistiveText = true;
+        ItemName.Size = new Size(731, 52);
+        ItemName.TabIndex = 0;
+        ItemName.TabStop = false;
+        ItemName.Text = "ItemName";
+        ItemName.TextAlign = HorizontalAlignment.Left;
+        ItemName.TrailingIcon = null;
+        ItemName.UseAccent = false;
+        ItemName.UseSystemPasswordChar = false;
+        ItemName.UseTallSize = false;
+        // 
+        // pictureBox5
+        // 
+        pictureBox5.BackgroundImageLayout = ImageLayout.Center;
+        pictureBox5.Image = Properties.Resources.ezgif_com_webp_to_png;
+        pictureBox5.Location = new Point(373, 169);
+        pictureBox5.Name = "pictureBox5";
+        pictureBox5.Size = new Size(449, 362);
+        pictureBox5.TabIndex = 2;
+        pictureBox5.TabStop = false;
+        // 
+        // button3
+        // 
+        button3.Location = new Point(862, 28);
+        button3.Name = "button3";
+        button3.Size = new Size(173, 67);
+        button3.TabIndex = 0;
+        button3.Text = "Sign In";
+        button3.UseVisualStyleBackColor = true;
+        button3.Click += button3_Click;
+        // 
+        // button4
+        // 
+        button4.Location = new Point(1065, 28);
+        button4.Name = "button4";
+        button4.Size = new Size(173, 67);
+        button4.TabIndex = 1;
+        button4.Text = "Sign Up";
+        button4.UseVisualStyleBackColor = true;
+        button4.Click += button4_Click;
+        // 
         // BixbyApp
         // 
         AutoScaleMode = AutoScaleMode.None;
@@ -493,6 +763,11 @@ partial class BixbyApp
         panel3.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)pictureBox4).EndInit();
         ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+        AddProducts.ResumeLayout(false);
+        panel4.ResumeLayout(false);
+        panel5.ResumeLayout(false);
+        panel5.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)pictureBox5).EndInit();
         ResumeLayout(false);
     }
 
@@ -508,7 +783,6 @@ partial class BixbyApp
     private PictureBox pictureBox1;
     private Panel panel2;
     private PictureBox pictureBox2;
-    private PictureBox pictureBox3;
     private Panel panel3;
     private MetroFramework.Controls.MetroButton metroButton2;
     private MetroFramework.Controls.MetroLabel metroLabel1;
@@ -524,4 +798,19 @@ partial class BixbyApp
     private MaterialSkin.Controls.MaterialTextBox2 FirstName_txt;
     private MetroFramework.Controls.MetroLabel FirstName;
     private PictureBox pictureBox4;
+    private TabPage AddProducts;
+    private Panel panel4;
+    private PictureBox pictureBox5;
+    private Button button3;
+    private Button button4;
+    private Panel panel5;
+    private MaterialSkin.Controls.MaterialTextBox2 ItemName;
+    private MaterialSkin.Controls.MaterialTextBox2 Price;
+    private MaterialSkin.Controls.MaterialTextBox2 Description;
+    private MetroFramework.Controls.MetroLabel metroLabel7;
+    private MetroFramework.Controls.MetroLabel metroLabel6;
+    private MetroFramework.Controls.MetroLabel metroLabel5;
+    private FlowLayoutPanel flowLayoutPanel1;
+    private MetroFramework.Controls.MetroButton Save;
+    private MetroFramework.Controls.MetroButton UploadImages;
 }

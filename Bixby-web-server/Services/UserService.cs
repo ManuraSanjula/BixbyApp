@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Text.RegularExpressions;
 using Bixby_web_server.Models;
-using Bixby_web_server.Services;
+using BixbyShop_LK.Services;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -10,7 +10,7 @@ using MongoDB.Driver;
 using SendGrid;
 using BCryptNet = BCrypt.Net.BCrypt;
 
-namespace BixbyShop_LK.Services;
+namespace Bixby_web_server.Services;
 
 public class EmailServiceHelper
 {

@@ -6,7 +6,7 @@ namespace Bixby_web_server.Services;
 
 public class UserShopService
 {
-    private readonly IMongoCollection<UserShop> UserShopCollection;
+    private readonly IMongoCollection<UserShop> _userShopCollection;
 
     public UserShopService()
     {
@@ -15,7 +15,7 @@ public class UserShopService
         var client = new MongoClient(settings);
 
         var database = client.GetDatabase("BixByApp");
-        UserShopCollection = database.GetCollection<UserShop>("UserShop");
+        _userShopCollection = database.GetCollection<UserShop>("UserShop");
     }
 
     public async Task AddProduct(string? user, ObjectId shopItem)
@@ -24,42 +24,42 @@ public class UserShopService
         userShop.User = user;
         userShop.Item = shopItem;
 
-        await UserShopCollection.InsertOneAsync(userShop);
+        await _userShopCollection.InsertOneAsync(userShop);
     }
 
     public async Task ProductUpdateByItemId(ObjectId id, UserShop userShop)
     {
-        await UserShopCollection.ReplaceOneAsync(us => us.Id == id, userShop);
+        await _userShopCollection.ReplaceOneAsync(us => us.Id == id, userShop);
     }
 
     public async Task<UserShop> GetProductByItemId(ObjectId id)
     {
-        return await UserShopCollection.Find(u => u.Item == id).FirstOrDefaultAsync();
+        return await _userShopCollection.Find(u => u.Item == id).FirstOrDefaultAsync();
     }
 
     public async Task<UserShop> GetProductByUserAndShopItem(ObjectId shopItem, string email)
     {
-        return await UserShopCollection.Find(u => u.Item == shopItem && u.User == email).FirstOrDefaultAsync();
+        return await _userShopCollection.Find(u => u.Item == shopItem && u.User == email).FirstOrDefaultAsync();
     }
 
     public async Task<List<UserShop>> GetProductByUserEmail(string? email)
     {
-        return await UserShopCollection.Find(u => u.User == email).ToListAsync();
+        return await _userShopCollection.Find(u => u.User == email).ToListAsync();
     }
 
     public async Task<UserShop> GetProduct(ObjectId id)
     {
-        return await UserShopCollection.Find(u => u.Id == id).FirstOrDefaultAsync();
+        return await _userShopCollection.Find(u => u.Id == id).FirstOrDefaultAsync();
     }
 
     public async Task DeleteProductByEmailAndShopId(string email, ObjectId id)
     {
-        await UserShopCollection.DeleteOneAsync(u => u.User == email && u.Item == id);
+        await _userShopCollection.DeleteOneAsync(u => u.User == email && u.Item == id);
     }
 
     public async Task<List<UserShop>> GetAllProducts()
     {
-        return await UserShopCollection.Find(_ => true).ToListAsync();
+        return await _userShopCollection.Find(_ => true).ToListAsync();
     }
 
     public async Task<long> GetTotalOrders(ObjectId id)

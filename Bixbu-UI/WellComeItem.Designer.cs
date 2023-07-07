@@ -34,9 +34,9 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = SystemColors.ActiveCaption;
+            BackColor = Color.White;
             Name = "WellComeItem";
-            Size = new Size(252, 269);
+            Size = new Size(261, 301);
             ResumeLayout(false);
         }
 

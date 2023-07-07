@@ -153,3 +153,4 @@ C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\bin\Release\net6.0-windows\r
 C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\bin\Release\net6.0-windows\runtimes\win-x86\native\SQLite.Interop.dll
 C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\bin\Release\net6.0-windows\Dapper.dll
 C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\bin\Release\net6.0-windows\AWSSDK.S3.dll
+C:\Users\MSI\source\repos\Bixby-web-server\Bixbu-UI\obj\Release\net6.0-windows\Bixbu_UI.CustomImage.resources

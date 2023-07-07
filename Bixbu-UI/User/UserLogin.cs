@@ -24,12 +24,6 @@ public partial class UserLogin : MetroForm
             var email = textBox1.Text;
             var password = Password.Text;
 
-            if (string.IsNullOrEmpty(email))
-            {
-                MessageBox.Show(password);
-                return;
-            }
-
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
                 Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread

@@ -11,6 +11,11 @@ public class ShopItemeq
     [JsonProperty("description")] public string Description { get; set; }
 
     [JsonProperty("price")] public int Price { get; set; }
+    
+    /*public string[] PicsLowRes { get; set; } = { "default-low-res-pic.png" };
+    public string[] PicsHighRes { get; set; } = { "default-high-res-pic.png" };
+    public string PicMainHighRes { get; set; } = "default-high-res-pic.png";
+    public string PicMainLowRes { get; set; } = "default-low-res-pic.png";*/
 }
 
 public class UserInShopItem
@@ -41,8 +46,8 @@ public class ShopItem
     public int Price { get; set; }
     public string[] PicsLowRes { get; set; } = { "default-low-res-pic.png" };
     public string[] PicsHighRes { get; set; } = { "default-high-res-pic.png" };
-    public string PicHighRes { get; set; } = "default-high-res-pic.png";
-    public string PicLowRes { get; set; } = "default-low-res-pic.png";
+    public string PicMainHighRes { get; set; } = "default-high-res-pic.png";
+    public string PicMainLowRes { get; set; } = "default-low-res-pic.png";
     public UserInShopItem publish { get; set; }
     public int loveThisProduct { get; set; } = 0;
 }

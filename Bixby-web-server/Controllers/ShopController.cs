@@ -35,7 +35,7 @@ public abstract class ShopController
         {
             Id = shop.Id,
             Name = shop.Name,
-            PicLowRes = shop.PicLowRes
+            PicLowRes = shop.PicMainLowRes
         }).ToList();
 
         var response = new

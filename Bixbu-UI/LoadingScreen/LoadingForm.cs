@@ -34,7 +34,7 @@ namespace Bixbu_UI.LoadingScreen
                 byte[] imageData = webClient.DownloadData(gifUrl);
                 using (var ms = new MemoryStream(imageData))
                 {
-                    var gifImage = Image.FromStream(ms);
+                    Image gifImage = Image.FromStream(ms);
                     pictureBox.Size = gifImage.Size;
                     ClientSize = new Size(gifImage.Width, gifImage.Height);
                    

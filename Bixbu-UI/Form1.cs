@@ -116,7 +116,9 @@ public partial class BixbyApp : MaterialForm
         catch (Exception ex)
         {
             panel1.Visible = true;
+            panel4.Visible = true;
             panel3.Visible = false;
+            panel5.Visible = false;
         }
     }
 
@@ -149,7 +151,7 @@ public partial class BixbyApp : MaterialForm
 
     private void RefreshAccountTab()
     {
-       
+
     }
 
 
@@ -157,6 +159,43 @@ public partial class BixbyApp : MaterialForm
     {
         base.OnResize(e);
         this.Size = new System.Drawing.Size(1268, 758);
+    }
+
+
+    private void Button_MouseClick(object sender, MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Right)
+        {
+            CustomImage button = (CustomImage)sender;
+
+            // Create a ContextMenuStrip
+            ContextMenuStrip contextMenuStrip = new ContextMenuStrip();
+
+            // Add menu items
+            ToolStripMenuItem menuItem1 = new ToolStripMenuItem("Menu Item 1");
+            ToolStripMenuItem menuItem2 = new ToolStripMenuItem("Menu Item 2");
+            ToolStripMenuItem menuItem3 = new ToolStripMenuItem("Menu Item 3");
+
+            // Attach click event handlers for the menu items
+            menuItem1.Click += MenuItem_Click;
+            menuItem2.Click += MenuItem_Click;
+            menuItem3.Click += MenuItem_Click;
+
+            // Add menu items to the ContextMenuStrip
+            contextMenuStrip.Items.Add(menuItem1);
+            contextMenuStrip.Items.Add(menuItem2);
+            contextMenuStrip.Items.Add(menuItem3);
+
+            // Show the ContextMenuStrip at the mouse position
+            contextMenuStrip.Show(button, e.Location);
+        }
+    }
+
+    private void MenuItem_Click(object sender, EventArgs e)
+    {
+        // Handle the menu item click event
+        ToolStripMenuItem menuItem = (ToolStripMenuItem)sender;
+        MessageBox.Show("Clicked: " + menuItem.Text);
     }
 
     private async void Form1_Load(object sender, EventArgs e)
@@ -174,8 +213,15 @@ public partial class BixbyApp : MaterialForm
         String token = Properties.Settings.Default.TokenValue;
         String email = Properties.Settings.Default.Email;
 
+        flowLayoutPanel1.FlowDirection = FlowDirection.LeftToRight;
+        // Set the FlowLayoutPanel properties
+        flowLayoutPanel1.AutoScroll = true;
+        flowLayoutPanel1.WrapContents = false;
+        flowLayoutPanel1.Padding = new Padding(10); // Adjust the padding as per your requirement
+
+
         LoadingForm loadingForm = new LoadingForm("https://cdn.dribbble.com/users/295241/screenshots/4496315/loading-animation.gif");
-        loadingForm.Show(); // Display the loading form
+        loadingForm.Show();
 
         foreach (Control control in this.Controls)
         {
@@ -203,7 +249,7 @@ public partial class BixbyApp : MaterialForm
             {
                 shopAllShopItems.ForEach(item =>
                 {
-                    
+
                 });
             }
 
@@ -214,7 +260,9 @@ public partial class BixbyApp : MaterialForm
             else
             {
                 panel1.Visible = true;
+                panel4.Visible = true;
                 panel3.Visible = false;
+                panel5.Visible = false;
             }
 
             loadingForm.Close(); // Close the loading form once both requests are completed
@@ -559,6 +607,27 @@ public partial class BixbyApp : MaterialForm
         }
     }
 
+    private void button3_Click(object sender, EventArgs e)
+    {
+        var loginForm = new UserLogin();
+        loginForm.MinimizeBox = false;
+        loginForm.MaximizeBox = false;
+        loginForm.FormClosed += ChildForm_FormClosed;
+        Blur();
+        loginForm.Show();
+        UnBlur();
+    }
+
+    private void button4_Click(object sender, EventArgs e)
+    {
+        var SingUp = new SingUp();
+        SingUp.MinimizeBox = false;
+        SingUp.MaximizeBox = false;
+        SingUp.FormClosed += ChildForm_FormClosed;
+        Blur();
+        SingUp.Show();
+        UnBlur();
+    }
 }
 
 public class BitmapFilter

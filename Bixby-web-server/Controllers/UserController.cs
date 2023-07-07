@@ -33,7 +33,7 @@ public abstract class UserController
         if (!jwt.ContainsKey("jwt"))
             throw new NotFoundException(new
                 { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
-
+        
         var result = (User)jwt["jwt"];
         if (NullEmptyChecker.HasNullEmptyValues(result))
             throw new NotFoundException(new

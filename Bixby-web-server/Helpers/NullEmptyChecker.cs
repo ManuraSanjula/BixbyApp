@@ -36,7 +36,9 @@ public static class NullEmptyChecker
                 if (typeof(IDictionary).IsAssignableFrom(field.FieldType))
                 {
                     var dictionary = field.GetValue(obj) as IDictionary;
-                    if (dictionary == null || dictionary.Count == 0)
+                    /*if (dictionary == null || dictionary.Count == 0)
+                        return true;*/
+                    if (dictionary == null)
                         return true;
                 }
 

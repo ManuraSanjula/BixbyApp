@@ -11,7 +11,7 @@ using System.Drawing.Drawing2D;
 using Amazon.S3.Model;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using System.Net.Http;
+using Bixbu_UI.LoadingScreen;
 
 namespace Bixbu_UI;
 
@@ -74,7 +74,7 @@ public partial class BixbyApp : MaterialForm
     }
 
 
-    private async void UserAccount(string email, string token)
+    private async Task UserAccount(string email, string token)
     {
         try
         {
@@ -96,6 +96,7 @@ public partial class BixbyApp : MaterialForm
                     bool hasNullOrEmpty = DictionaryHasNullOrEmpty(userDict);
                     if (!hasNullOrEmpty)
                     {
+                        // Update the UI based on the userDict data
                         Email.Text = userDict["Email"].ToString();
                         FirstName_txt.Text = userDict["FirstName"].ToString();
                         LastName.Text = userDict["LastName"].ToString();
@@ -108,9 +109,7 @@ public partial class BixbyApp : MaterialForm
                             RetrieveImageFromS3(filename);
                             return;
                         }
-
                     }
-
                 }
             }
         }
@@ -120,6 +119,7 @@ public partial class BixbyApp : MaterialForm
             panel3.Visible = false;
         }
     }
+
 
 
     private void Blur()
@@ -161,7 +161,6 @@ public partial class BixbyApp : MaterialForm
 
     private async void Form1_Load(object sender, EventArgs e)
     {
-
         this.metroLabel4.Visible = false;
         this.metroLabel4.Enabled = false;
         this.Size = new System.Drawing.Size(1268, 758);
@@ -172,22 +171,16 @@ public partial class BixbyApp : MaterialForm
         panel1.Controls.Add(pb);
         pb.Dock = DockStyle.Fill;
 
-        //===========================================================================================
-
         String token = Properties.Settings.Default.TokenValue;
         String email = Properties.Settings.Default.Email;
 
-        if (!token.IsNullOrEmpty() || !email.IsNullOrEmpty())
-        {
-            UserAccount(email, token);
-        }
-        else
-        {
-            panel1.Visible = true;
-            panel3.Visible = false;
-        }
+        LoadingForm loadingForm = new LoadingForm("https://cdn.dribbble.com/users/295241/screenshots/4496315/loading-animation.gif");
+        loadingForm.Show(); // Display the loading form
 
-        //-------------------------------------------------------------------------------------------
+        foreach (Control control in this.Controls)
+        {
+            control.Enabled = false;
+        }
 
         try
         {
@@ -198,26 +191,47 @@ public partial class BixbyApp : MaterialForm
             var rootElement = jsonDocument.RootElement;
 
             if (rootElement.GetProperty("body").ValueKind == JsonValueKind.Array)
+            {
                 foreach (var element in rootElement.GetProperty("body").EnumerateArray())
                 {
                     var customObject = System.Text.Json.JsonSerializer.Deserialize<ShopAllShopItem>(element.GetRawText());
                     shopAllShopItems.Add(customObject);
                 }
+            }
 
             if (shopAllShopItems.Count > 0)
             {
                 shopAllShopItems.ForEach(item =>
                 {
-                    //flowLayoutPanel1.Controls.Add(new WellComeItem());
+                    
                 });
+            }
+
+            if (!token.IsNullOrEmpty() || !email.IsNullOrEmpty())
+            {
+                await UserAccount(email, token); // Wait for the UserAccount method to complete
+            }
+            else
+            {
+                panel1.Visible = true;
+                panel3.Visible = false;
+            }
+
+            loadingForm.Close(); // Close the loading form once both requests are completed
+
+            foreach (Control control in this.Controls)
+            {
+                control.Enabled = true;
             }
         }
         catch (Exception ex)
         {
             panel1.Visible = true;
             panel3.Visible = false;
+            loadingForm.Close(); // Close the loading form in case of an exception
         }
     }
+
 
     private void tabControl1_Selecting(object? sender, EventArgs e)
     {
@@ -227,23 +241,6 @@ public partial class BixbyApp : MaterialForm
             RefreshAccountTab();
         }
     }
-
-    private void materialFloatingActionButton1_Click(object sender, EventArgs e)
-    {
-    }
-
-    private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e)
-    {
-    }
-
-    private void materialButton1_Click(object sender, EventArgs e)
-    {
-    }
-
-    private void button1_Click(object sender, EventArgs e)
-    {
-    }
-
 
     private void ChildForm_FormClosed(object sender, FormClosedEventArgs e)
     {

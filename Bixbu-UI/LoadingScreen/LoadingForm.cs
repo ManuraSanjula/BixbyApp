@@ -1,5 +1,7 @@
 ﻿using System.Drawing.Imaging;
+using System.Net;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 
 namespace Bixbu_UI.LoadingScreen
@@ -7,30 +9,35 @@ namespace Bixbu_UI.LoadingScreen
     public class LoadingForm : Form
     {
         private const int BlurAmount = 10; // Adjust the blur intensity here
+        private PictureBox pictureBox;
 
-        public LoadingForm()
+        public LoadingForm(string gifUrl)
         {
             // Customize loading screen appearance here
             Text = "Loading...";
-            Width = 200;
-            Height = 100;
-            FormBorderStyle = FormBorderStyle.None;
+            FormBorderStyle = FormBorderStyle.None; // Remove the border
             ShowInTaskbar = false;
             TopMost = true;
-            TransparencyKey = Color.Turquoise;
+            TransparencyKey = Color.Black;
+            StartPosition = FormStartPosition.CenterScreen; // Set the form's position to the center of the screen
 
-            // Create a screenshot of the desktop as the background image
-            using (var screenBitmap = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height))
+            // Create a PictureBox to hold the animated GIF
+            pictureBox = new PictureBox();
+            pictureBox.SizeMode = PictureBoxSizeMode.AutoSize;
+
+            pictureBox.ImageLocation = gifUrl;
+            Controls.Add(pictureBox);
+
+            // Download the GIF and resize the form
+            using (var webClient = new WebClient())
             {
-                using (var g = Graphics.FromImage(screenBitmap))
+                byte[] imageData = webClient.DownloadData(gifUrl);
+                using (var ms = new MemoryStream(imageData))
                 {
-                    g.CopyFromScreen(Screen.PrimaryScreen.Bounds.X, Screen.PrimaryScreen.Bounds.Y, 0, 0, screenBitmap.Size);
-                }
-
-                // Apply a blur effect to the background image
-                using (var blurredBitmap = BlurImage(screenBitmap, BlurAmount))
-                {
-                    BackgroundImage = blurredBitmap;
+                    var gifImage = Image.FromStream(ms);
+                    pictureBox.Size = gifImage.Size;
+                    ClientSize = new Size(gifImage.Width, gifImage.Height);
+                   
                 }
             }
         }
@@ -57,9 +64,6 @@ namespace Bixbu_UI.LoadingScreen
 
     public class GaussianBlurFilter : IDisposable
     {
-        private const int BitsPerPixel = 32;
-        private const int BytesPerPixel = BitsPerPixel / 8;
-
         private readonly double sigma;
         private readonly int radius;
         private readonly int size;

@@ -21,7 +21,7 @@ public static class Startup
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "PasswordReset.html");
 
 
-    public static string GetFileContent(string filePath)
+    public static string? GetFileContent(string filePath)
     {
         try
         {

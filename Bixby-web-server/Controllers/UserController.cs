@@ -28,34 +28,37 @@ public abstract class UserController
 
         var request = context.Request;
         var checkMiddleWare = new CheckMiddleWare();
-        var jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]);
-
+        var jwt = await checkMiddleWare.CheckMiddleWareJwt(context, context.DynamicPath?[0]?.Trim());
         if (!jwt.ContainsKey("jwt"))
-            throw new NotFoundException(new
-                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
-        
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
+                .ToJson());
+
         var result = (User)jwt["jwt"];
-        if (NullEmptyChecker.HasNullEmptyValues(result))
+
+        if (!NullEmptyChecker.HasNullEmptyValues(result))
             throw new NotFoundException(new
                 { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
 
         using var reader = new StreamReader(request.InputStream, request.ContentEncoding);
         if (reader == null)
             throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
-
+        Console.WriteLine("=========================================================================k");
         var json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
         var validateResult = await checkMiddleWare.CheckUserReq<UserReqForUpdate>(json, context.DynamicPath);
 
-        if (validateResult.ContainsKey("UserReqForUpdate") && validateResult.TryGetValue("User", out var value))
+        if (validateResult.TryGetValue("UserReqForUpdate", out var value1) && validateResult.TryGetValue("User", out var value))
         {
+            Console.WriteLine("=========================================================================k");
             var user = (User)value;
             if (user == null)
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+            Console.WriteLine("=========================================================================k");
 
-            var userReqAndRes = (UserReqForUpdate)validateResult["UserReqForUpdate"];
+            var userReqAndRes = (UserReqForUpdate)value1;
             if (userReqAndRes == null)
                 throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+            Console.WriteLine("=========================================================================kddddddddddddddddddddddddd");
 
             if (!string.IsNullOrEmpty(userReqAndRes.FirstName)) user.FirstName = userReqAndRes.FirstName;
             if (!string.IsNullOrEmpty(userReqAndRes.LastName)) user.LastName = userReqAndRes.LastName;

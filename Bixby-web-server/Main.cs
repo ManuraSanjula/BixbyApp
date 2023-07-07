@@ -5,21 +5,21 @@ namespace Bixby_web_server;
 
 public class TaskScheduler
 {
-    private Timer timer;
+    private Timer? _timer;
 
     public void Start()
     {
         // Create a timer that calls the ExecuteTask method every 10 minutes
-        timer = new Timer(ExecuteTask, null, TimeSpan.Zero, TimeSpan.FromMinutes(10));
+        _timer = new Timer(ExecuteTask, null, TimeSpan.Zero, TimeSpan.FromMinutes(10));
     }
 
     public void Stop()
     {
         // Dispose the timer to stop the task execution
-        timer?.Dispose();
+        _timer?.Dispose();
     }
 
-    private void ExecuteTask(object state)
+    private void ExecuteTask(object? state)
     {
         RedisCache.FlushRedisDatabase();
     }
@@ -27,30 +27,29 @@ public class TaskScheduler
 
 public static class RedisCache
 {
-    private static readonly ConnectionMultiplexer _connection;
-    private static readonly IDatabase _database;
+    private static readonly IDatabase Database;
 
     static RedisCache()
     {
         var connectionString =
             "bixbyapp.redis.cache.windows.net:6380,password=CBas2gkhQQWt3LqrhqIaK4E79sa4Xey0WAzCaFHP8uo=,ssl=True,abortConnect=False";
-        _connection = ConnectionMultiplexer.Connect(connectionString);
-        _database = _connection.GetDatabase();
+        var connection = ConnectionMultiplexer.Connect(connectionString);
+        Database = connection.GetDatabase();
     }
 
-    public static void Set(string key, string value)
+    public static void Set(string? key, string? value)
     {
-        _database.StringSet(key, value);
+        Database.StringSet(key, value);
     }
 
-    public static string Get(string key)
+    public static string? Get(string? key)
     {
-        return _database.StringGet(key);
+        return Database.StringGet(key);
     }
 
     public static bool Remove(string key)
     {
-        return _database.KeyDelete(key);
+        return Database.KeyDelete(key);
     }
 
     public static void FlushRedisDatabase()
@@ -73,7 +72,7 @@ public static class RedisCache
     }
 }
 
-public class Program
+public abstract class Program
 {
     private static WebServer? _webServer;
 

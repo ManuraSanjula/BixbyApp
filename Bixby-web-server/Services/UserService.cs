@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text.RegularExpressions;
 using Bixby_web_server.Models;
+using Bixby_web_server.Services;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -104,7 +105,7 @@ public class UserService
         return await userCollection.Find(_ => true).ToListAsync();
     }
 
-    public static dynamic? GetUserBasedOnToken(string token, bool allowBoolean)
+    public static dynamic GetUserBasedOnToken(string token, bool allowBoolean)
     {
         if (!string.IsNullOrEmpty(token))
             return TokenService.ValidateJwtToken(token, allowBoolean);
@@ -124,7 +125,7 @@ public class UserService
 
                 var createdUser = await GetUserByEmailAsync(newUser.Email);
                 if (createdUser == null) return null;
-                return await TokenService.tokenCreator(true, path,
+                return await TokenService.TokenCreator(true, path,
                     createdUser.Email == null ? newUser.Email : createdUser.Email,
                     createdUser.Password == null ? newUser.Password : createdUser.Password, createdUser);
                 ;
@@ -157,7 +158,7 @@ public class UserService
 
             var createdUser = await GetUserByEmailAsync(username);
             if (createdUser == null) return null;
-            return await TokenService.tokenCreator(true, path, createdUser.Email == null ? username : createdUser.Email,
+            return await TokenService.TokenCreator(true, path, createdUser.Email == null ? username : createdUser.Email,
                 createdUser.Password == null ? newUser.Password : createdUser.Password, createdUser);
             ;
         }
@@ -169,7 +170,7 @@ public class UserService
     {
         var user = await GetUserByEmailAsync(username);
         if (user != null && BCryptNet.Verify(password, user.Password) && user.EmailVerify)
-            return await TokenService.tokenCreator(false, path, user.Email == null ? username : user.Email,
+            return await TokenService.TokenCreator(false, path, user.Email == null ? username : user.Email,
                 user.Password, user);
 
         return null;

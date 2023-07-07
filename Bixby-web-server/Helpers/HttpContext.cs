@@ -16,7 +16,7 @@ public class HttpContext
     public HttpListenerResponse Response { get; }
     public string Url { get; } // Variable to store the URL
     public string[] DynamicPath { get; private set; } = { }; // Variable to store the dynamic path
-    public string ResponseContent { get; set; } // Property to store the response content
+    public string? ResponseContent { get; set; } // Property to store the response content
 
     public void ExtractDynamicPath(string pattern)
     {
@@ -32,7 +32,7 @@ public class HttpContext
         DynamicPath = dynamicSegments.ToArray();
     }
 
-    public async Task WriteResponseAsync(string content, string contentType,
+    public async Task WriteResponseAsync(string? content, string contentType,
         HttpStatusCode statusCode = HttpStatusCode.OK, Dictionary<string, string>? headers = null)
     {
         ResponseContent = content;
@@ -48,7 +48,7 @@ public class HttpContext
         Response.Close();
     }
 
-    public async Task WriteResponse(string content, string contentType, HttpStatusCode statusCode = HttpStatusCode.OK,
+    public async Task WriteResponse(string? content, string contentType, HttpStatusCode statusCode = HttpStatusCode.OK,
         Dictionary<string, string>? headers = null)
     {
         ResponseContent = content;

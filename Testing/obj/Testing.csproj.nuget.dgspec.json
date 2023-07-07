@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Testing\\Testing.csproj": {}
+    "C:\\BixbyApp\\Testing\\Testing.csproj": {}
   },
   "projects": {
-    "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Bixby-web-server\\Bixby-web-server.csproj": {
+    "C:\\BixbyApp\\Bixby-web-server\\Bixby-web-server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Bixby-web-server\\Bixby-web-server.csproj",
+        "projectUniqueName": "C:\\BixbyApp\\Bixby-web-server\\Bixby-web-server.csproj",
         "projectName": "Bixby-web-server",
-        "projectPath": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Bixby-web-server\\Bixby-web-server.csproj",
+        "projectPath": "C:\\BixbyApp\\Bixby-web-server\\Bixby-web-server.csproj",
         "packagesPath": "C:\\Users\\MSI\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Bixby-web-server\\obj\\",
+        "outputPath": "C:\\BixbyApp\\Bixby-web-server\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -137,14 +137,14 @@
         }
       }
     },
-    "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Testing\\Testing.csproj": {
+    "C:\\BixbyApp\\Testing\\Testing.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Testing\\Testing.csproj",
+        "projectUniqueName": "C:\\BixbyApp\\Testing\\Testing.csproj",
         "projectName": "Testing",
-        "projectPath": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Testing\\Testing.csproj",
+        "projectPath": "C:\\BixbyApp\\Testing\\Testing.csproj",
         "packagesPath": "C:\\Users\\MSI\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Testing\\obj\\",
+        "outputPath": "C:\\BixbyApp\\Testing\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -165,8 +165,8 @@
           "net6.0": {
             "targetAlias": "net6.0",
             "projectReferences": {
-              "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Bixby-web-server\\Bixby-web-server.csproj": {
-                "projectPath": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Bixby-web-server\\Bixby-web-server.csproj"
+              "C:\\BixbyApp\\Bixby-web-server\\Bixby-web-server.csproj": {
+                "projectPath": "C:\\BixbyApp\\Bixby-web-server\\Bixby-web-server.csproj"
               }
             }
           }

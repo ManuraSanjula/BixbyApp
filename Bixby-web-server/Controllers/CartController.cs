@@ -87,7 +87,7 @@ public abstract class CartController
             cartAndOrder = await asyncCursor.ToListAsync()
         };
     }
-                    
+
     public static async Task SeeAllTheCart(HttpContext arg)
     {
         if (arg.Request.HttpMethod != "GET")

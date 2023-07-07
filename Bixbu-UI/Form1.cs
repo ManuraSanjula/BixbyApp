@@ -1,57 +1,46 @@
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Text.Json;
-using Amazon.S3.Transfer;
+using System.Text;
+using Amazon;
 using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.S3.Transfer;
+using Bixbu_UI.LoadingScreen;
 using Bixbu_UI.User;
 using Bixby_web_server.Models;
 using MaterialSkin.Controls;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using System.Drawing.Drawing2D;
-using Amazon.S3.Model;
-using System.Text;
 using Newtonsoft.Json.Linq;
-using Bixbu_UI.LoadingScreen;
-using System.Windows.Forms;
-using Braintree;
 
 namespace Bixbu_UI;
 
 public partial class BixbyApp : MaterialForm
 {
-
     private const string AccessKey = "AKIASULOPD3USE5RVZCQ";
     private const string SecretKey = "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";
     private const string BucketName = "bixby-app-nibm";
-
-    private OpenFileDialog openFileDialog = new OpenFileDialog();
-
-    public UserInformation userData;
     private static readonly HttpClient client = new();
-    private PictureBox pb;
 
     private readonly List<ShopAllShopItem> shopAllShopItems = new();
-    private List<String> re_sized_images = new List<string>();
-    private List<String> original_images = new List<string>();
+
+    private OpenFileDialog openFileDialog = new();
+    private readonly List<string> original_images = new();
+    private PictureBox pb;
+    private readonly List<string> re_sized_images = new();
+
+    public UserInformation userData;
+
     public BixbyApp()
     {
         InitializeComponent();
 
-        this.FormBorderStyle = FormBorderStyle.FixedSingle;
-        this.MaximizeBox = false;
-        this.MinimizeBox = false;
+        FormBorderStyle = FormBorderStyle.FixedSingle;
+        MaximizeBox = false;
+        MinimizeBox = false;
 
         // Disable form minimizing
-        this.ShowIcon = false;
-    }
-
-    private async Task<string> SendGetRequestAsync(string url)
-    {
-        var response = await client.GetAsync(url);
-        response.EnsureSuccessStatusCode();
-
-        var responseBody = await response.Content.ReadAsStringAsync();
-        return responseBody;
+        ShowIcon = false;
     }
 
     private void InitializeUI()
@@ -66,12 +55,8 @@ public partial class BixbyApp : MaterialForm
     public bool DictionaryHasNullOrEmpty(Dictionary<string, object> dictionary)
     {
         foreach (var kvp in dictionary)
-        {
             if (string.IsNullOrEmpty(kvp.Key) || kvp.Value == null || string.IsNullOrEmpty(kvp.Value.ToString()))
-            {
                 return true;
-            }
-        }
 
         return false;
     }
@@ -87,16 +72,16 @@ public partial class BixbyApp : MaterialForm
                 var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/user/{email}");
                 request.Headers.Add("Authorization", $"Bearer {token}");
                 var response = await client.SendAsync(request);
-                HttpResponseMessage httpResponseMessage = response.EnsureSuccessStatusCode();
+                var httpResponseMessage = response.EnsureSuccessStatusCode();
 
                 if (httpResponseMessage.IsSuccessStatusCode)
                 {
-                    string responseBody = await response.Content.ReadAsStringAsync();
+                    var responseBody = await response.Content.ReadAsStringAsync();
                     dynamic json = JsonConvert.DeserializeObject(responseBody);
                     string bodyKey = json["body"].ToString(); // Replace "key" with the actual key you want to extract
-                    Dictionary<string, object> userDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(bodyKey);
+                    var userDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(bodyKey);
 
-                    bool hasNullOrEmpty = DictionaryHasNullOrEmpty(userDict);
+                    var hasNullOrEmpty = DictionaryHasNullOrEmpty(userDict);
                     if (!hasNullOrEmpty)
                     {
                         // Update the UI based on the userDict data
@@ -105,12 +90,11 @@ public partial class BixbyApp : MaterialForm
                         LastName.Text = userDict["LastName"].ToString();
                         Address.Text = userDict["Address"].ToString();
 
-                        string url = userDict["Pic"].ToString();
+                        var url = userDict["Pic"].ToString();
                         if (!url.Equals("default"))
                         {
-                            string filename = Path.GetFileName(url);
-                            RetrieveImageFromS3(filename);
-                            return;
+                            var filename = Path.GetFileName(url);
+                            RetrieveImageFromS3(url);
                         }
                     }
                 }
@@ -124,7 +108,6 @@ public partial class BixbyApp : MaterialForm
             panel5.Visible = false;
         }
     }
-
 
 
     private void Blur()
@@ -146,36 +129,33 @@ public partial class BixbyApp : MaterialForm
     {
         // Check if the selected tab is the "Account" tab
         if (e.TabPage == Account)
-        {
             // Add your custom refresh logic here
             RefreshAccountTab();
-        }
     }
 
     private void RefreshAccountTab()
     {
-
     }
 
 
     protected override void OnResize(EventArgs e)
     {
         base.OnResize(e);
-        this.Size = new System.Drawing.Size(1268, 758);
+        Size = new Size(1268, 758);
     }
 
     private void MenuItem_Click(object sender, EventArgs e)
     {
         // Handle the menu item click event
-        ToolStripMenuItem menuItem = (ToolStripMenuItem)sender;
+        var menuItem = (ToolStripMenuItem)sender;
         MessageBox.Show("Clicked: " + menuItem.Text);
     }
 
     private async void Form1_Load(object sender, EventArgs e)
     {
-        this.metroLabel4.Visible = false;
-        this.metroLabel4.Enabled = false;
-        this.Size = new System.Drawing.Size(1268, 758);
+        metroLabel4.Visible = false;
+        metroLabel4.Enabled = false;
+        Size = new Size(1268, 758);
         materialTabControl1.Selecting += tabControl1_Selecting;
         materialTabControl1.SelectedIndexChanged += tabControl1_Selecting;
 
@@ -183,8 +163,8 @@ public partial class BixbyApp : MaterialForm
         panel1.Controls.Add(pb);
         pb.Dock = DockStyle.Fill;
 
-        String token = Properties.Settings.Default.TokenValue;
-        String email = Properties.Settings.Default.Email;
+        var token = Properties.Settings.Default.TokenValue;
+        var email = Properties.Settings.Default.Email;
 
         flowLayoutPanel1.FlowDirection = FlowDirection.LeftToRight;
         // Set the FlowLayoutPanel properties
@@ -193,38 +173,18 @@ public partial class BixbyApp : MaterialForm
         flowLayoutPanel1.Padding = new Padding(10); // Adjust the padding as per your requirement
 
 
-        LoadingForm loadingForm = new LoadingForm("https://cdn.dribbble.com/users/295241/screenshots/4496315/loading-animation.gif");
+        var loadingForm =
+            new LoadingForm("https://cdn.dribbble.com/users/295241/screenshots/4496315/loading-animation.gif");
         loadingForm.Show();
 
-        foreach (Control control in this.Controls)
-        {
-            control.Enabled = false;
-        }
+        foreach (Control control in Controls) control.Enabled = false;
 
         try
         {
-            var url = "http://localhost:8080/home";
-            var response = await SendGetRequestAsync(url);
-
-            var jsonDocument = JsonDocument.Parse(response);
-            var rootElement = jsonDocument.RootElement;
-
-            if (rootElement.GetProperty("body").ValueKind == JsonValueKind.Array)
-            {
-                foreach (var element in rootElement.GetProperty("body").EnumerateArray())
-                {
-                    var customObject = System.Text.Json.JsonSerializer.Deserialize<ShopAllShopItem>(element.GetRawText());
-                    shopAllShopItems.Add(customObject);
-                }
-            }
-
-            if (shopAllShopItems.Count > 0)
-            {
-                shopAllShopItems.ForEach(item =>
-                {
-
-                });
-            }
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost:8080/home");
+            var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
 
             if (!token.IsNullOrEmpty() || !email.IsNullOrEmpty())
             {
@@ -240,10 +200,7 @@ public partial class BixbyApp : MaterialForm
 
             loadingForm.Close(); // Close the loading form once both requests are completed
 
-            foreach (Control control in this.Controls)
-            {
-                control.Enabled = true;
-            }
+            foreach (Control control in Controls) control.Enabled = true;
         }
         catch (Exception ex)
         {
@@ -256,11 +213,8 @@ public partial class BixbyApp : MaterialForm
 
     private void tabControl1_Selecting(object? sender, EventArgs e)
     {
-        TabControl tab = (TabControl)sender;
-        if (tab.SelectedTab == Account)
-        {
-            RefreshAccountTab();
-        }
+        var tab = (TabControl)sender;
+        if (tab.SelectedTab == Account) RefreshAccountTab();
     }
 
     private void ChildForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -293,7 +247,7 @@ public partial class BixbyApp : MaterialForm
 
     private async void RetrieveImageFromS3(string key)
     {
-        var s3Client = new AmazonS3Client(AccessKey, SecretKey, Amazon.RegionEndpoint.APSouth1);
+        var s3Client = new AmazonS3Client(AccessKey, SecretKey, RegionEndpoint.APSouth1);
 
         var request = new GetObjectRequest
         {
@@ -303,14 +257,14 @@ public partial class BixbyApp : MaterialForm
 
         try
         {
-            using (GetObjectResponse response = await s3Client.GetObjectAsync(request))
+            using (var response = await s3Client.GetObjectAsync(request))
             {
-                using (Stream responseStream = response.ResponseStream)
+                using (var responseStream = response.ResponseStream)
                 {
                     // Create a temporary file path to save the retrieved image
-                    string tempFilePath = Path.GetTempFileName();
+                    var tempFilePath = Path.GetTempFileName();
 
-                    using (FileStream fileStream = File.Create(tempFilePath))
+                    using (var fileStream = File.Create(tempFilePath))
                     {
                         responseStream.CopyTo(fileStream);
                     }
@@ -320,7 +274,7 @@ public partial class BixbyApp : MaterialForm
                 }
             }
 
-            MessageBox.Show($"Image retrieved successfully.");
+            MessageBox.Show("Image retrieved successfully.");
         }
         catch (Exception ex)
         {
@@ -330,23 +284,21 @@ public partial class BixbyApp : MaterialForm
 
     private void UpdatePictureBox(string imagePath)
     {
-        Image image = Image.FromFile(imagePath);
+        var image = Image.FromFile(imagePath);
         pictureBox4.Image = image;
         pictureBox4.SizeMode = PictureBoxSizeMode.CenterImage;
-
-
     }
 
     private void pictureBox2_Click(object sender, EventArgs e)
     {
     }
 
-    private async void UploadToS3(string filePath, string type, List<String> images)
+    private async Task<string> UploadToS3(string filePath, string type, List<string> images)
     {
-        var s3Client = new AmazonS3Client(AccessKey, SecretKey, Amazon.RegionEndpoint.APSouth1);
+        var s3Client = new AmazonS3Client(AccessKey, SecretKey, RegionEndpoint.APSouth1);
 
         // Generate a unique key for the uploaded image
-        string key = Guid.NewGuid().ToString() + Path.GetExtension(filePath);
+        var key = Guid.NewGuid() + Path.GetExtension(filePath);
 
         // Set up the transfer utility
         var transferUtility = new TransferUtility(s3Client);
@@ -362,50 +314,51 @@ public partial class BixbyApp : MaterialForm
             // Upload the image to S3
             transferUtility.Upload(transferUtilityRequest);
 
-            // Get the URL of the uploaded image
-            string imageUrl = $"https://{BucketName}.s3.amazonaws.com/{key}";
-
             if (type == "user")
             {
                 var client = new HttpClient();
-                String email = Properties.Settings.Default.Email;
+                var email = Properties.Settings.Default.Email;
                 var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/user/{email}/add/image");
-                request.Headers.Add("img", $"{imageUrl}");
+                request.Headers.Add("img", $"{key}");
                 var response = await client.SendAsync(request);
-                HttpResponseMessage httpResponseMessage = response.EnsureSuccessStatusCode();
+                var httpResponseMessage = response.EnsureSuccessStatusCode();
                 if (httpResponseMessage.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Okay");
                     materialTabControl1.SelectedIndex = 0;
+                    return null;
                 }
-                else
-                {
-                    MessageBox.Show("Not Okay");
-                }
-            }
-            else if (type == "food-images")
-            {
-                images.Add(imageUrl);
+
+                MessageBox.Show("Not Okay");
+                return null;
             }
 
+            if (type == "food-images")
+            {
+                images.Add(key);
+                return key;
+            }
+
+            return null;
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Error uploading image: {ex.Message}");
+            return null;
         }
     }
 
     public void ResizeImage(string sourceFilePath, string destFilePath, int maxWidth, int maxHeight)
     {
-        using (Image sourceImage = Image.FromFile(sourceFilePath))
+        using (var sourceImage = Image.FromFile(sourceFilePath))
         {
-            int width = sourceImage.Width;
-            int height = sourceImage.Height;
+            var width = sourceImage.Width;
+            var height = sourceImage.Height;
 
             // Calculate the new dimensions while preserving the aspect ratio
             if (width > maxWidth || height > maxHeight)
             {
-                double aspectRatio = (double)width / height;
+                var aspectRatio = (double)width / height;
                 if (width > height)
                 {
                     width = maxWidth;
@@ -418,9 +371,9 @@ public partial class BixbyApp : MaterialForm
                 }
             }
 
-            using (Bitmap resizedImage = new Bitmap(width, height))
+            using (var resizedImage = new Bitmap(width, height))
             {
-                using (Graphics graphics = Graphics.FromImage(resizedImage))
+                using (var graphics = Graphics.FromImage(resizedImage))
                 {
                     graphics.CompositingQuality = CompositingQuality.HighQuality;
                     graphics.SmoothingMode = SmoothingMode.HighQuality;
@@ -438,20 +391,22 @@ public partial class BixbyApp : MaterialForm
     private void ProcessAndUploadImage(string filePath)
     {
         // Create a temporary file path for the processed image
-        string processedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "processed_" + Path.GetFileName(filePath));
+        var processedFilePath =
+            Path.Combine(Path.GetDirectoryName(filePath), "processed_" + Path.GetFileName(filePath));
 
         try
         {
             // Apply low-quality blur effect to the image
-            using (Image originalImage = Image.FromFile(filePath))
+            using (var originalImage = Image.FromFile(filePath))
             {
-                using (Bitmap processedImage = new Bitmap(originalImage.Width, originalImage.Height))
+                using (var processedImage = new Bitmap(originalImage.Width, originalImage.Height))
                 {
-                    using (Graphics graphics = Graphics.FromImage(processedImage))
+                    using (var graphics = Graphics.FromImage(processedImage))
                     {
                         graphics.SmoothingMode = SmoothingMode.HighSpeed;
                         graphics.InterpolationMode = InterpolationMode.Low;
-                        graphics.DrawImage(originalImage, new Rectangle(0, 0, processedImage.Width, processedImage.Height));
+                        graphics.DrawImage(originalImage,
+                            new Rectangle(0, 0, processedImage.Width, processedImage.Height));
                     }
 
                     // Save the processed image to the temporary file path
@@ -467,21 +422,19 @@ public partial class BixbyApp : MaterialForm
         }
         catch (Exception ex)
         {
-
         }
     }
 
     private void metroButton2_Click(object sender, EventArgs e)
     {
-
     }
 
     private void materialButton3_Click_1(object sender, EventArgs e)
     {
         if (openFileDialog.ShowDialog() == DialogResult.OK)
         {
-            string filePath = openFileDialog.FileName;
-            Image selectedImage = Image.FromFile(filePath);
+            var filePath = openFileDialog.FileName;
+            var selectedImage = Image.FromFile(filePath);
             metroLabel4.Visible = selectedImage != null;
             metroLabel4.Enabled = selectedImage != null;
             metroLabel4.Text = filePath;
@@ -490,13 +443,14 @@ public partial class BixbyApp : MaterialForm
 
     private void materialButton1_Click_2(object sender, EventArgs e)
     {
-        string filePath = openFileDialog.FileName;
+        var filePath = openFileDialog.FileName;
         if (filePath == null)
         {
             MessageBox.Show("Pick a image");
             return;
         }
-        string resizedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "resized_" + Path.GetFileName(filePath));
+
+        var resizedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "resized_" + Path.GetFileName(filePath));
 
         // Resize the image
         ResizeImage(filePath, resizedFilePath, 800, 600);
@@ -520,20 +474,17 @@ public partial class BixbyApp : MaterialForm
 
     private async void materialButton2_Click(object sender, EventArgs e)
     {
-        string token = Properties.Settings.Default.TokenValue;
-        string email = Properties.Settings.Default.Email;
+        var token = Properties.Settings.Default.TokenValue;
+        var email = Properties.Settings.Default.Email;
 
-        string firstName = FirstName_txt.Text;
-        string lastName = LastName.Text;
-        string userEmail = Email.Text;
-        string address = Address.Text;
+        var firstName = FirstName_txt.Text;
+        var lastName = LastName.Text;
+        var userEmail = Email.Text;
+        var address = Address.Text;
 
         if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
         {
-            Invoke(new Action(() =>
-            {
-                MessageBox.Show("Invalid Input: Passwords do not match");
-            })); // Invoke on UI thread
+            Invoke(() => { MessageBox.Show("Invalid Input: Passwords do not match"); }); // Invoke on UI thread
             return;
         }
 
@@ -543,10 +494,10 @@ public partial class BixbyApp : MaterialForm
 
         var content = new
         {
-            firstName = firstName,
-            lastName = lastName,
+            firstName,
+            lastName,
             email = userEmail,
-            address = address
+            address
         };
 
         var json = JsonConvert.SerializeObject(content);
@@ -554,7 +505,7 @@ public partial class BixbyApp : MaterialForm
         request.Content = stringContent;
 
         var response = await client.SendAsync(request);
-        HttpResponseMessage httpResponseMessage = response.EnsureSuccessStatusCode();
+        var httpResponseMessage = response.EnsureSuccessStatusCode();
 
         if (httpResponseMessage.IsSuccessStatusCode)
         {
@@ -578,13 +529,11 @@ public partial class BixbyApp : MaterialForm
                 }
             else
                 Invoke(new Action(() => MessageBox.Show("Try Again")));
+
             return;
         }
-        else
-        {
-            Invoke(new Action(() => MessageBox.Show("Try Again")));
-            return;
-        }
+
+        Invoke(new Action(() => MessageBox.Show("Try Again")));
     }
 
     private void button3_Click(object sender, EventArgs e)
@@ -629,9 +578,10 @@ public partial class BixbyApp : MaterialForm
         flowLayoutPanel1.Padding = new Padding(10);
         flowLayoutPanel1.FlowDirection = FlowDirection.LeftToRight;
 
-        foreach (string imagePath in imagePaths)
+        foreach (var imagePath in imagePaths)
         {
-            String resizedFilePath = Path.Combine(Path.GetDirectoryName(imagePath), "resized_" + Path.GetFileName(imagePath));
+            var resizedFilePath =
+                Path.Combine(Path.GetDirectoryName(imagePath), "resized_" + Path.GetFileName(imagePath));
             ResizeImage(imagePath, resizedFilePath, 404, 251);
             flowLayoutPanel1.Controls.Add(new ImageDetail(resizedFilePath));
             re_sized_images.Add(resizedFilePath);
@@ -641,45 +591,35 @@ public partial class BixbyApp : MaterialForm
 
     private async void Save_Click(object sender, EventArgs e)
     {
-      /*  if (re_sized_images.IsNullOrEmpty() || original_images.IsNullOrEmpty())
-        {
-            return;
-        }
-        List<string> re_sized_imagesDeepCopy = new List<string>();
-        List<string> original_imagesDeepCopy = new List<string>();*/
+        if (re_sized_images.IsNullOrEmpty() || original_images.IsNullOrEmpty()) return;
+        var re_sized_imagesDeepCopy = new List<string>();
+        var original_imagesDeepCopy = new List<string>();
         //        File.Delete(resizedFilePath);
 
-       /* re_sized_images.ForEach(image =>
-        {
-            UploadToS3(image, "food-images", re_sized_imagesDeepCopy);
-        });
+        re_sized_images.ForEach(image => { UploadToS3(image, "food-images", re_sized_imagesDeepCopy); });
 
-        original_images.ForEach(image =>
-        {
-            UploadToS3(image, "food-images", original_imagesDeepCopy);
-        });*/
+        original_images.ForEach(image => { UploadToS3(image, "food-images", original_imagesDeepCopy); });
 
-        String token = Properties.Settings.Default.TokenValue;
-        String email = Properties.Settings.Default.Email;
+        var token = Properties.Settings.Default.TokenValue;
+        var email = Properties.Settings.Default.Email;
 
         try
         {
-
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Post, $"http://localhost:8080/{email}/add-shop-item");
             request.Headers.Add("Authorization", $"Bearer {token}");
 
-            String item_name = ItemName.Text;
-            String description = Description.Text;
-            int price = int.Parse(Price.Text);
+            var item_name = ItemName.Text;
+            var description = Description.Text;
+            var price = int.Parse(Price.Text);
 
             var content = new
             {
                 name = item_name,
                 description,
                 price,
-               /* picsLowRes = re_sized_imagesDeepCopy.ToArray(),
-                picsHighRes = original_imagesDeepCopy.ToArray(),*/
+                picsLowRes = re_sized_imagesDeepCopy.ToArray(),
+                picsHighRes = original_imagesDeepCopy.ToArray()
             };
 
             var json = JsonConvert.SerializeObject(content);
@@ -687,7 +627,7 @@ public partial class BixbyApp : MaterialForm
             request.Content = stringContent;
 
             var response = await client.SendAsync(request);
-            HttpResponseMessage httpResponseMessage = response.EnsureSuccessStatusCode();
+            var httpResponseMessage = response.EnsureSuccessStatusCode();
 
             if (httpResponseMessage.IsSuccessStatusCode)
             {
@@ -701,28 +641,40 @@ public partial class BixbyApp : MaterialForm
                         case "Success":
                             Invoke(() =>
                             {
+                                re_sized_images.ForEach(image => { File.Delete(image); });
+
+                                original_images.ForEach(image => { File.Delete(image); });
                                 MessageBox.Show("Success");
                                 materialTabControl1.SelectedIndex = 0;
                             });
                             break;
                         case "An error occurred.":
-                            Invoke(new Action(() => MessageBox.Show("Try Again FUCK ING "))); // Invoke on UI thread
+                            Invoke(() =>
+                            {
+                                re_sized_images.ForEach(image => { File.Delete(image); });
+
+                                original_images.ForEach(image => { File.Delete(image); });
+                                MessageBox.Show("Try Again");
+                            }); // Invoke on UI thread
                             break;
                     }
                 else
-                    Invoke(new Action(() => MessageBox.Show("Try Again FUCK")));
+                    Invoke(() =>
+                    {
+                        re_sized_images.ForEach(image => { File.Delete(image); });
+
+                        original_images.ForEach(image => { File.Delete(image); });
+                        MessageBox.Show("Try Again");
+                    });
+
                 return;
             }
-            else
-            {
-                Invoke(new Action(() => MessageBox.Show("Try Again FUCK 2")));
-                return;
-            }
+
+            Invoke(new Action(() => MessageBox.Show("Try Again")));
         }
         catch (Exception ex)
         {
             Invoke(new Action(() => MessageBox.Show(ex.Message)));
-            return;
         }
     }
 }
@@ -838,13 +790,12 @@ public class BitmapFilter
 
 public class UserInformation
 {
-    public String FirstName { get; set; }
-    public String LastName { get; set; }
-    public String Address { get; set; }
-    public String EmailVerify { get; set; }
-    public String Email { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public string Address { get; set; }
+    public string EmailVerify { get; set; }
+    public string Email { get; set; }
 }
-
 
 internal class Screenshot
 {

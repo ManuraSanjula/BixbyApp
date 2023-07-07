@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "d1Nes47FNtFpsI+pWELK9rNVSm9C6jnC+rnxk3vmMTQpWtmok91bwcRpjsozuCIp512HBMTM09yP7D30dneZqA==",
+  "dgSpecHash": "MWU3fhSCDQf3Hkyu/WaMkJNl2a3+b+ldyGppaU32w2cFcXnB/8GFJXRuJys6STlSvS7TQAhChebPrPprc0fvMg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\MSI\\source\\repos\\Bixby-web-server\\Bixbu-UI\\Bixby-UI.csproj",
+  "projectFilePath": "C:\\BixbyApp\\Bixbu-UI\\Bixby-UI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\MSI\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\MSI\\.nuget\\packages\\awssdk.core\\3.7.107.11\\awssdk.core.3.7.107.11.nupkg.sha512",

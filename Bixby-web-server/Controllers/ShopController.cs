@@ -35,7 +35,7 @@ public abstract class ShopController
         {
             Id = shop.Id,
             Name = shop.Name,
-            PicLowRes = shop.PicMainLowRes
+            PicLowRes = shop.PicsLowRes.Length > 0 ? "" : shop.PicsLowRes[0]
         }).ToList();
 
         var response = new
@@ -164,7 +164,7 @@ public abstract class ShopController
 
         var json = await new StreamReader(context.Request.InputStream, context.Request.ContentEncoding)
             .ReadToEndAsync().ConfigureAwait(false);
-        
+
         var validateResult =
             await checkMiddleWare.CheckUserReq<ShopItemeq>(json, context.DynamicPath);
 

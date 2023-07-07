@@ -39,12 +39,11 @@ public class ConfigService
     }
 }
 
-
 public class SQlDBContext : DbContext
 {
-    public SQlDBContext() : base(new SQLiteConnection()
+    public SQlDBContext() : base(new SQLiteConnection
     {
-        ConnectionString = new SQLiteConnectionStringBuilder()
+        ConnectionString = new SQLiteConnectionStringBuilder
         {
             DataSource = GetDatabaseFilePath(),
             ForeignKeys = true
@@ -64,24 +63,24 @@ public class SQlDBContext : DbContext
 
     private static string GetDatabaseFilePath()
     {
-        string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bixby", "data");
+        var folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Bixby", "data");
         Directory.CreateDirectory(folderPath);
-        string filePath = Path.Combine(folderPath, "bixby.db");
+        var filePath = Path.Combine(folderPath, "bixby.db");
         return filePath;
     }
 
     private static void InitializeDatabaseFolder()
     {
-        string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bixby", "data");
+        var folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Bixby", "data");
         Directory.CreateDirectory(folderPath);
     }
 }
 
-
-
 public class SQLService
 {
-    public static void Save(String email, String token)
+    public static void Save(string email, string token)
     {
         using (var dbContext = new SQlDBContext())
         {

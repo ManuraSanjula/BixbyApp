@@ -45,7 +45,8 @@ public abstract class UserController
 
         var validateResult = await checkMiddleWare.CheckUserReq<UserReqForUpdate>(json, context.DynamicPath);
 
-        if (validateResult.TryGetValue("UserReqForUpdate", out var value1) && validateResult.TryGetValue("User", out var value))
+        if (validateResult.TryGetValue("UserReqForUpdate", out var value1) &&
+            validateResult.TryGetValue("User", out var value))
         {
             var user = (User)value;
             if (user == null)
@@ -74,7 +75,9 @@ public abstract class UserController
             await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
         }
         else
+        {
             throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+        }
 
         throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
     }
@@ -135,13 +138,13 @@ public abstract class UserController
             user.EmailVerify = true;
             user.Tokens[token].valid = false;
             user.Tokens.Remove(token);
-            
         }
         else
         {
             user?.Tokens.Remove(token);
             throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
         }
+
         try
         {
             RedisCache.Set(user.Email, user.ToJson());
@@ -304,7 +307,7 @@ public abstract class UserController
             throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
         var response = new { status = "Success" };
-        
+
         try
         {
             RedisCache.Set(user.Email, user.ToJson());
@@ -523,9 +526,10 @@ public abstract class UserController
         var authorizationHeader = arg.Request.Headers["img"];
         if (user != null)
         {
-            user.Pic = authorizationHeader?.ToString();
+            user.Pic = authorizationHeader;
             await UserService.UpdateUserAsync(user.Id, user);
         }
+
         var response = new
         {
             status = "Success"

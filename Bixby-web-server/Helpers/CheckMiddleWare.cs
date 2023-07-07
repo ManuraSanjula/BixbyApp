@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using Bixby_web_server.Models;
 using Bixby_web_server.Services;
-using BixbyShop_LK.Services;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 
@@ -11,7 +10,7 @@ public class CheckMiddleWare
 {
     private UserService UserService { get; } = new();
 
-    private Dictionary<string, object> Values { get; set; } = new();
+    private Dictionary<string, object> Values { get; } = new();
 
     private static async Task<User?> GetTheUserFromToken(HttpListenerRequest request)
     {
@@ -138,7 +137,7 @@ public class CheckMiddleWare
                 }
             }
 
-            if (user == null || NullEmptyChecker.HasNullEmptyValues(user) || !user.EmailVerify) return Values;
+            if (user == null || !user.EmailVerify) return Values;
             var userInShopItem = new UserInShopItem
             {
                 FirstName = user.FirstName,
@@ -152,7 +151,9 @@ public class CheckMiddleWare
                 Name = shopItemReq.Name,
                 Price = shopItemReq.Price,
                 publish = userInShopItem,
-                Description = shopItemReq.Description
+                Description = shopItemReq.Description,
+                PicsLowRes = shopItemReq.PicsLowRes,
+                PicsHighRes = shopItemReq.PicsHighRes
             };
 
             Values.Add("data", shopItem);

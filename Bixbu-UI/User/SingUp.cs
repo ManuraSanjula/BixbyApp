@@ -1,9 +1,6 @@
 ﻿using Bixbu_UI.Properties;
-using Bixbu_UI.SQL;
 using MaterialSkin.Controls;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace Bixbu_UI;
 
@@ -60,25 +57,26 @@ public partial class SingUp : MaterialForm
                     var status = jObject["status"]?.Value<string>();
                     var token = jObject["token"]?.Value<string>();
                     if (status != null)
+                    {
                         switch (status)
                         {
                             case "Success":
                                 Invoke(() =>
                                 {
-                                    Properties.Settings.Default.TokenValue = token;
-                                    Properties.Settings.Default.Save();
+                                    Settings.Default.TokenValue = token;
+                                    Settings.Default.Save();
 
-                                    Properties.Settings.Default.Email = email;
-                                    Properties.Settings.Default.Save();
+                                    Settings.Default.Email = email;
+                                    Settings.Default.Save();
                                     MessageBox.Show("Success");
                                     Close();
-                                    return;
                                 });
                                 break;
                             case "An error occurred.":
                                 Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
                                 break;
                         }
+                    }
                     else
                     {
                         Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
@@ -97,7 +95,6 @@ public partial class SingUp : MaterialForm
             Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
             return;
         }
-        return;
     }
 
     private void materialButton2_Click(object sender, EventArgs e)

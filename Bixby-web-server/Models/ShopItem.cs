@@ -11,18 +11,10 @@ public class ShopItemeq
     [JsonProperty("description")] public string Description { get; set; }
 
     [JsonProperty("price")] public int Price { get; set; }
-    
-    /*[JsonProperty("picsLowRes")]
-    public string[] PicsLowRes { get; set; } = { "default-low-res-pic.png" };
-    
-    [JsonProperty("picsHighRes")]
-    public string[] PicsHighRes { get; set; } = { "default-high-res-pic.png" };
-    
-    [JsonProperty("picMainHighRes")]
-    public string PicMainHighRes { get; set; } = "default-high-res-pic.png";
-    
-    [JsonProperty("picMainLowRes")]
-    public string PicMainLowRes { get; set; } = "default-low-res-pic.png";*/
+
+    [JsonProperty("picsLowRes")] public string[] PicsLowRes { get; set; } = { "default-low-res-pic.png" };
+
+    [JsonProperty("picsHighRes")] public string[] PicsHighRes { get; set; } = { "default-high-res-pic.png" };
 }
 
 public class UserInShopItem
@@ -51,12 +43,9 @@ public class ShopItem
     public string Description { get; set; }
     public long TotalComments { get; set; }
     public int Price { get; set; }
-    
+
     public string[] PicsLowRes { get; set; } = { "default-low-res-pic.png" };
     public string[] PicsHighRes { get; set; } = { "default-high-res-pic.png" };
-    
-    public string PicMainHighRes { get; set; } = "default-high-res-pic.png";
-    public string PicMainLowRes { get; set; } = "default-low-res-pic.png";
     public UserInShopItem publish { get; set; }
     public int loveThisProduct { get; set; } = 0;
 }

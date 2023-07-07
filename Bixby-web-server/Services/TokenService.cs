@@ -2,7 +2,6 @@
 using System.Security.Claims;
 using System.Text;
 using Bixby_web_server.Models;
-using BixbyShop_LK.Services;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using Newtonsoft.Json;
@@ -66,26 +65,23 @@ public static class TokenService
                     user);
                 return userToken;
             }
-            else
+
+            user.UserAuthTokens.Add(userToken);
+            if (!await UserService.UpdateUserAsync(user.Id, user)) return null;
+            try
             {
-                user.UserAuthTokens.Add(userToken);
-                if (!await UserService.UpdateUserAsync(user.Id, user)) return null;
-                try
-                {
-                    if (user.Email != null) RedisCache.Set(user.Email, user.ToJson());
-                }
-                catch (Exception e)
-                {
-                    // ignored
-                }
-
-                if (!loginPath) return userToken;
-
-                _ = EmailService.SendEmail(path, user.Email, "Email Verification Code for Your Account 🙂🙂", 0,
-                    user);
-                return userToken;
-
+                if (user.Email != null) RedisCache.Set(user.Email, user.ToJson());
             }
+            catch (Exception e)
+            {
+                // ignored
+            }
+
+            if (!loginPath) return userToken;
+
+            _ = EmailService.SendEmail(path, user.Email, "Email Verification Code for Your Account 🙂🙂", 0,
+                user);
+            return userToken;
         }
 
         return null;
@@ -115,7 +111,8 @@ public static class TokenService
         try
         {
             user = JsonConvert.DeserializeObject<User>(cache ?? string.Empty);
-        }catch (Exception)
+        }
+        catch (Exception)
         {
             user = null;
         }

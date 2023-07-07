@@ -11,19 +11,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AWSSDK.S3" Version="3.7.107.2" />
-        <PackageReference Include="Dapper" Version="2.0.143" />
-        <PackageReference Include="EntityFramework" Version="6.4.4" />
-        <PackageReference Include="ImageResizer" Version="4.2.8" />
-        <PackageReference Include="MaterialSkin.2" Version="2.3.1" />
-        <PackageReference Include="MetroModernUI" Version="1.4.0" />
-        <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
-        <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
-        <PackageReference Include="WindowsAPICodePack" Version="7.0.4" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.107.2"/>
+        <PackageReference Include="Dapper" Version="2.0.143"/>
+        <PackageReference Include="EntityFramework" Version="6.4.4"/>
+        <PackageReference Include="ImageResizer" Version="4.2.8"/>
+        <PackageReference Include="MaterialSkin.2" Version="2.3.1"/>
+        <PackageReference Include="MetroModernUI" Version="1.4.0"/>
+        <PackageReference Include="System.Data.SQLite" Version="1.0.118"/>
+        <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118"/>
+        <PackageReference Include="WindowsAPICodePack" Version="7.0.4"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Bixby-web-server\Bixby-web-server.csproj" />
+        <ProjectReference Include="..\Bixby-web-server\Bixby-web-server.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

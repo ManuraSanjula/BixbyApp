@@ -1,31 +1,32 @@
 ﻿using System.Data.SQLite;
 using Dapper;
 
-namespace Bixbu_UI.SQL
+namespace Bixbu_UI.SQL;
+
+public class ConfigDb
 {
-    public class ConfigDb
+    private readonly string databaseFilePath;
+
+    public ConfigDb()
     {
-        private readonly string databaseFilePath;
+        databaseFilePath = GetDatabaseFilePath();
+        InitializeDatabase();
+    }
 
-        public ConfigDb()
-        {
-            databaseFilePath = GetDatabaseFilePath();
-            InitializeDatabase();
-        }
+    private string GetDatabaseFilePath()
+    {
+        var folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Bixby", "data");
+        Directory.CreateDirectory(folderPath);
+        var filePath = Path.Combine(folderPath, "bixby.db");
+        return filePath;
+    }
 
-        private string GetDatabaseFilePath()
+    private void InitializeDatabase()
+    {
+        using (var connection = new SQLiteConnection(GetConnectionString()))
         {
-            string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bixby", "data");
-            Directory.CreateDirectory(folderPath);
-            string filePath = Path.Combine(folderPath, "bixby.db");
-            return filePath;
-        }
-
-        private void InitializeDatabase()
-        {
-            using (var connection = new SQLiteConnection(GetConnectionString()))
-            {
-                connection.Execute(@"
+            connection.Execute(@"
                 CREATE TABLE IF NOT EXISTS Config (
                     Email TEXT,
                     Token TEXT,
@@ -33,31 +34,30 @@ namespace Bixbu_UI.SQL
                     RabbitMQURL TEXT
                 );
             ");
-            }
         }
+    }
 
-        private string GetConnectionString()
-        {
-            return $"Data Source={databaseFilePath};Version=3;";
-        }
+    private string GetConnectionString()
+    {
+        return $"Data Source={databaseFilePath};Version=3;";
+    }
 
-        public void InsertConfig(Config config)
+    public void InsertConfig(Config config)
+    {
+        using (var connection = new SQLiteConnection(GetConnectionString()))
         {
-            using (var connection = new SQLiteConnection(GetConnectionString()))
-            {
-                connection.Execute(@"
+            connection.Execute(@"
                 INSERT INTO Config (Email, Token, RabbitMQName, RabbitMQURL)
                 VALUES (@Email, @Token, @RabbitMQName, @RabbitMQURL);
             ", config);
-            }
         }
+    }
 
-        public Config GetConfig()
+    public Config GetConfig()
+    {
+        using (var connection = new SQLiteConnection(GetConnectionString()))
         {
-            using (var connection = new SQLiteConnection(GetConnectionString()))
-            {
-                return connection.QueryFirstOrDefault<Config>("SELECT * FROM Config;");
-            }
+            return connection.QueryFirstOrDefault<Config>("SELECT * FROM Config;");
         }
     }
 }

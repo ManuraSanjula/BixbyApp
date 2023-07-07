@@ -57,6 +57,7 @@ partial class BixbyApp
         AddProducts = new TabPage();
         panel4 = new Panel();
         panel5 = new Panel();
+        metroLabel5 = new MetroFramework.Controls.MetroLabel();
         Save = new MetroFramework.Controls.MetroButton();
         UploadImages = new MetroFramework.Controls.MetroButton();
         flowLayoutPanel1 = new FlowLayoutPanel();
@@ -68,7 +69,6 @@ partial class BixbyApp
         pictureBox5 = new PictureBox();
         button3 = new Button();
         button4 = new Button();
-        metroLabel5 = new MetroFramework.Controls.MetroLabel();
         materialTabControl1.SuspendLayout();
         Home.SuspendLayout();
         panel2.SuspendLayout();
@@ -531,6 +531,17 @@ partial class BixbyApp
         panel5.Size = new Size(1246, 658);
         panel5.TabIndex = 3;
         // 
+        // metroLabel5
+        // 
+        metroLabel5.AutoSize = true;
+        metroLabel5.FontSize = MetroFramework.MetroLabelSize.Tall;
+        metroLabel5.FontWeight = MetroFramework.MetroLabelWeight.Bold;
+        metroLabel5.Location = new Point(62, 28);
+        metroLabel5.Name = "metroLabel5";
+        metroLabel5.Size = new Size(106, 25);
+        metroLabel5.TabIndex = 9;
+        metroLabel5.Text = "Item Name";
+        // 
         // Save
         // 
         Save.Highlight = true;
@@ -717,17 +728,6 @@ partial class BixbyApp
         button4.Text = "Sign Up";
         button4.UseVisualStyleBackColor = true;
         button4.Click += button4_Click;
-        // 
-        // metroLabel5
-        // 
-        metroLabel5.AutoSize = true;
-        metroLabel5.FontSize = MetroFramework.MetroLabelSize.Tall;
-        metroLabel5.FontWeight = MetroFramework.MetroLabelWeight.Bold;
-        metroLabel5.Location = new Point(62, 28);
-        metroLabel5.Name = "metroLabel5";
-        metroLabel5.Size = new Size(106, 25);
-        metroLabel5.TabIndex = 9;
-        metroLabel5.Text = "Item Name";
         // 
         // BixbyApp
         // 

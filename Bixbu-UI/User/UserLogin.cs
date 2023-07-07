@@ -1,7 +1,5 @@
 ﻿using Bixbu_UI.Properties;
-using Bixbu_UI.SQL;
 using MetroFramework.Forms;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 
 namespace Bixbu_UI.User;
@@ -55,19 +53,19 @@ public partial class UserLogin : MetroForm
                         {
                             Invoke(() =>
                             {
-                                Properties.Settings.Default.TokenValue = token;
-                                Properties.Settings.Default.Save();
+                                Settings.Default.TokenValue = token;
+                                Settings.Default.Save();
 
-                                Properties.Settings.Default.Email = email;
-                                Properties.Settings.Default.Save();
+                                Settings.Default.Email = email;
+                                Settings.Default.Save();
                                 MessageBox.Show("Success");
                                 Close();
                             });
                         }
                         catch (Exception ex)
                         {
-
                         }
+
                         MessageBox.Show(Settings.Default.Email);
                     }
                     else

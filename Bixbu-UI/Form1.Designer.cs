@@ -37,15 +37,7 @@ partial class BixbyApp
         panel1 = new Panel();
         panel3 = new Panel();
         metroButton2 = new MetroFramework.Controls.MetroButton();
-        metroButton1 = new MetroFramework.Controls.MetroButton();
-        materialTextBox23 = new MaterialSkin.Controls.MaterialTextBox2();
-        materialTextBox22 = new MaterialSkin.Controls.MaterialTextBox2();
-        Password = new MaterialSkin.Controls.MaterialTextBox2();
-        metroLabel7 = new MetroFramework.Controls.MetroLabel();
-        metroLabel6 = new MetroFramework.Controls.MetroLabel();
-        metroLabel5 = new MetroFramework.Controls.MetroLabel();
         metroLabel1 = new MetroFramework.Controls.MetroLabel();
-        hScrollBar1 = new HScrollBar();
         metroLabel4 = new MetroFramework.Controls.MetroLabel();
         materialButton3 = new MaterialSkin.Controls.MaterialButton();
         materialButton2 = new MaterialSkin.Controls.MaterialButton();
@@ -80,13 +72,13 @@ partial class BixbyApp
         materialTabControl1.Controls.Add(Settings);
         materialTabControl1.Depth = 0;
         materialTabControl1.Dock = DockStyle.Fill;
-        materialTabControl1.Location = new Point(3, 48);
+        materialTabControl1.Location = new Point(3, 64);
         materialTabControl1.Margin = new Padding(3, 2, 3, 2);
         materialTabControl1.MouseState = MaterialSkin.MouseState.HOVER;
         materialTabControl1.Multiline = true;
         materialTabControl1.Name = "materialTabControl1";
         materialTabControl1.SelectedIndex = 0;
-        materialTabControl1.Size = new Size(1934, 1050);
+        materialTabControl1.Size = new Size(1260, 692);
         materialTabControl1.SizeMode = TabSizeMode.Fixed;
         materialTabControl1.TabIndex = 0;
         // 
@@ -96,7 +88,7 @@ partial class BixbyApp
         Home.Location = new Point(4, 24);
         Home.Margin = new Padding(3, 2, 3, 2);
         Home.Name = "Home";
-        Home.Size = new Size(1926, 1022);
+        Home.Size = new Size(1252, 664);
         Home.TabIndex = 3;
         Home.Text = "Home";
         Home.UseVisualStyleBackColor = true;
@@ -107,7 +99,7 @@ partial class BixbyApp
         panel2.Dock = DockStyle.Fill;
         panel2.Location = new Point(0, 0);
         panel2.Name = "panel2";
-        panel2.Size = new Size(1926, 1022);
+        panel2.Size = new Size(1252, 664);
         panel2.TabIndex = 0;
         // 
         // pictureBox2
@@ -117,7 +109,7 @@ partial class BixbyApp
         pictureBox2.Image = Properties.Resources.ezgif_com_webp_to_jpg;
         pictureBox2.Location = new Point(0, 0);
         pictureBox2.Name = "pictureBox2";
-        pictureBox2.Size = new Size(1926, 1022);
+        pictureBox2.Size = new Size(1252, 664);
         pictureBox2.SizeMode = PictureBoxSizeMode.CenterImage;
         pictureBox2.TabIndex = 0;
         pictureBox2.TabStop = false;
@@ -130,7 +122,7 @@ partial class BixbyApp
         Account.Margin = new Padding(3, 2, 3, 2);
         Account.Name = "Account";
         Account.Padding = new Padding(3, 2, 3, 2);
-        Account.Size = new Size(1926, 1022);
+        Account.Size = new Size(1252, 664);
         Account.TabIndex = 1;
         Account.Text = "Account";
         Account.UseVisualStyleBackColor = true;
@@ -145,21 +137,13 @@ partial class BixbyApp
         panel1.Dock = DockStyle.Fill;
         panel1.Location = new Point(3, 2);
         panel1.Name = "panel1";
-        panel1.Size = new Size(1920, 1018);
+        panel1.Size = new Size(1246, 660);
         panel1.TabIndex = 2;
         // 
         // panel3
         // 
         panel3.Controls.Add(metroButton2);
-        panel3.Controls.Add(metroButton1);
-        panel3.Controls.Add(materialTextBox23);
-        panel3.Controls.Add(materialTextBox22);
-        panel3.Controls.Add(Password);
-        panel3.Controls.Add(metroLabel7);
-        panel3.Controls.Add(metroLabel6);
-        panel3.Controls.Add(metroLabel5);
         panel3.Controls.Add(metroLabel1);
-        panel3.Controls.Add(hScrollBar1);
         panel3.Controls.Add(metroLabel4);
         panel3.Controls.Add(materialButton3);
         panel3.Controls.Add(materialButton2);
@@ -175,14 +159,14 @@ partial class BixbyApp
         panel3.Dock = DockStyle.Fill;
         panel3.Location = new Point(0, 0);
         panel3.Name = "panel3";
-        panel3.Size = new Size(1920, 1018);
-        panel3.TabIndex = 3;
+        panel3.Size = new Size(1246, 660);
+        panel3.TabIndex = 4;
         // 
         // metroButton2
         // 
         metroButton2.FontSize = MetroFramework.MetroButtonSize.Tall;
         metroButton2.Highlight = true;
-        metroButton2.Location = new Point(758, 672);
+        metroButton2.Location = new Point(200, 488);
         metroButton2.Name = "metroButton2";
         metroButton2.Size = new Size(190, 36);
         metroButton2.Style = MetroFramework.MetroColorStyle.Blue;
@@ -192,148 +176,7 @@ partial class BixbyApp
         metroButton2.UseCustomForeColor = true;
         metroButton2.UseSelectable = true;
         metroButton2.UseStyleColors = true;
-        metroButton2.Click += metroButton2_Click;
-        // 
-        // metroButton1
-        // 
-        metroButton1.FontSize = MetroFramework.MetroButtonSize.Tall;
-        metroButton1.Highlight = true;
-        metroButton1.Location = new Point(1347, 467);
-        metroButton1.Name = "metroButton1";
-        metroButton1.Size = new Size(165, 43);
-        metroButton1.Style = MetroFramework.MetroColorStyle.Blue;
-        metroButton1.TabIndex = 22;
-        metroButton1.Text = "Update Password";
-        metroButton1.UseCustomBackColor = true;
-        metroButton1.UseCustomForeColor = true;
-        metroButton1.UseSelectable = true;
-        metroButton1.UseStyleColors = true;
-        // 
-        // materialTextBox23
-        // 
-        materialTextBox23.AnimateReadOnly = true;
-        materialTextBox23.BackgroundImageLayout = ImageLayout.None;
-        materialTextBox23.CharacterCasing = CharacterCasing.Normal;
-        materialTextBox23.Depth = 0;
-        materialTextBox23.Font = new Font("Microsoft Sans Serif", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
-        materialTextBox23.HideSelection = true;
-        materialTextBox23.LeadingIcon = null;
-        materialTextBox23.Location = new Point(1347, 395);
-        materialTextBox23.MaxLength = 32767;
-        materialTextBox23.MouseState = MaterialSkin.MouseState.OUT;
-        materialTextBox23.Name = "materialTextBox23";
-        materialTextBox23.PasswordChar = '●';
-        materialTextBox23.PrefixSuffixText = null;
-        materialTextBox23.ReadOnly = false;
-        materialTextBox23.RightToLeft = RightToLeft.No;
-        materialTextBox23.SelectedText = "";
-        materialTextBox23.SelectionLength = 0;
-        materialTextBox23.SelectionStart = 0;
-        materialTextBox23.ShortcutsEnabled = true;
-        materialTextBox23.Size = new Size(385, 36);
-        materialTextBox23.TabIndex = 21;
-        materialTextBox23.TabStop = false;
-        materialTextBox23.Text = "Confirm Password";
-        materialTextBox23.TextAlign = HorizontalAlignment.Left;
-        materialTextBox23.TrailingIcon = null;
-        materialTextBox23.UseAccent = false;
-        materialTextBox23.UseSystemPasswordChar = true;
-        materialTextBox23.UseTallSize = false;
-        // 
-        // materialTextBox22
-        // 
-        materialTextBox22.AnimateReadOnly = true;
-        materialTextBox22.BackgroundImageLayout = ImageLayout.None;
-        materialTextBox22.CharacterCasing = CharacterCasing.Normal;
-        materialTextBox22.Depth = 0;
-        materialTextBox22.Font = new Font("Microsoft Sans Serif", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
-        materialTextBox22.HideSelection = true;
-        materialTextBox22.LeadingIcon = null;
-        materialTextBox22.Location = new Point(1347, 254);
-        materialTextBox22.MaxLength = 32767;
-        materialTextBox22.MouseState = MaterialSkin.MouseState.OUT;
-        materialTextBox22.Name = "materialTextBox22";
-        materialTextBox22.PasswordChar = '●';
-        materialTextBox22.PrefixSuffixText = null;
-        materialTextBox22.ReadOnly = false;
-        materialTextBox22.RightToLeft = RightToLeft.No;
-        materialTextBox22.SelectedText = "";
-        materialTextBox22.SelectionLength = 0;
-        materialTextBox22.SelectionStart = 0;
-        materialTextBox22.ShortcutsEnabled = true;
-        materialTextBox22.Size = new Size(385, 36);
-        materialTextBox22.TabIndex = 20;
-        materialTextBox22.TabStop = false;
-        materialTextBox22.Text = "New Password";
-        materialTextBox22.TextAlign = HorizontalAlignment.Left;
-        materialTextBox22.TrailingIcon = null;
-        materialTextBox22.UseAccent = false;
-        materialTextBox22.UseSystemPasswordChar = true;
-        materialTextBox22.UseTallSize = false;
-        // 
-        // Password
-        // 
-        Password.AnimateReadOnly = true;
-        Password.BackgroundImageLayout = ImageLayout.None;
-        Password.CharacterCasing = CharacterCasing.Normal;
-        Password.Depth = 0;
-        Password.Font = new Font("Microsoft Sans Serif", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
-        Password.HideSelection = true;
-        Password.LeadingIcon = null;
-        Password.Location = new Point(1347, 110);
-        Password.MaxLength = 32767;
-        Password.MouseState = MaterialSkin.MouseState.OUT;
-        Password.Name = "Password";
-        Password.PasswordChar = '●';
-        Password.PrefixSuffixText = null;
-        Password.ReadOnly = false;
-        Password.RightToLeft = RightToLeft.No;
-        Password.SelectedText = "";
-        Password.SelectionLength = 0;
-        Password.SelectionStart = 0;
-        Password.ShortcutsEnabled = true;
-        Password.Size = new Size(385, 36);
-        Password.TabIndex = 19;
-        Password.TabStop = false;
-        Password.Text = "Current Password";
-        Password.TextAlign = HorizontalAlignment.Left;
-        Password.TrailingIcon = null;
-        Password.UseAccent = false;
-        Password.UseSystemPasswordChar = true;
-        Password.UseTallSize = false;
-        // 
-        // metroLabel7
-        // 
-        metroLabel7.AutoSize = true;
-        metroLabel7.FontSize = MetroFramework.MetroLabelSize.Tall;
-        metroLabel7.FontWeight = MetroFramework.MetroLabelWeight.Bold;
-        metroLabel7.Location = new Point(1347, 340);
-        metroLabel7.Name = "metroLabel7";
-        metroLabel7.Size = new Size(165, 25);
-        metroLabel7.TabIndex = 18;
-        metroLabel7.Text = "Confirm Password";
-        // 
-        // metroLabel6
-        // 
-        metroLabel6.AutoSize = true;
-        metroLabel6.FontSize = MetroFramework.MetroLabelSize.Tall;
-        metroLabel6.FontWeight = MetroFramework.MetroLabelWeight.Bold;
-        metroLabel6.Location = new Point(1347, 202);
-        metroLabel6.Name = "metroLabel6";
-        metroLabel6.Size = new Size(135, 25);
-        metroLabel6.TabIndex = 17;
-        metroLabel6.Text = "New Password";
-        // 
-        // metroLabel5
-        // 
-        metroLabel5.AutoSize = true;
-        metroLabel5.FontSize = MetroFramework.MetroLabelSize.Tall;
-        metroLabel5.FontWeight = MetroFramework.MetroLabelWeight.Bold;
-        metroLabel5.Location = new Point(1347, 60);
-        metroLabel5.Name = "metroLabel5";
-        metroLabel5.Size = new Size(161, 25);
-        metroLabel5.TabIndex = 16;
-        metroLabel5.Text = "Current Password";
+        metroButton2.Click += metroButton2_Click_1;
         // 
         // metroLabel1
         // 
@@ -345,13 +188,6 @@ partial class BixbyApp
         metroLabel1.Size = new Size(80, 25);
         metroLabel1.TabIndex = 15;
         metroLabel1.Text = "Address";
-        // 
-        // hScrollBar1
-        // 
-        hScrollBar1.Location = new Point(1241, 60);
-        hScrollBar1.Name = "hScrollBar1";
-        hScrollBar1.Size = new Size(55, 839);
-        hScrollBar1.TabIndex = 14;
         // 
         // metroLabel4
         // 
@@ -380,7 +216,7 @@ partial class BixbyApp
         materialButton3.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
         materialButton3.UseAccentColor = false;
         materialButton3.UseVisualStyleBackColor = true;
-        materialButton3.Click += materialButton3_Click;
+        materialButton3.Click += materialButton3_Click_1;
         // 
         // materialButton2
         // 
@@ -389,7 +225,7 @@ partial class BixbyApp
         materialButton2.Depth = 0;
         materialButton2.HighEmphasis = true;
         materialButton2.Icon = null;
-        materialButton2.Location = new Point(979, 672);
+        materialButton2.Location = new Point(200, 565);
         materialButton2.Margin = new Padding(4, 6, 4, 6);
         materialButton2.MouseState = MaterialSkin.MouseState.HOVER;
         materialButton2.Name = "materialButton2";
@@ -400,6 +236,7 @@ partial class BixbyApp
         materialButton2.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
         materialButton2.UseAccentColor = false;
         materialButton2.UseVisualStyleBackColor = true;
+        materialButton2.Click += materialButton2_Click;
         // 
         // materialButton1
         // 
@@ -419,7 +256,7 @@ partial class BixbyApp
         materialButton1.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
         materialButton1.UseAccentColor = false;
         materialButton1.UseVisualStyleBackColor = true;
-        materialButton1.Click += materialButton1_Click_1;
+        materialButton1.Click += materialButton1_Click_2;
         // 
         // Address
         // 
@@ -597,7 +434,7 @@ partial class BixbyApp
         // 
         pictureBox1.BackgroundImageLayout = ImageLayout.Center;
         pictureBox1.Image = Properties.Resources.ezgif_com_webp_to_png;
-        pictureBox1.Location = new Point(481, 230);
+        pictureBox1.Location = new Point(396, 180);
         pictureBox1.Name = "pictureBox1";
         pictureBox1.Size = new Size(449, 362);
         pictureBox1.TabIndex = 2;
@@ -605,7 +442,7 @@ partial class BixbyApp
         // 
         // button1
         // 
-        button1.Location = new Point(1015, 28);
+        button1.Location = new Point(862, 28);
         button1.Name = "button1";
         button1.Size = new Size(173, 67);
         button1.TabIndex = 0;
@@ -615,7 +452,7 @@ partial class BixbyApp
         // 
         // button2
         // 
-        button2.Location = new Point(1241, 28);
+        button2.Location = new Point(1065, 28);
         button2.Name = "button2";
         button2.Size = new Size(173, 67);
         button2.TabIndex = 1;
@@ -628,20 +465,21 @@ partial class BixbyApp
         Settings.Location = new Point(4, 24);
         Settings.Margin = new Padding(3, 2, 3, 2);
         Settings.Name = "Settings";
-        Settings.Size = new Size(1926, 1022);
+        Settings.Size = new Size(1252, 664);
         Settings.TabIndex = 2;
         Settings.Text = "Settings";
         Settings.UseVisualStyleBackColor = true;
         // 
         // BixbyApp
         // 
+        AutoScaleMode = AutoScaleMode.None;
         AutoSize = true;
-        ClientSize = new Size(1940, 1100);
+        ClientSize = new Size(1266, 758);
         Controls.Add(materialTabControl1);
         DrawerTabControl = materialTabControl1;
         Margin = new Padding(3, 2, 3, 2);
         Name = "BixbyApp";
-        Padding = new Padding(3, 48, 3, 2);
+        Padding = new Padding(3, 64, 3, 2);
         StartPosition = FormStartPosition.CenterScreen;
         Text = "BixbyApp";
         Load += Form1_Load;
@@ -672,26 +510,18 @@ partial class BixbyApp
     private PictureBox pictureBox2;
     private PictureBox pictureBox3;
     private Panel panel3;
-    private PictureBox pictureBox4;
-    private MetroFramework.Controls.MetroLabel FirstName;
+    private MetroFramework.Controls.MetroButton metroButton2;
+    private MetroFramework.Controls.MetroLabel metroLabel1;
+    private MetroFramework.Controls.MetroLabel metroLabel4;
+    private MaterialSkin.Controls.MaterialButton materialButton3;
+    private MaterialSkin.Controls.MaterialButton materialButton2;
+    private MaterialSkin.Controls.MaterialButton materialButton1;
     private MaterialSkin.Controls.MaterialTextBox2 Address;
     private MaterialSkin.Controls.MaterialTextBox2 Email;
     private MetroFramework.Controls.MetroLabel metroLabel3;
     private MaterialSkin.Controls.MaterialTextBox2 LastName;
     private MetroFramework.Controls.MetroLabel metroLabel2;
     private MaterialSkin.Controls.MaterialTextBox2 FirstName_txt;
-    private MaterialSkin.Controls.MaterialButton materialButton2;
-    private MaterialSkin.Controls.MaterialButton materialButton1;
-    private MaterialSkin.Controls.MaterialButton materialButton3;
-    private MetroFramework.Controls.MetroLabel metroLabel4;
-    private HScrollBar hScrollBar1;
-    private MetroFramework.Controls.MetroLabel metroLabel1;
-    private MaterialSkin.Controls.MaterialTextBox2 materialTextBox23;
-    private MaterialSkin.Controls.MaterialTextBox2 materialTextBox22;
-    private MaterialSkin.Controls.MaterialTextBox2 Password;
-    private MetroFramework.Controls.MetroLabel metroLabel7;
-    private MetroFramework.Controls.MetroLabel metroLabel6;
-    private MetroFramework.Controls.MetroLabel metroLabel5;
-    private MetroFramework.Controls.MetroButton metroButton1;
-    private MetroFramework.Controls.MetroButton metroButton2;
+    private MetroFramework.Controls.MetroLabel FirstName;
+    private PictureBox pictureBox4;
 }

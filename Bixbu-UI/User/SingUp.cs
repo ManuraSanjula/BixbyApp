@@ -72,6 +72,7 @@ public partial class SingUp : MaterialForm
                                     Properties.Settings.Default.Save();
                                     MessageBox.Show("Success");
                                     Close();
+                                    return;
                                 });
                                 break;
                             case "An error occurred.":
@@ -79,18 +80,24 @@ public partial class SingUp : MaterialForm
                                 break;
                         }
                     else
+                    {
                         Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
+                        return;
+                    }
                 }
                 else
                 {
                     Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
+                    return;
                 }
             }
         }
         catch (Exception ex)
         {
             Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
+            return;
         }
+        return;
     }
 
     private void materialButton2_Click(object sender, EventArgs e)

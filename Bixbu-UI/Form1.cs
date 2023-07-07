@@ -8,9 +8,9 @@ using MaterialSkin.Controls;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System.Drawing.Drawing2D;
-using Newtonsoft.Json.Linq;
 using Amazon.S3.Model;
-using System.Windows.Forms;
+using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace Bixbu_UI;
 
@@ -32,6 +32,13 @@ public partial class BixbyApp : MaterialForm
     public BixbyApp()
     {
         InitializeComponent();
+
+        this.FormBorderStyle = FormBorderStyle.FixedSingle;
+        this.MaximizeBox = false;
+        this.MinimizeBox = false;
+
+        // Disable form minimizing
+        this.ShowIcon = false;
     }
 
     private async Task<string> SendGetRequestAsync(string url)
@@ -98,20 +105,16 @@ public partial class BixbyApp : MaterialForm
                         {
                             string filename = Path.GetFileName(url);
                             RetrieveImageFromS3(filename);
+                            return;
                         }
 
                     }
 
                 }
-                else
-                {
-                    MessageBox.Show(response.ToString());
-                }
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message);
             panel1.Visible = true;
             panel3.Visible = false;
         }
@@ -145,17 +148,22 @@ public partial class BixbyApp : MaterialForm
 
     private void RefreshAccountTab()
     {
+       
+    }
 
+
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+        this.Size = new System.Drawing.Size(1268, 758);
     }
 
     private async void Form1_Load(object sender, EventArgs e)
     {
-        this.WindowState = FormWindowState.Minimized;
 
-        // To maximize the form
-        this.WindowState = FormWindowState.Maximized;
-        this.WindowState = FormWindowState.Normal;
-
+        this.metroLabel4.Visible = false;
+        this.metroLabel4.Enabled = false;
+        this.Size = new System.Drawing.Size(1268, 758);
         materialTabControl1.Selecting += tabControl1_Selecting;
         materialTabControl1.SelectedIndexChanged += tabControl1_Selecting;
 
@@ -235,11 +243,18 @@ public partial class BixbyApp : MaterialForm
     {
     }
 
+
+    private void ChildForm_FormClosed(object sender, FormClosedEventArgs e)
+    {
+        Application.Restart();
+    }
+
     private void button1_Click_1(object sender, EventArgs e)
     {
         var loginForm = new UserLogin();
         loginForm.MinimizeBox = false;
         loginForm.MaximizeBox = false;
+        loginForm.FormClosed += ChildForm_FormClosed;
         Blur();
         loginForm.Show();
         UnBlur();
@@ -251,6 +266,7 @@ public partial class BixbyApp : MaterialForm
         var SingUp = new SingUp();
         SingUp.MinimizeBox = false;
         SingUp.MaximizeBox = false;
+        SingUp.FormClosed += ChildForm_FormClosed;
         Blur();
         SingUp.Show();
         UnBlur();
@@ -297,41 +313,13 @@ public partial class BixbyApp : MaterialForm
     {
         Image image = Image.FromFile(imagePath);
         pictureBox4.Image = image;
+        pictureBox4.SizeMode = PictureBoxSizeMode.CenterImage;
+
 
     }
 
     private void pictureBox2_Click(object sender, EventArgs e)
     {
-    }
-
-    private void materialButton3_Click(object sender, EventArgs e)
-    {
-        if (openFileDialog.ShowDialog() == DialogResult.OK)
-        {
-            string filePath = openFileDialog.FileName;
-            Image selectedImage = Image.FromFile(filePath);
-            metroLabel4.Text = filePath;
-        }
-    }
-
-    private void materialButton1_Click_1(object sender, EventArgs e)
-    {
-        string filePath = openFileDialog.FileName;
-        if (filePath == null)
-        {
-            MessageBox.Show("Pick a image");
-            return;
-        }
-        string resizedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "resized_" + Path.GetFileName(filePath));
-
-        // Resize the image
-        ResizeImage(filePath, resizedFilePath, 800, 600);
-
-        // Upload the resized image to S3
-        UploadToS3(resizedFilePath);
-
-        // Clean up
-        File.Delete(resizedFilePath);
     }
 
     private async void UploadToS3(string filePath)
@@ -367,6 +355,7 @@ public partial class BixbyApp : MaterialForm
             if (httpResponseMessage.IsSuccessStatusCode)
             {
                 MessageBox.Show("Okay");
+                materialTabControl1.SelectedIndex = 0;
             }
             else
             {
@@ -452,7 +441,7 @@ public partial class BixbyApp : MaterialForm
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error processing and uploading image: {ex.Message}");
+
         }
     }
 
@@ -460,6 +449,118 @@ public partial class BixbyApp : MaterialForm
     {
 
     }
+
+    private void materialButton3_Click_1(object sender, EventArgs e)
+    {
+        if (openFileDialog.ShowDialog() == DialogResult.OK)
+        {
+            string filePath = openFileDialog.FileName;
+            Image selectedImage = Image.FromFile(filePath);
+            metroLabel4.Visible = selectedImage != null;
+            metroLabel4.Enabled = selectedImage != null;
+            metroLabel4.Text = filePath;
+        }
+    }
+
+    private void materialButton1_Click_2(object sender, EventArgs e)
+    {
+        string filePath = openFileDialog.FileName;
+        if (filePath == null)
+        {
+            MessageBox.Show("Pick a image");
+            return;
+        }
+        string resizedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "resized_" + Path.GetFileName(filePath));
+
+        // Resize the image
+        ResizeImage(filePath, resizedFilePath, 800, 600);
+
+        // Upload the resized image to S3
+        UploadToS3(resizedFilePath);
+
+        // Clean up
+        File.Delete(resizedFilePath);
+    }
+
+    private void metroButton2_Click_1(object sender, EventArgs e)
+    {
+        Properties.Settings.Default.TokenValue = null;
+        Properties.Settings.Default.Email = null;
+        Properties.Settings.Default.Save();
+        MessageBox.Show("Success");
+        materialTabControl1.SelectedIndex = 0;
+        Form1_Load(this, EventArgs.Empty);
+    }
+
+    private async void materialButton2_Click(object sender, EventArgs e)
+    {
+        string token = Properties.Settings.Default.TokenValue;
+        string email = Properties.Settings.Default.Email;
+
+        string firstName = FirstName_txt.Text;
+        string lastName = LastName.Text;
+        string userEmail = Email.Text;
+        string address = Address.Text;
+
+        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+        {
+            Invoke(new Action(() =>
+            {
+                MessageBox.Show("Invalid Input: Passwords do not match");
+            })); // Invoke on UI thread
+            return;
+        }
+
+        var client = new HttpClient();
+        var request = new HttpRequestMessage(HttpMethod.Put, $"http://localhost:8080/updateUser/{email}");
+        request.Headers.Add("Authorization", $"Bearer {token}");
+
+        var content = new
+        {
+            firstName = firstName,
+            lastName = lastName,
+            email = userEmail,
+            address = address
+        };
+
+        var json = JsonConvert.SerializeObject(content);
+        var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
+        request.Content = stringContent;
+
+        var response = await client.SendAsync(request);
+        HttpResponseMessage httpResponseMessage = response.EnsureSuccessStatusCode();
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var jsonResult = await response.Content.ReadAsStringAsync();
+            var jObject = JObject.Parse(jsonResult);
+            var status = jObject["status"]?.Value<string>();
+
+            if (status != null)
+                switch (status)
+                {
+                    case "Success":
+                        Invoke(() =>
+                        {
+                            MessageBox.Show("Success");
+                            materialTabControl1.SelectedIndex = 0;
+                        });
+                        break;
+                    case "An error occurred.":
+                        Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
+                        break;
+                }
+            else
+                Invoke(new Action(() => MessageBox.Show("Try Again")));
+            return;
+        }
+        else
+        {
+            Invoke(new Action(() => MessageBox.Show("Try Again")));
+            return;
+        }
+    }
+
 }
 
 public class BitmapFilter

@@ -31,8 +31,7 @@ partial class BixbyApp
     {
         materialTabControl1 = new MaterialSkin.Controls.MaterialTabControl();
         Home = new TabPage();
-        panel2 = new Panel();
-        pictureBox2 = new PictureBox();
+        home_panel = new FlowLayoutPanel();
         Account = new TabPage();
         panel1 = new Panel();
         panel3 = new Panel();
@@ -50,7 +49,6 @@ partial class BixbyApp
         FirstName_txt = new MaterialSkin.Controls.MaterialTextBox2();
         FirstName = new MetroFramework.Controls.MetroLabel();
         pictureBox4 = new PictureBox();
-        pictureBox1 = new PictureBox();
         button1 = new Button();
         button2 = new Button();
         Settings = new TabPage();
@@ -66,22 +64,17 @@ partial class BixbyApp
         Price = new MaterialSkin.Controls.MaterialTextBox2();
         Description = new MaterialSkin.Controls.MaterialTextBox2();
         ItemName = new MaterialSkin.Controls.MaterialTextBox2();
-        pictureBox5 = new PictureBox();
         button3 = new Button();
         button4 = new Button();
         materialTabControl1.SuspendLayout();
         Home.SuspendLayout();
-        panel2.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
         Account.SuspendLayout();
         panel1.SuspendLayout();
         panel3.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)pictureBox4).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
         AddProducts.SuspendLayout();
         panel4.SuspendLayout();
         panel5.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)pictureBox5).BeginInit();
         SuspendLayout();
         // 
         // materialTabControl1
@@ -104,7 +97,7 @@ partial class BixbyApp
         // 
         // Home
         // 
-        Home.Controls.Add(panel2);
+        Home.Controls.Add(home_panel);
         Home.Location = new Point(4, 24);
         Home.Margin = new Padding(3, 2, 3, 2);
         Home.Name = "Home";
@@ -113,27 +106,13 @@ partial class BixbyApp
         Home.Text = "Home";
         Home.UseVisualStyleBackColor = true;
         // 
-        // panel2
+        // home_panel
         // 
-        panel2.Controls.Add(pictureBox2);
-        panel2.Dock = DockStyle.Fill;
-        panel2.Location = new Point(0, 0);
-        panel2.Name = "panel2";
-        panel2.Size = new Size(1252, 664);
-        panel2.TabIndex = 0;
-        // 
-        // pictureBox2
-        // 
-        pictureBox2.BackColor = Color.White;
-        pictureBox2.Dock = DockStyle.Fill;
-        pictureBox2.Image = Properties.Resources.ezgif_com_webp_to_jpg;
-        pictureBox2.Location = new Point(0, 0);
-        pictureBox2.Name = "pictureBox2";
-        pictureBox2.Size = new Size(1252, 664);
-        pictureBox2.SizeMode = PictureBoxSizeMode.CenterImage;
-        pictureBox2.TabIndex = 0;
-        pictureBox2.TabStop = false;
-        pictureBox2.Click += pictureBox2_Click;
+        home_panel.Dock = DockStyle.Fill;
+        home_panel.Location = new Point(0, 0);
+        home_panel.Name = "home_panel";
+        home_panel.Size = new Size(1252, 664);
+        home_panel.TabIndex = 0;
         // 
         // Account
         // 
@@ -151,7 +130,6 @@ partial class BixbyApp
         // 
         panel1.BackColor = Color.White;
         panel1.Controls.Add(panel3);
-        panel1.Controls.Add(pictureBox1);
         panel1.Controls.Add(button1);
         panel1.Controls.Add(button2);
         panel1.Dock = DockStyle.Fill;
@@ -450,16 +428,6 @@ partial class BixbyApp
         pictureBox4.TabIndex = 0;
         pictureBox4.TabStop = false;
         // 
-        // pictureBox1
-        // 
-        pictureBox1.BackgroundImageLayout = ImageLayout.Center;
-        pictureBox1.Image = Properties.Resources.ezgif_com_webp_to_png;
-        pictureBox1.Location = new Point(396, 180);
-        pictureBox1.Name = "pictureBox1";
-        pictureBox1.Size = new Size(449, 362);
-        pictureBox1.TabIndex = 2;
-        pictureBox1.TabStop = false;
-        // 
         // button1
         // 
         button1.Location = new Point(862, 28);
@@ -505,7 +473,6 @@ partial class BixbyApp
         // 
         panel4.BackColor = Color.White;
         panel4.Controls.Add(panel5);
-        panel4.Controls.Add(pictureBox5);
         panel4.Controls.Add(button3);
         panel4.Controls.Add(button4);
         panel4.Dock = DockStyle.Fill;
@@ -699,16 +666,6 @@ partial class BixbyApp
         ItemName.UseSystemPasswordChar = false;
         ItemName.UseTallSize = false;
         // 
-        // pictureBox5
-        // 
-        pictureBox5.BackgroundImageLayout = ImageLayout.Center;
-        pictureBox5.Image = Properties.Resources.ezgif_com_webp_to_png;
-        pictureBox5.Location = new Point(373, 169);
-        pictureBox5.Name = "pictureBox5";
-        pictureBox5.Size = new Size(449, 362);
-        pictureBox5.TabIndex = 2;
-        pictureBox5.TabStop = false;
-        // 
         // button3
         // 
         button3.Location = new Point(862, 28);
@@ -744,19 +701,15 @@ partial class BixbyApp
         Load += Form1_Load;
         materialTabControl1.ResumeLayout(false);
         Home.ResumeLayout(false);
-        panel2.ResumeLayout(false);
-        ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
         Account.ResumeLayout(false);
         panel1.ResumeLayout(false);
         panel3.ResumeLayout(false);
         panel3.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)pictureBox4).EndInit();
-        ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
         AddProducts.ResumeLayout(false);
         panel4.ResumeLayout(false);
         panel5.ResumeLayout(false);
         panel5.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)pictureBox5).EndInit();
         ResumeLayout(false);
     }
 
@@ -769,9 +722,6 @@ partial class BixbyApp
     private Button button2;
     private Button button1;
     private Panel panel1;
-    private PictureBox pictureBox1;
-    private Panel panel2;
-    private PictureBox pictureBox2;
     private Panel panel3;
     private MetroFramework.Controls.MetroButton metroButton2;
     private MetroFramework.Controls.MetroLabel metroLabel1;
@@ -789,7 +739,6 @@ partial class BixbyApp
     private PictureBox pictureBox4;
     private TabPage AddProducts;
     private Panel panel4;
-    private PictureBox pictureBox5;
     private Button button3;
     private Button button4;
     private Panel panel5;
@@ -802,4 +751,5 @@ partial class BixbyApp
     private MetroFramework.Controls.MetroButton Save;
     private MetroFramework.Controls.MetroButton UploadImages;
     private MetroFramework.Controls.MetroLabel metroLabel5;
+    private FlowLayoutPanel home_panel;
 }

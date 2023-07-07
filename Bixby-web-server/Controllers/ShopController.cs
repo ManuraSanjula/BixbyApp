@@ -33,9 +33,9 @@ public abstract class ShopController
         var shopItems = await ShopItemService.GetAllShopItemsAsync();
         var convertedItems = shopItems.Select(shop => new ShopAllShopItem
         {
-            Id = shop.Id,
+            Id = shop.Id.ToString(),
             Name = shop.Name,
-            PicLowRes = shop.PicsLowRes.Length > 0 ? "" : shop.PicsLowRes[0]
+            PicLowRes = shop.PicsLowRes.Length > 0 ? shop.PicsLowRes[0] : ""
         }).ToList();
 
         var response = new

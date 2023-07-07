@@ -1,6 +1,7 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Text;
+using System.Windows.Forms;
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -28,7 +29,7 @@ public partial class BixbyApp : MaterialForm
     private readonly List<string> original_images = new();
     private PictureBox pb;
     private readonly List<string> re_sized_images = new();
-
+    HashSet<Item> items = new();
     public UserInformation userData;
 
     public BixbyApp()
@@ -129,8 +130,10 @@ public partial class BixbyApp : MaterialForm
     {
         // Check if the selected tab is the "Account" tab
         if (e.TabPage == Account)
-            // Add your custom refresh logic here
             RefreshAccountTab();
+        if (e.TabPage == Home)
+            home(null);
+
     }
 
     private void RefreshAccountTab()
@@ -156,8 +159,10 @@ public partial class BixbyApp : MaterialForm
         metroLabel4.Visible = false;
         metroLabel4.Enabled = false;
         Size = new Size(1268, 758);
-        materialTabControl1.Selecting += tabControl1_Selecting;
-        materialTabControl1.SelectedIndexChanged += tabControl1_Selecting;
+
+
+        /*  materialTabControl1.Selecting += tabControl1_Selecting;
+          materialTabControl1.SelectedIndexChanged += tabControl1_Selecting;*/
 
         pb = new PictureBox();
         panel1.Controls.Add(pb);
@@ -172,6 +177,8 @@ public partial class BixbyApp : MaterialForm
         flowLayoutPanel1.WrapContents = false;
         flowLayoutPanel1.Padding = new Padding(10); // Adjust the padding as per your requirement
 
+        home_panel.AutoScroll = true;
+        home_panel.FlowDirection = FlowDirection.LeftToRight;
 
         var loadingForm =
             new LoadingForm("https://cdn.dribbble.com/users/295241/screenshots/4496315/loading-animation.gif");
@@ -181,11 +188,6 @@ public partial class BixbyApp : MaterialForm
 
         try
         {
-            var client = new HttpClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost:8080/home");
-            var response = await client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
             if (!token.IsNullOrEmpty() || !email.IsNullOrEmpty())
             {
                 await UserAccount(email, token); // Wait for the UserAccount method to complete
@@ -197,10 +199,6 @@ public partial class BixbyApp : MaterialForm
                 panel3.Visible = false;
                 panel5.Visible = false;
             }
-
-            loadingForm.Close(); // Close the loading form once both requests are completed
-
-            foreach (Control control in Controls) control.Enabled = true;
         }
         catch (Exception ex)
         {
@@ -208,13 +206,104 @@ public partial class BixbyApp : MaterialForm
             panel3.Visible = false;
             loadingForm.Close(); // Close the loading form in case of an exception
         }
+
+
+        home(loadingForm);
+
+        loadingForm.Close(); // Close the loading form once both requests are completed
+
+        foreach (Control control in Controls) control.Enabled = true;
     }
 
+
+    private bool ControlProperties(Control.ControlCollection controls, String key)
+    {
+        foreach (Control control in controls)
+        {
+            if (control is ImageDetail myUserControl)
+            {
+                if (myUserControl.path == key)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void homeError()
+    {
+
+    }
+    private void PictureBox_Load(object sender, EventArgs e)
+    {
+        PictureBox pictureBox = (PictureBox)sender;
+
+        // Load the image from the online source
+        string imageUrl = "https://example.com/image.jpg";
+        pictureBox.ImageLocation = imageUrl;
+
+        // Adjust the size of the PictureBox based on the loaded image
+        if (pictureBox.Image != null)
+        {
+            // Calculate the aspect ratio of the image
+            float aspectRatio = (float)pictureBox.Image.Width / pictureBox.Image.Height;
+
+            // Set the size of the PictureBox based on the aspect ratio and desired width
+            int desiredWidth = 200; // Adjust as needed
+            int desiredHeight = (int)(desiredWidth / aspectRatio);
+            pictureBox.Size = new Size(desiredWidth, desiredHeight);
+        }
+    }
+
+    private void home(LoadingForm loadingForm)
+    {
+        try
+        {
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost:8080/home");
+
+            var response = client.SendAsync(request).GetAwaiter().GetResult();
+            response.EnsureSuccessStatusCode();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                var responseObject = JsonConvert.DeserializeObject<Response>(json);
+                items = responseObject.body;
+
+                if (items.Count > 0)
+                {
+                    foreach (var item in items)
+                    {
+                        if (item != null)
+                        {
+                            if (!ControlProperties(home_panel.Controls, item.PicLowRes))
+                                home_panel.Controls.Add(new ImageDetail(item.PicLowRes, true));
+                        }
+                    }
+                    return;
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            if (loadingForm != null)
+                loadingForm.Close();
+            return;
+            // Close the loading form once both requests are completed
+        }
+    }
 
     private void tabControl1_Selecting(object? sender, EventArgs e)
     {
         var tab = (TabControl)sender;
         if (tab.SelectedTab == Account) RefreshAccountTab();
+        if (tab.SelectedTab == Home) home(null);
     }
 
     private void ChildForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -273,8 +362,43 @@ public partial class BixbyApp : MaterialForm
                     UpdatePictureBox(tempFilePath);
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error retrieving image: {ex.Message}");
+        }
+    }
 
-            MessageBox.Show("Image retrieved successfully.");
+    public static async void RetrieveImageFromS3(string key, PictureBox pictureBox)
+    {
+        var s3Client = new AmazonS3Client(AccessKey, SecretKey, RegionEndpoint.APSouth1);
+
+        var request = new GetObjectRequest
+        {
+            BucketName = BucketName,
+            Key = key
+        };
+
+        try
+        {
+            using (var response = await s3Client.GetObjectAsync(request))
+            {
+                using (var responseStream = response.ResponseStream)
+                {
+                    // Create a temporary file path to save the retrieved image
+                    var tempFilePath = Path.GetTempFileName();
+
+                    using (var fileStream = File.Create(tempFilePath))
+                    {
+                        responseStream.CopyTo(fileStream);
+                    }
+
+                    // Update the PictureBox with the retrieved image
+                    var image = Image.FromFile(tempFilePath);
+                    pictureBox.Image = image;
+                    pictureBox.SizeMode = PictureBoxSizeMode.CenterImage;
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -583,7 +707,7 @@ public partial class BixbyApp : MaterialForm
             var resizedFilePath =
                 Path.Combine(Path.GetDirectoryName(imagePath), "resized_" + Path.GetFileName(imagePath));
             ResizeImage(imagePath, resizedFilePath, 404, 251);
-            flowLayoutPanel1.Controls.Add(new ImageDetail(resizedFilePath));
+            flowLayoutPanel1.Controls.Add(new ImageDetail(resizedFilePath, false));
             re_sized_images.Add(resizedFilePath);
             original_images.Add(imagePath);
         }
@@ -641,19 +765,15 @@ public partial class BixbyApp : MaterialForm
                         case "Success":
                             Invoke(() =>
                             {
-                                re_sized_images.ForEach(image => { File.Delete(image); });
-
-                                original_images.ForEach(image => { File.Delete(image); });
                                 MessageBox.Show("Success");
                                 materialTabControl1.SelectedIndex = 0;
+                                materialTabControl1.Refresh();
+                                Home.Refresh();
                             });
                             break;
                         case "An error occurred.":
                             Invoke(() =>
                             {
-                                re_sized_images.ForEach(image => { File.Delete(image); });
-
-                                original_images.ForEach(image => { File.Delete(image); });
                                 MessageBox.Show("Try Again");
                             }); // Invoke on UI thread
                             break;
@@ -661,9 +781,6 @@ public partial class BixbyApp : MaterialForm
                 else
                     Invoke(() =>
                     {
-                        re_sized_images.ForEach(image => { File.Delete(image); });
-
-                        original_images.ForEach(image => { File.Delete(image); });
                         MessageBox.Show("Try Again");
                     });
 
@@ -676,6 +793,11 @@ public partial class BixbyApp : MaterialForm
         {
             Invoke(new Action(() => MessageBox.Show(ex.Message)));
         }
+    }
+
+    private void pictureBox2_Click_1(object sender, EventArgs e)
+    {
+
     }
 }
 
@@ -806,4 +928,116 @@ internal class Screenshot
         g.CopyFromScreen(ctl.PointToScreen(ctl.ClientRectangle.Location), new Point(0, 0), ctl.ClientRectangle.Size);
         return bmp;
     }
+}
+
+
+public class Item : IEquatable<Item>
+{
+    public bool Equals(Item? other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return _id == other._id && Name == other.Name && PicLowRes == other.PicLowRes;
+    }
+
+    private sealed class IdNamePicLowResEqualityComparer : IEqualityComparer<Item>
+    {
+        public bool Equals(Item x, Item y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (ReferenceEquals(x, null)) return false;
+            if (ReferenceEquals(y, null)) return false;
+            if (x.GetType() != y.GetType()) return false;
+            return x._id == y._id && x.Name == y.Name && x.PicLowRes == y.PicLowRes;
+        }
+
+        public int GetHashCode(Item obj)
+        {
+            return HashCode.Combine(obj._id, obj.Name, obj.PicLowRes);
+        }
+    }
+
+    public static IEqualityComparer<Item> IdNamePicLowResComparer { get; } = new IdNamePicLowResEqualityComparer();
+
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != this.GetType()) return false;
+        return Equals((Item)obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(_id, Name, PicLowRes);
+    }
+
+    public static bool operator ==(Item? left, Item? right)
+    {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(Item? left, Item? right)
+    {
+        return !Equals(left, right);
+    }
+
+    public string _id { get; set; }
+    public string Name { get; set; }
+    public string PicLowRes { get; set; }
+}
+
+public class Response : IEquatable<Response>
+{
+    public bool Equals(Response? other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return status == other.status && body.Equals(other.body);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != this.GetType()) return false;
+        return Equals((Response)obj);
+    }
+
+    private sealed class StatusBodyEqualityComparer : IEqualityComparer<Response>
+    {
+        public bool Equals(Response x, Response y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (ReferenceEquals(x, null)) return false;
+            if (ReferenceEquals(y, null)) return false;
+            if (x.GetType() != y.GetType()) return false;
+            return x.status == y.status && x.body.Equals(y.body);
+        }
+
+        public int GetHashCode(Response obj)
+        {
+            return HashCode.Combine(obj.status, obj.body);
+        }
+    }
+
+    public static IEqualityComparer<Response> StatusBodyComparer { get; } = new StatusBodyEqualityComparer();
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(status, body);
+    }
+
+    public static bool operator ==(Response? left, Response? right)
+    {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(Response? left, Response? right)
+    {
+        return !Equals(left, right);
+    }
+
+    public string status { get; set; }
+    public HashSet<Item> body { get; set; }
 }

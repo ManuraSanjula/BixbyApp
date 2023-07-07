@@ -2,13 +2,21 @@
 
 public partial class ImageDetail : UserControl
 {
-    private string resizedFilePath;
+    public string path { get; }
 
-    public ImageDetail(string url)
+    public ImageDetail(string url, bool aws)
     {
         InitializeComponent();
-        pictureBox1.Image = Image.FromFile(url);
-        pictureBox1.SizeMode = PictureBoxSizeMode.CenterImage;
+        if (aws)
+        {
+            this.path = url;
+            BixbyApp.RetrieveImageFromS3(url, pictureBox1);
+        }
+        else
+        {
+            pictureBox1.Image = Image.FromFile(url);
+            pictureBox1.SizeMode = PictureBoxSizeMode.CenterImage;
+        }
     }
 
     protected override void OnHandleDestroyed(EventArgs e)

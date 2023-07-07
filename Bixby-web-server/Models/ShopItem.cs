@@ -30,8 +30,7 @@ public class UserInShopItem
 
 public class ShopAllShopItem
 {
-    public ObjectId Id { get; set; }
-
+    public String Id { get; set; }
     public string Name { get; set; }
     public string PicLowRes { get; set; }
 }

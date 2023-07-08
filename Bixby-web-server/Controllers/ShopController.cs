@@ -35,7 +35,7 @@ public abstract class ShopController
         {
             Id = shop.Id.ToString(),
             Name = shop.Name,
-            PicLowRes = shop.PicsLowRes.Length > 0 ? shop.PicsLowRes[0] : ""
+            PicLowRes = shop.Pics.Length > 0 ? shop.Pics[0] : ""
         }).ToList();
 
         var response = new
@@ -81,8 +81,7 @@ public abstract class ShopController
                         Description = shopItem.Description,
                         TotalComments = (int)shopItem.TotalComments,
                         Price = shopItem.Price,
-                        shopItem.PicsLowRes,
-                        shopItem.PicsHighRes,
+                        shopItem.Pics,
                         shopItem.publish,
                         loveThisProduct = shopItem.loveThisProduct
                     }

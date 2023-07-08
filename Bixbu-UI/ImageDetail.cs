@@ -5,18 +5,13 @@ namespace Bixbu_UI;
 public partial class ImageDetail : UserControl
 {
     public string path { get; }
-    public string original { get; }
-    private bool aws { get; set; }
-    public ImageDetail(string url, string original, bool aws, bool full)
+    public ImageDetail(string url, bool aws, bool full)
     {
         InitializeComponent();
-        this.original = original;
         this.path = url;
-        this.original = original;
-        this.aws = aws;
         if (aws)
         {
-            BixbyApp.RetrieveImageFromS3(url, pictureBox1, full);
+            BixbyApp.RetrieveImageFromS3(url, pictureBox1, 404, 251);
         }
         else
         {
@@ -54,6 +49,6 @@ public partial class SecondForm : Form
         var pictureBox = new PictureBox();
         // Add the PictureBox to the second form
         Controls.Add(pictureBox);
-        BixbyApp.RetrieveImageFromS3(image, pictureBox, true);
+        //BixbyApp.RetrieveImageFromS3(image, pictureBox, true);
     }
 }

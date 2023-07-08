@@ -27,9 +27,8 @@ public partial class BixbyApp : MaterialForm
     private readonly List<ShopAllShopItem> shopAllShopItems = new();
 
     private OpenFileDialog openFileDialog = new();
-    private readonly List<string> original_images = new();
     private PictureBox pb;
-    private readonly List<string> re_sized_images = new();
+    private readonly List<string> images = new();
     HashSet<Item> items = new();
     public UserInformation userData;
 
@@ -363,7 +362,7 @@ public partial class BixbyApp : MaterialForm
         }
     }
 
-    public static async void RetrieveImageFromS3(string key, PictureBox pictureBox, bool fullRes)
+    public static async void RetrieveImageFromS3(string key, PictureBox pictureBox, int width, int height)
     {
         var s3Client = new AmazonS3Client(AccessKey, SecretKey, RegionEndpoint.APSouth1);
 
@@ -377,19 +376,16 @@ public partial class BixbyApp : MaterialForm
         {
             using (var response = await s3Client.GetObjectAsync(request))
             {
-                using (var responseStream = response.ResponseStream)
+                // Create a temporary in-memory stream to store the retrieved image
+                using (var imageStream = new MemoryStream())
                 {
-                    // Create a temporary file path to save the retrieved image
-                    var tempFilePath = Path.GetTempFileName();
+                    await response.ResponseStream.CopyToAsync(imageStream);
 
-                    using (var fileStream = File.Create(tempFilePath))
-                    {
-                        responseStream.CopyTo(fileStream);
-                    }
+                    // Resize the image using the in-memory stream
+                    var resizedImage = ResizeImage(Image.FromStream(imageStream), width, height);
 
-                    // Update the PictureBox with the retrieved image
-                    var image = Image.FromFile(tempFilePath);
-                    pictureBox.Image = image;
+                    // Update the PictureBox with the resized image
+                    pictureBox.Image = resizedImage;
                     pictureBox.SizeMode = PictureBoxSizeMode.CenterImage;
                 }
             }
@@ -399,6 +395,30 @@ public partial class BixbyApp : MaterialForm
             MessageBox.Show($"Error retrieving image: {ex.Message}");
         }
     }
+
+    public static Image ResizeImage(Image image, int width, int height)
+    {
+        // Create a new bitmap with the desired width and height
+        Bitmap resizedImage = new Bitmap(width, height);
+
+        // Set the resolution of the resized image to match the source image
+        resizedImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+
+        // Create a Graphics object from the resized image
+        using (Graphics graphics = Graphics.FromImage(resizedImage))
+        {
+            // Set the interpolation mode and pixel offset mode for high-quality resizing
+            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            graphics.SmoothingMode = SmoothingMode.HighQuality;
+
+            // Draw the original image onto the resized image
+            graphics.DrawImage(image, 0, 0, width, height);
+        }
+
+        return resizedImage;
+    }
+
 
     private void UpdatePictureBox(string imagePath)
     {
@@ -698,28 +718,21 @@ public partial class BixbyApp : MaterialForm
 
         foreach (var imagePath in imagePaths)
         {
-            var resizedFilePath =
-                Path.Combine(Path.GetDirectoryName(imagePath), "resized_" + Path.GetFileName(imagePath));
-            ResizeImage(imagePath, resizedFilePath, 404, 251);
-            flowLayoutPanel1.Controls.Add(new ImageDetail(resizedFilePath, imagePath, false, false));
-            re_sized_images.Add(resizedFilePath);
-            original_images.Add(imagePath);
+            flowLayoutPanel1.Controls.Add(new ImageDetail(imagePath, false, false));
+            images.Add(imagePath);
         }
     }
 
     private async void Save_Click(object sender, EventArgs e)
     {
         
-        if (re_sized_images.IsNullOrEmpty() || original_images.IsNullOrEmpty()) return;
-        var re_sized_imagesDeepCopy = new List<string>();
-        var original_imagesDeepCopy = new List<string>();
-        //        File.Delete(resizedFilePath);
+        if (images.IsNullOrEmpty()) return;
+        var img = new List<string>();
 
         var loadingForm =
                    new LoadingForm("https://cdn.dribbble.com/users/295241/screenshots/4496315/loading-animation.gif"); loadingForm.Show();
-        re_sized_images.ForEach(image => { UploadToS3(image, "food-images", re_sized_imagesDeepCopy); });
+        images.ForEach(image => { UploadToS3(image, "food-images", img); });
 
-        original_images.ForEach(image => { UploadToS3(image, "food-images", original_imagesDeepCopy); });
 
         var token = Properties.Settings.Default.TokenValue;
         var email = Properties.Settings.Default.Email;
@@ -744,8 +757,7 @@ public partial class BixbyApp : MaterialForm
                 name = item_name,
                 description,
                 price,
-                picsLowRes = re_sized_imagesDeepCopy.ToArray(),
-                picsHighRes = original_imagesDeepCopy.ToArray()
+                pics = img.ToArray(),
             };
 
             var json = JsonConvert.SerializeObject(content);

@@ -1,4 +1,5 @@
-﻿using Braintree;
+﻿using Bixbu_UI.LoadingScreen;
+using Braintree;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
@@ -50,8 +51,11 @@ namespace Bixbu_UI
             return false;
         }
 
+        private List<string> addedImages = new List<string>(); // Track added images
+
         private async void FullItemDetails_Load(object sender, EventArgs e)
         {
+          
             flowLayoutPanel2.AutoScroll = true;
             flowLayoutPanel2.FlowDirection = FlowDirection.BottomUp;
             flowLayoutPanel2.WrapContents = false;
@@ -69,29 +73,34 @@ namespace Bixbu_UI
                     JToken body = json["body"];
                     // Deserialize the modified JSON to the Product class
                     product = body.ToObject<Product>();
-                    foreach (string key in product.PicsLowRes)
+                    foreach (string key in product.Pics)
                     {
-                        if (!ControlPropertiesForImage(flowLayoutPanel1.Controls, key))
-                            flowLayoutPanel1.Controls.Add(new ImageDetail(key, null, true, false));
+                        if (!addedImages.Contains(key)) // Check if image is already added
+                        {
+                            if (!ControlPropertiesForImage(flowLayoutPanel1.Controls, key))
+                            {
+                                flowLayoutPanel1.Controls.Add(new ImageDetail(key, true, false));
+                                addedImages.Add(key); // Add image to the list
+                            }
+                        }
                     }
                     metroLabel1.Text = product.Name;
                     metroLabel2.Text = product.Description;
                     metroLabel4.Text = product.Price.ToString();
 
                     fetchingComments();
-
                 }
                 else
                 {
                     // Handle the error case
-
                 }
             }
             catch (Exception ex)
             {
-
+                // Handle exception
             }
         }
+
 
         private List<string> addedComments = new List<string>(); // Track added comments
 
@@ -172,6 +181,14 @@ namespace Bixbu_UI
                 MessageBox.Show("Error");
             }
         }
+        private void flowLayoutPanel1_Click(object sender, PaintEventArgs e)
+        {
+            MessageBox.Show("Error");
+        }
+        private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
     }
     public class Product
     {
@@ -180,8 +197,7 @@ namespace Bixbu_UI
         public string Description { get; set; }
         public long TotalComments { get; set; }
         public int Price { get; set; }
-        public string[] PicsLowRes { get; set; }
-        public string[] PicsHighRes { get; set; }
+        public string[] Pics { get; set; }
         public Publish publish { get; set; }
         public int loveThisProduct { get; set; }
     }

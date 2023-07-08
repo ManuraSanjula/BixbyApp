@@ -17,7 +17,7 @@ namespace Bixbu_UI
             this.name = name;
             metroLabel1.Text = name;
             this.itemId = id;
-            BixbyApp.RetrieveImageFromS3(url, pictureBox1, false);
+            BixbyApp.RetrieveImageFromS3(url, pictureBox1, 404, 251);
             this.flowLayoutPanel = flowLayoutPanel;
         }
 

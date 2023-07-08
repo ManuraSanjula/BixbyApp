@@ -152,8 +152,7 @@ public class CheckMiddleWare
                 Price = shopItemReq.Price,
                 publish = userInShopItem,
                 Description = shopItemReq.Description,
-                PicsLowRes = shopItemReq.PicsLowRes,
-                PicsHighRes = shopItemReq.PicsHighRes
+                Pics = shopItemReq.Pics,
             };
 
             Values.Add("data", shopItem);

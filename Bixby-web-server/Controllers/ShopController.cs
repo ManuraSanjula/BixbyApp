@@ -25,11 +25,6 @@ public abstract class ShopController
         if (context.Request.HttpMethod != "GET")
             throw new MethodNotAllowedException(new
                 { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
-
-        if (RedisCache.Get("all-items") != null)
-            await context.WriteResponse(RedisCache.Get("all-items"), "application/json")
-                .ConfigureAwait(false);
-
         var shopItems = await ShopItemService.GetAllShopItemsAsync();
         var convertedItems = shopItems.Select(shop => new ShopAllShopItem
         {
@@ -43,7 +38,6 @@ public abstract class ShopController
             status = "Success",
             body = convertedItems
         };
-        RedisCache.Set("all-items", response.ToJson());
         context.ResponseContent = response.ToJson();
         await context.WriteResponse(response.ToJson(), "application/json")
             .ConfigureAwait(false);
@@ -58,10 +52,6 @@ public abstract class ShopController
 
         if (context.DynamicPath is { Length: > 0 })
         {
-            if (RedisCache.Get("item-" + context.DynamicPath[0]) != null)
-                await context.WriteResponse(RedisCache.Get("item-" + context.DynamicPath[0]), "application/json")
-                    .ConfigureAwait(false);
-
             var shopItem = await ShopItemService.GetShopItemByIdAsync(context.DynamicPath[0]);
             if (shopItem == null)
                 throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
@@ -86,7 +76,6 @@ public abstract class ShopController
                         shopItem.loveThisProduct
                     }
                 };
-                RedisCache.Set("item-" + context.DynamicPath[0], response.ToJson());
                 context.ResponseContent = response.ToJson();
                 await context.WriteResponse(response.ToJson(), "application/json")
                     .ConfigureAwait(false);
@@ -147,8 +136,6 @@ public abstract class ShopController
             status = "Success",
             message = "ShopItem Updated successfully"
         };
-        RedisCache.Set("item-" + context.DynamicPath[0], response.ToJson());
-        RedisCache.Remove("all-items");
         await context.WriteResponse(response.ToJson(), "application/json")
             .ConfigureAwait(false);
     }
@@ -247,9 +234,6 @@ public abstract class ShopController
                         status = "Success",
                         message = "Comment added successfully"
                     };
-                    RedisCache.Remove("comment-user-" + user.Email);
-                    RedisCache.Remove("comment-" + shopId);
-
                     await context.WriteResponse(response.ToJson(), "application/json")
                         .ConfigureAwait(false);
                 }
@@ -261,10 +245,6 @@ public abstract class ShopController
                     .ToJson());
             case "GET":
             {
-                if (RedisCache.Get("comment-" + shopId) != null)
-                    await context.WriteResponse(RedisCache.Get("commend-" + shopId), "application/json")
-                        .ConfigureAwait(false);
-
                 var comment = CommentService.GetAllCommentsByShopItemName(shopId) ??
                               throw new NotFoundException(new
                                       { status = "An error occurred.", message = "Not Found Exception" }
@@ -289,7 +269,6 @@ public abstract class ShopController
                         return null;
                     })
                 };
-                RedisCache.Set("comment-" + shopId, response.ToJson());
                 await context.WriteResponse(response.ToJson(), "application/json")
                     .ConfigureAwait(false);
 
@@ -309,9 +288,9 @@ public abstract class ShopController
 
         var user = await UserService.GetUserByEmailAsync(email);
 
-        if (NullEmptyChecker.HasNullEmptyValues(user))
+        /*if (NullEmptyChecker.HasNullEmptyValues(user))
             throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
-                .ToJson());
+                .ToJson());*/
 
         var jwt =
             await checkMiddleWare.CheckMiddleWareJwt(context, email?.Trim());
@@ -354,8 +333,6 @@ public abstract class ShopController
         {
             status = "Success"
         };
-        RedisCache.Remove("User-SeePurchase-" + email);
-        RedisCache.Remove(email + "-order");
         await context.WriteResponse(response.ToJson(), "application/json")
             .ConfigureAwait(false);
     }

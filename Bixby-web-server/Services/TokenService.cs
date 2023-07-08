@@ -47,20 +47,6 @@ public static class TokenService
                 user.UserAuthTokens = new List<string> { userToken };
 
                 if (!await UserService.UpdateUserAsync(user.Id, user)) return userToken;
-                if (!loginPath)
-                {
-                    try
-                    {
-                        if (user.Email != null) RedisCache.Set(user.Email, user.ToJson());
-                    }
-                    catch (Exception)
-                    {
-                        // ignored
-                    }
-
-                    return userToken;
-                }
-
                 _ = EmailService.SendEmail(path, user.Email, "Email Verification Code for Your Account 🙂🙂", 0,
                     user);
                 return userToken;
@@ -68,15 +54,7 @@ public static class TokenService
 
             user.UserAuthTokens.Add(userToken);
             if (!await UserService.UpdateUserAsync(user.Id, user)) return null;
-            try
-            {
-                if (user.Email != null) RedisCache.Set(user.Email, user.ToJson());
-            }
-            catch (Exception e)
-            {
-                // ignored
-            }
-
+            
             if (!loginPath) return userToken;
 
             _ = EmailService.SendEmail(path, user.Email, "Email Verification Code for Your Account 🙂🙂", 0,
@@ -97,95 +75,14 @@ public static class TokenService
         var email = enumerable.FirstOrDefault(c => c.Type == "email")?.Value;
         var password = enumerable.FirstOrDefault(c => c.Type == "password")?.Value;
 
-        User? user;
-        var cache = "";
-        try
-        {
-            if (email != null) cache = RedisCache.Get(email);
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
-        try
-        {
-            user = JsonConvert.DeserializeObject<User>(cache ?? string.Empty);
-        }
-        catch (Exception)
-        {
-            user = null;
-        }
-
-        if (user != null)
-        {
-            var fromDb = await UserService.GetUserByEmailAsync(email);
-            if (!user.Equals(fromDb))
-            {
-                user = fromDb;
-                try
-                {
-                    if (user != null)
-                    {
-                        var redisUer = new
-                        {
-                            Id = user.Id.ToString(),
-                            user.FirstName,
-                            user.LastName,
-                            user.Email,
-                            user.Address,
-                            user.Password,
-                            user.Pic,
-                            user.EmailVerify,
-                            user.Tokens,
-                            user.UserAuthTokens
-                        };
-                        RedisCache.Set(redisUer.Email, redisUer.ToString());
-                    }
-                }
-                catch (Exception)
-                {
-                    // ignored
-                }
-            }
-
-            if (user == null) return null;
-
-            if (user.Password == password && !user.UserAuthTokens.Contains(jwtToken)) return null;
-
-            if (user.Password != password) return false;
-            if (allowBoolean)
-                return true;
-            return user;
-        }
-
-
-        user = await UserService.GetUserByEmailAsync(email);
+        User? user = await UserService.GetUserByEmailAsync(email);
         if (user == null) return null;
-        try
-        {
-            var redisUer = new
-            {
-                Id = user.Id.ToString(),
-                user.FirstName,
-                user.LastName,
-                user.Email,
-                user.Address,
-                user.Password,
-                user.Pic,
-                user.EmailVerify,
-                user.Tokens,
-                user.UserAuthTokens
-            };
-            RedisCache.Set(redisUer.Email, redisUer.ToString());
-        }
-        catch (Exception e)
-        {
-            // ignored
-        }
-
         if (user.Password == password && !user.UserAuthTokens.Contains(jwtToken)) return null;
         if (user.Password != password) return null;
+
+        if (user.Password == password && !user.UserAuthTokens.Contains(jwtToken)) return null;
+
+        if (user.Password != password) return false;
         if (allowBoolean)
             return true;
         return user;

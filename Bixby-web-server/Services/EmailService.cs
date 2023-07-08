@@ -57,94 +57,19 @@ public static class EmailService
 
     private static async void UserUpdate(string? email, string? token)
     {
-        User? user = null;
-        string? userCache = null;
-        try
-        {
-            if (email != null) userCache = RedisCache.Get(email);
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
-        if (userCache.IsNullOrEmpty())
-        {
-            user = await UserService.GetUserByEmailAsync(email);
-            try
-            {
-                if (user != null)
-                    if (user.Email != null)
-                        RedisCache.Set(user.Email, user.ToJson());
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-        }
-        else
-        {
-            try
-            {
-                if (userCache != null) user = JsonConvert.DeserializeObject<User>(userCache);
-            }
-            catch (Exception)
-            {
-                user = await UserService.GetUserByEmailAsync(email);
-            }
-
-            var userDb = await UserService.GetUserByEmailAsync(email);
-            if (userDb == null) return;
-            if (user != null && !user.Equals(userDb))
-            {
-                user = userDb;
-                try
-                {
-                    if (user.Email != null) RedisCache.Set(user.Email, user.ToJson());
-                }
-                catch (Exception)
-                {
-                    // ignored
-                }
-            }
-
-            try
-            {
-                if (user?.Email != null) RedisCache.Set(user.Email, user.ToJson());
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-        }
-
+        User? user = await UserService.GetUserByEmailAsync(email);
+        
         if (user != null)
         {
             user.AddToken(token, DateTime.Now.ToString(CultureInfo.InvariantCulture));
             await UserService.UpdateUserAsync(user.Id, user);
-            try
-            {
-                if (user.Email != null) RedisCache.Set(user.Email, user.ToJson());
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
         }
     }
 
     private static string? EmailVerificationCode(string code, string path, string? email)
     {
-        string? text = null;
-        try
-        {
-            text = RedisCache.Get("emailVerificationCode");
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
+        string? text = Startup.GetFileContent(Startup.ConfirmYourEmail);
+     
         if (text != null)
             return FormatHtml(text, placeholder =>
             {
@@ -152,54 +77,13 @@ public static class EmailService
                 var link = path + $"/ui/email-verify/?token={path + $"/email-verify/{email}/{code}"}";
                 return link;
             });
-        text = Startup.GetFileContent(Startup.ConfirmYourEmail);
-        try
-        {
-            RedisCache.Set("emailVerificationCode", text);
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
-        return FormatHtml(text, placeholder =>
-        {
-            if (placeholder == "VerificationLink")
-            {
-                var link = path + $"/ui/email-verify/?token={path + $"/email-verify/{email}/{code}"}";
-                return link;
-            }
-
-            return string.Empty;
-        });
+        return String.Empty;
     }
 
     private static Task<string?> ForgotPasswordEmailVerification(string code, string path,
         User user)
     {
-        string? text = null;
-        try
-        {
-            text = RedisCache.Get("forgotPasswordEmailVerification");
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
-        if (text == null)
-        {
-            text = Startup.GetFileContent(Startup.ResetPasswordReqEmail);
-            try
-            {
-                RedisCache.Set("forgotPasswordEmailVerification", text);
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-        }
-
+        string? text = Startup.GetFileContent(Startup.ResetPasswordReqEmail);
         return Task.FromResult(FormatHtml(text, placeholder =>
         {
             if (placeholder != "VerificationLink") return string.Empty;

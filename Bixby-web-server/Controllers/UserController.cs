@@ -63,28 +63,6 @@ public abstract class UserController
             var response = await UserService.UpdateUserAsync(user.Id, user)
                 ? new { status = "Success", message = "User updated successfully" }
                 : new { status = "An error occurred.", message = "BadRequest" };
-            try
-            {
-                var redisUer = new
-                {
-                    Id = user.Id.ToString(),
-                    user.FirstName,
-                    user.LastName,
-                    user.Email,
-                    user.Address,
-                    user.Password,
-                    user.Pic,
-                    user.EmailVerify,
-                    user.Tokens,
-                    user.UserAuthTokens
-                };
-                RedisCache.Set(redisUer.Email, redisUer.ToString());
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-
             await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
         }
         else
@@ -157,29 +135,6 @@ public abstract class UserController
             user?.Tokens.Remove(token);
             throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
         }
-
-        try
-        {
-            var redisUer = new
-            {
-                Id = user.Id.ToString(),
-                user.FirstName,
-                user.LastName,
-                user.Email,
-                user.Address,
-                user.Password,
-                user.Pic,
-                user.EmailVerify,
-                user.Tokens,
-                user.UserAuthTokens
-            };
-            RedisCache.Set(redisUer.Email, redisUer.ToString());
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
         if (await UserService.UpdateUserAsync(user.Id, user))
         {
             var response = new
@@ -333,29 +288,6 @@ public abstract class UserController
             throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
 
         var response = new { status = "Success" };
-
-        try
-        {
-            var redisUer = new
-            {
-                Id = user.Id.ToString(),
-                user.FirstName,
-                user.LastName,
-                user.Email,
-                user.Address,
-                user.Password,
-                user.Pic,
-                user.EmailVerify,
-                user.Tokens,
-                user.UserAuthTokens
-            };
-            RedisCache.Set(redisUer.Email, redisUer.ToString());
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
         await EmailService.SendEmail(context.Url, user.Email, "Successfully Reset The Password of Your Account 🙂🙂", 2,
             user);
 
@@ -393,18 +325,6 @@ public abstract class UserController
                 .ToJson());
 
         var email = context.DynamicPath?[0];
-        try
-        {
-            if (RedisCache.Get("comment-user-" + email) != null)
-                await context.WriteResponse(RedisCache.Get("comment-user-" + email), "application/json")
-                    .ConfigureAwait(false);
-        }
-        catch (Exception e)
-        {
-            throw new ServerUnavailableException(new
-                { status = "An error occurred.", message = "Server Unavailable Exception" }.ToJson());
-        }
-
         var user = await UserService.GetUserByEmailAsync(email);
 
         if (user == null)
@@ -419,15 +339,6 @@ public abstract class UserController
             comments
         };
         context.ResponseContent = response.ToJson();
-        try
-        {
-            RedisCache.Set("comment-user-" + user.Email, response.ToJson());
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
         await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
     }
 
@@ -474,16 +385,6 @@ public abstract class UserController
         {
             status = "Success"
         };
-        try
-        {
-            RedisCache.Remove("all-items");
-            RedisCache.Remove("item-" + shopId);
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
         await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
     }
 
@@ -501,19 +402,7 @@ public abstract class UserController
         if (NullEmptyChecker.HasNullEmptyValues(result))
             throw new NotFoundException(new
                 { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
-
-        try
-        {
-            if (RedisCache.Get("User-SeePurchase-" + result.Email) != null)
-                await context.WriteResponse(RedisCache.Get("User-SeePurchase-" + result.Email), "application/json")
-                    .ConfigureAwait(false);
-        }
-        catch (Exception e)
-        {
-            throw new ServerUnavailableException(new
-                { status = "An error occurred.", message = "Server Unavailable Exception" }.ToJson());
-        }
-
+        
         var productPurchases = await ProductPurchasesService.GetProductPurchasesByOwnerIdAsync(result.Email);
         var response = new
         {
@@ -521,15 +410,6 @@ public abstract class UserController
             productPurchases
         };
         context.ResponseContent = response.ToJson();
-        try
-        {
-            RedisCache.Set("User-SeePurchase-" + result.Email, response.ToJson());
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
         await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
     }
 
@@ -573,15 +453,6 @@ public abstract class UserController
         {
             status = "Success"
         };
-        try
-        {
-            if (email != null) RedisCache.Remove(email);
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-
         await arg.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
     }
 }

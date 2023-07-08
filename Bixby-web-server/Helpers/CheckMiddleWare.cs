@@ -37,75 +37,7 @@ public class CheckMiddleWare
             var userReq = JsonConvert.DeserializeObject<UserReqForUpdate>(jsonString, settings);
             if (userReq == null && NullEmptyChecker.HasNullEmptyValues(userReq)) return Values;
             if (dynamic is not { Length: > 0 } || string.IsNullOrEmpty(dynamic[0])) return Values;
-            User? user = null;
-            try
-            {
-                user = JsonConvert.DeserializeObject<User>(RedisCache.Get(dynamic[0]) ?? string.Empty);
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-
-            if (user != null)
-            {
-                var userDb = await UserService.GetUserByEmailAsync(dynamic[0]);
-                if (userDb == null) return Values;
-                if (!user.Equals(userDb))
-                {
-                    user = userDb;
-                    try
-                    {
-                        var redisUer = new
-                        {
-                            Id = user.Id.ToString(),
-                            user.FirstName,
-                            user.LastName,
-                            user.Email,
-                            user.Address,
-                            user.Password,
-                            user.Pic,
-                            user.EmailVerify,
-                            user.Tokens,
-                            user.UserAuthTokens
-                        };
-                        RedisCache.Set(redisUer.Email, redisUer.ToString());
-                    }
-                    catch (Exception)
-                    {
-                        // ignored
-                    }
-                }
-            }
-            else
-            {
-                user = await UserService.GetUserByEmailAsync(dynamic[0]);
-                try
-                {
-                    if (user != null)
-                    {
-                        var redisUer = new
-                        {
-                            Id = user.Id.ToString(),
-                            user.FirstName,
-                            user.LastName,
-                            user.Email,
-                            user.Address,
-                            user.Password,
-                            user.Pic,
-                            user.EmailVerify,
-                            user.Tokens,
-                            user.UserAuthTokens
-                        };
-                        RedisCache.Set(redisUer.Email, redisUer.ToString());
-                    }
-                }
-                catch (Exception)
-                {
-                    // ignored
-                }
-            }
-
+            User? user = await UserService.GetUserByEmailAsync(dynamic[0]);
             if (user == null && NullEmptyChecker.HasNullEmptyValues(user) && user!.EmailVerify) return Values;
 
             if (userReq != null) Values.Add("UserReqForUpdate", userReq);
@@ -126,72 +58,8 @@ public class CheckMiddleWare
             if (shopItemReq == null || NullEmptyChecker.HasNullEmptyValues(shopItemReq)) return Values;
 
             if (dynamic is not { Length: > 0 }) return Values;
-            User? user = null;
-            try
-            {
-                user = JsonConvert.DeserializeObject<User>(RedisCache.Get(dynamic[0]) ?? string.Empty);
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-
-            if (user != null)
-            {
-                var userDb = await UserService.GetUserByEmailAsync(dynamic[0]);
-                if (userDb == null) return Values;
-                if (!user.Equals(userDb))
-                {
-                    user = userDb;
-                    try
-                    {
-                        var redisUer = new
-                        {
-                            Id = user.Id.ToString(),
-                            user.FirstName,
-                            user.LastName,
-                            user.Email,
-                            user.Address,
-                            user.Password,
-                            user.Pic,
-                            user.EmailVerify,
-                            user.Tokens,
-                            user.UserAuthTokens
-                        };
-                        RedisCache.Set(redisUer.Email, redisUer.ToString());
-                    }
-                    catch (Exception)
-                    {
-                        // ignored
-                    }
-                }
-            }
-            else
-            {
-                user = await UserService.GetUserByEmailAsync(dynamic[0]);
-                try
-                {
-                    var redisUer = new
-                    {
-                        Id = user.Id.ToString(),
-                        user.FirstName,
-                        user.LastName,
-                        user.Email,
-                        user.Address,
-                        user.Password,
-                        user.Pic,
-                        user.EmailVerify,
-                        user.Tokens,
-                        user.UserAuthTokens
-                    };
-                    RedisCache.Set(redisUer.Email, redisUer.ToString());
-                }
-                catch (Exception)
-                {
-                    // ignored
-                }
-            }
-
+            User? user = await UserService.GetUserByEmailAsync(dynamic[0]);
+            
             if (user == null || !user.EmailVerify) return Values;
             var userInShopItem = new UserInShopItem
             {

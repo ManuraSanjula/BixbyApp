@@ -162,8 +162,8 @@ public partial class BixbyApp : MaterialForm
         Size = new Size(1268, 758);
 
 
-        /*  materialTabControl1.Selecting += tabControl1_Selecting;
-          materialTabControl1.SelectedIndexChanged += tabControl1_Selecting;*/
+        materialTabControl1.Selecting += tabControl1_Selecting;
+        materialTabControl1.SelectedIndexChanged += tabControl1_Selecting;
 
         pb = new PictureBox();
         panel1.Controls.Add(pb);
@@ -178,8 +178,7 @@ public partial class BixbyApp : MaterialForm
         flowLayoutPanel1.Padding = new Padding(10); // Adjust the padding as per your requirement
 
         home_panel.AutoScroll = true;
-        home_panel.Padding = new Padding(11); // Adjust the padding as per your requirement
-
+   
 
         var loadingForm =
             new LoadingForm("https://cdn.dribbble.com/users/295241/screenshots/4496315/loading-animation.gif");
@@ -216,22 +215,6 @@ public partial class BixbyApp : MaterialForm
         foreach (Control control in Controls) control.Enabled = true;
     }
 
-
-    private bool ControlProperties(Control.ControlCollection controls, String key)
-    {
-        foreach (Control control in controls)
-        {
-            if (control is ImageDetail myUserControl)
-            {
-                if (myUserControl.path == key)
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     private void homeError()
     {
 
@@ -256,6 +239,8 @@ public partial class BixbyApp : MaterialForm
             pictureBox.Size = new Size(desiredWidth, desiredHeight);
         }
     }
+    private List<string> addedItems = new List<string>(); // Track added item IDs
+
     private void home(LoadingForm loadingForm)
     {
         try
@@ -278,28 +263,35 @@ public partial class BixbyApp : MaterialForm
                     {
                         if (item != null)
                         {
-                            if (!ControlProperties(home_panel.Controls, item.PicLowRes))
+                            if (!addedItems.Contains(item._id)) // Check if item is already added
                             {
-                                HomeItem home_item =  new HomeItem(item.PicLowRes, item.Name, item._id, home_panel);
+                                HomeItem home_item = new HomeItem(item.PicLowRes, item.Name, item._id, home_panel);
                                 home_panel.Controls.Add(home_item);
+                                addedItems.Add(item._id); // Add item ID to the list
+                                if (loadingForm != null)
+                                    loadingForm.Close();
                             }
                         }
                     }
-                    loadingForm.Close();
                 }
                 else
                 {
-                    loadingForm.Close();
+                    if (loadingForm != null)
+                        loadingForm.Close();
                 }
+
+                if (loadingForm != null)
+                    loadingForm.Close();
             }
         }
         catch (Exception ex)
         {
             if (loadingForm != null)
                 loadingForm.Close();
-            // Close the loading form once both requests are completed
+            // Handle exception
         }
     }
+
 
     private void tabControl1_Selecting(object? sender, EventArgs e)
     {
@@ -717,11 +709,14 @@ public partial class BixbyApp : MaterialForm
 
     private async void Save_Click(object sender, EventArgs e)
     {
+        
         if (re_sized_images.IsNullOrEmpty() || original_images.IsNullOrEmpty()) return;
         var re_sized_imagesDeepCopy = new List<string>();
         var original_imagesDeepCopy = new List<string>();
         //        File.Delete(resizedFilePath);
 
+        var loadingForm =
+                   new LoadingForm("https://cdn.dribbble.com/users/295241/screenshots/4496315/loading-animation.gif"); loadingForm.Show();
         re_sized_images.ForEach(image => { UploadToS3(image, "food-images", re_sized_imagesDeepCopy); });
 
         original_images.ForEach(image => { UploadToS3(image, "food-images", original_imagesDeepCopy); });
@@ -735,6 +730,7 @@ public partial class BixbyApp : MaterialForm
         }
         try
         {
+
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Post, $"http://localhost:8080/{email}/add-shop-item");
             request.Headers.Add("Authorization", $"Bearer {token}");
@@ -771,16 +767,19 @@ public partial class BixbyApp : MaterialForm
                         case "Success":
                             Invoke(() =>
                             {
+                                loadingForm.Close();
                                 MessageBox.Show("Success");
                                 materialTabControl1.Refresh();
                                 Home.Refresh();
                                 materialTabControl1.SelectedIndex = 0;
+                                home(null);
                             });
                             break;
                         case "An error occurred.":
                             Invoke(() =>
                             {
                                 MessageBox.Show("Try Again");
+                               
                             }); // Invoke on UI thread
                             break;
                     }
@@ -792,7 +791,6 @@ public partial class BixbyApp : MaterialForm
 
                 return;
             }
-
             Invoke(new Action(() => MessageBox.Show("Try Again")));
         }
         catch (Exception ex)

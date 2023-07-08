@@ -6,17 +6,17 @@ namespace Bixbu_UI
     {
         private bool isFormLocked = false;
         public string path { get; }
-        public string namae { get; }
-        public string id { get; }
+        public string name { get; }
+        public string itemId { get; }
         public FlowLayoutPanel flowLayoutPanel;
         public HomeItem(string url, string name, string id, FlowLayoutPanel flowLayoutPanel)
         {
             InitializeComponent();
             this.path = url;
             this.Name = name;
-            this.namae = name;
+            this.name = name;
             metroLabel1.Text = name;
-            this.id = id;
+            this.itemId = id;
             BixbyApp.RetrieveImageFromS3(url, pictureBox1, false);
             this.flowLayoutPanel = flowLayoutPanel;
         }
@@ -36,7 +36,7 @@ namespace Bixbu_UI
             {
                 isFormLocked = true;
                 LockControls(ParentForm); // Disable other controls on the form
-                var fullItemDetails = new FullItemDetails(id);
+                var fullItemDetails = new FullItemDetails(itemId);
                 fullItemDetails.Show();
                 fullItemDetails.FormClosed += (s, args) =>
                 {

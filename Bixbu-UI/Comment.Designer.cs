@@ -114,7 +114,7 @@
             Controls.Add(metroLabel2);
             Controls.Add(metroLabel1);
             Name = "Comment";
-            Size = new Size(756, 118);
+            Size = new Size(557, 118);
             Load += Comment_Load;
             ResumeLayout(false);
             PerformLayout();

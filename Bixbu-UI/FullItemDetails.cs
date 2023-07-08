@@ -93,6 +93,8 @@ namespace Bixbu_UI
             }
         }
 
+        private List<string> addedComments = new List<string>(); // Track added comments
+
         private async void fetchingComments()
         {
             try
@@ -110,17 +112,21 @@ namespace Bixbu_UI
                 List<CommentModel> comments = new List<CommentModel>(parsedResponse.Body);
                 comments.ForEach(comment =>
                 {
-                    if(!ControlPropertiesForComment(flowLayoutPanel2.Controls, comment.UserComment, comment.User, comment.ShopItem))
-                        flowLayoutPanel2.Controls.Add(new Comment(comment.UserComment, comment.User, comment.ShopItem));
+                    if (!addedComments.Contains(comment.UserComment)) // Check if comment is already added
+                    {
+                        if (!ControlPropertiesForComment(flowLayoutPanel2.Controls, comment.UserComment, comment.User, comment.ShopItem))
+                        {
+                            flowLayoutPanel2.Controls.Add(new Comment(comment.UserComment, comment.User, comment.ShopItem));
+                            addedComments.Add(comment.UserComment); // Add comment to the list
+                        }
+                    }
                 });
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
             }
-
         }
-
         private async void Comment_Click(object sender, EventArgs e)
         {
             try

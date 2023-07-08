@@ -56,7 +56,20 @@ public class CheckMiddleWare
                     user = userDb;
                     try
                     {
-                        RedisCache.Set(user.Email, user.ToJson());
+                        var redisUer = new
+                        {
+                            Id = user.Id.ToString(),
+                            user.FirstName,
+                            user.LastName,
+                            user.Email,
+                            user.Address,
+                            user.Password,
+                            user.Pic,
+                            user.EmailVerify,
+                            user.Tokens,
+                            user.UserAuthTokens
+                        };
+                        RedisCache.Set(redisUer.Email, redisUer.ToString());
                     }
                     catch (Exception)
                     {
@@ -69,7 +82,23 @@ public class CheckMiddleWare
                 user = await UserService.GetUserByEmailAsync(dynamic[0]);
                 try
                 {
-                    if (user != null) RedisCache.Set(user.Email, user.ToJson());
+                    if (user != null)
+                    {
+                        var redisUer = new
+                        {
+                            Id = user.Id.ToString(),
+                            user.FirstName,
+                            user.LastName,
+                            user.Email,
+                            user.Address,
+                            user.Password,
+                            user.Pic,
+                            user.EmailVerify,
+                            user.Tokens,
+                            user.UserAuthTokens
+                        };
+                        RedisCache.Set(redisUer.Email, redisUer.ToString());
+                    }
                 }
                 catch (Exception)
                 {
@@ -116,7 +145,20 @@ public class CheckMiddleWare
                     user = userDb;
                     try
                     {
-                        RedisCache.Set(user.Email, user.ToJson());
+                        var redisUer = new
+                        {
+                            Id = user.Id.ToString(),
+                            user.FirstName,
+                            user.LastName,
+                            user.Email,
+                            user.Address,
+                            user.Password,
+                            user.Pic,
+                            user.EmailVerify,
+                            user.Tokens,
+                            user.UserAuthTokens
+                        };
+                        RedisCache.Set(redisUer.Email, redisUer.ToString());
                     }
                     catch (Exception)
                     {
@@ -129,7 +171,20 @@ public class CheckMiddleWare
                 user = await UserService.GetUserByEmailAsync(dynamic[0]);
                 try
                 {
-                    RedisCache.Set(user?.Email, user.ToJson());
+                    var redisUer = new
+                    {
+                        Id = user.Id.ToString(),
+                        user.FirstName,
+                        user.LastName,
+                        user.Email,
+                        user.Address,
+                        user.Password,
+                        user.Pic,
+                        user.EmailVerify,
+                        user.Tokens,
+                        user.UserAuthTokens
+                    };
+                    RedisCache.Set(redisUer.Email, redisUer.ToString());
                 }
                 catch (Exception)
                 {
@@ -152,7 +207,7 @@ public class CheckMiddleWare
                 Price = shopItemReq.Price,
                 publish = userInShopItem,
                 Description = shopItemReq.Description,
-                Pics = shopItemReq.Pics,
+                Pics = shopItemReq.Pics
             };
 
             Values.Add("data", shopItem);

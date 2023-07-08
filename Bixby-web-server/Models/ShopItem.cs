@@ -13,7 +13,6 @@ public class ShopItemeq
     [JsonProperty("price")] public int Price { get; set; }
 
     [JsonProperty("pics")] public string[] Pics { get; set; } = { "default-pic.png" };
-
 }
 
 public class UserInShopItem
@@ -29,7 +28,7 @@ public class UserInShopItem
 
 public class ShopAllShopItem
 {
-    public String Id { get; set; }
+    public string Id { get; set; }
     public string Name { get; set; }
     public string PicLowRes { get; set; }
 }

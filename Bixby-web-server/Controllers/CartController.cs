@@ -13,14 +13,14 @@ namespace Bixby_web_server.Controllers;
 
 public class CartRes
 {
-    public List<CartAndOrder> cartAndOrder { get; set; }
+    public List<Cart> cartAndOrder { get; set; }
     public User User { get; set; }
 }
 
 public abstract class CartController
 {
     private static readonly ShopItemService ShopItemService = new();
-    private static readonly CartAndOrderService CartAndOrderService = new();
+    private static readonly CartService CartService = new();
     private static readonly UserService UserService = new();
     private static readonly OrderService OrderService = new();
     private static readonly ProductPurchasesService productPurchasesService = new();
@@ -42,22 +42,17 @@ public abstract class CartController
 
         checkMiddleWare = new CheckMiddleWare();
         email = httpContext.DynamicPath?[0];
-        User? user;
-        user = JsonConvert.DeserializeObject<User>(RedisCache.Get(email));
-        if (user == null)
+        User? user = null;
+        try
         {
-            user = await UserService.GetUserByEmailAsync(email);
-            RedisCache.Set(user.Email, user.ToJson());
+            user = JsonConvert.DeserializeObject<User>(RedisCache.Get(email) ?? string.Empty);
         }
-        else
+        catch (Exception e)
         {
-            var user_db = await UserService.GetUserByEmailAsync(email);
-            if (!user.Equals(user_db))
-            {
-                user = user_db;
-                RedisCache.Set(user.Email, user.ToJson());
-            }
+            // ignored
         }
+
+        if (user == null) user = await User(email);
 
         if (NullEmptyChecker.HasNullEmptyValues(user))
             throw new NotFoundException(new { status = "An error occurred.", message = "Not Found Exception" }
@@ -80,12 +75,41 @@ public abstract class CartController
             throw new BadRequestException(new { status = "An error occurred.", message = "Bad Request Exception" }
                 .ToJson());
 
-        var asyncCursor = await CartAndOrderService.GetAllCartAndOrders(user?.Email);
+        var asyncCursor = await CartService.GetAllCartAndOrders(user?.Email);
         return new CartRes
         {
             User = user,
             cartAndOrder = await asyncCursor.ToListAsync()
         };
+    }
+
+    private static async Task<User?> User(string? email)
+    {
+        User? user = null;
+        try
+        {
+            user = await UserService.GetUserByEmailAsync(email);
+            var redisUer = new
+            {
+                Id = user?.Id.ToString(),
+                user?.FirstName,
+                user.LastName,
+                user.Email,
+                user.Address,
+                user.Password,
+                user.Pic,
+                user.EmailVerify,
+                user.Tokens,
+                user.UserAuthTokens
+            };
+            RedisCache.Set(redisUer.Email, redisUer.ToString());
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
+
+        return user;
     }
 
     public static async Task SeeAllTheCart(HttpContext arg)
@@ -116,9 +140,29 @@ public abstract class CartController
         var response = new
         {
             status = "Success",
-            data = cartAndOrders.cartAndOrder
+            data = cartAndOrders.cartAndOrder.ConvertAll(cart =>
+            {
+                var res = new
+                {
+                    Id = cart.Id.ToString(),
+                    Item = cart.Item.ToString(),
+                    cart.User,
+                    cart.Quantity,
+                    cart.Price
+                };
+                return res;
+            })
         };
-        RedisCache.Set(email + "-cart", response.ToJson());
+
+        try
+        {
+            RedisCache.Set(email + "-cart", response.ToJson());
+        }
+        catch (Exception e)
+        {
+            // ignored
+        }
+
         arg.ResponseContent = response.ToJson();
         await arg.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
     }
@@ -132,49 +176,86 @@ public abstract class CartController
         var email = arg.DynamicPath?[0];
         var shopId = arg.DynamicPath?[1];
 
-        User? user;
-        user = JsonConvert.DeserializeObject<User>(RedisCache.Get(email));
-        if (user == null)
-        {
-            user = await UserService.GetUserByEmailAsync(email);
-            RedisCache.Set(user.Email, user.ToJson());
-        }
-        else
-        {
-            var user_db = await UserService.GetUserByEmailAsync(email);
-            if (!user.Equals(user_db))
-            {
-                user = user_db;
-                RedisCache.Set(user.Email, user.ToJson());
-            }
-        }
+
+        var checkMiddleWare = new CheckMiddleWare();
+        var jwt = await checkMiddleWare.CheckMiddleWareJwt(arg, email?.Trim());
+        if (!jwt.ContainsKey("jwt"))
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
+                .ToJson());
+
+        var result = (User)jwt["jwt"];
+
+        if (!NullEmptyChecker.HasNullEmptyValues(result))
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
+                .ToJson());
+
 
         var shopItem = await ShopItemService.GetShopItemByIdAsync(shopId);
-
-        if (NullEmptyChecker.HasNullEmptyValues(user) || NullEmptyChecker.HasNullEmptyValues(shopItem))
+        if (NullEmptyChecker.HasNullEmptyValues(shopItem))
             throw new NotFoundException(new
                 { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
 
-        int? pathParam = int.Parse(arg.Request.QueryString["Quantity"] ?? string.Empty);
-        if (pathParam == null)
-            throw new BadRequestException(new { status = "An error occurred.", message = "Bad Request Exception" }
-                .ToJson());
-
-        var cartAndOrder = new CartAndOrder
+        var cart = await CartService.GetCartAndOrderByItem(new ObjectId(shopId));
+        if (cart != null)
         {
-            User = user?.Email,
-            Item = shopItem.Id,
-            Price = shopItem.Price * pathParam.Value,
-            Quantity = pathParam.Value
-        };
-
-        await CartAndOrderService.CreateCartAndOrder(cartAndOrder);
-        var response = new
+            cart.Price = cart.Price + shopItem.Price;
+            CartService.UpdateCartAndOrder(cart.Id, cart);
+            await arg.WriteResponse(new
+            {
+                status = "Success",
+                message = "Successfully added to the cart"
+            }.ToJson(), "application/json").ConfigureAwait(false);
+        }
+        else
         {
-            status = "Success",
-            message = "Successfully added to the cart"
-        };
-        await arg.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+            int? pathParam = int.Parse(arg.Request.QueryString["Quantity"] ?? string.Empty);
+            if (pathParam == 0) pathParam = 1;
+
+            var cartAndOrder = new Cart
+            {
+                User = result?.Email,
+                Item = shopItem.Id,
+                Price = shopItem.Price * pathParam.Value,
+                Quantity = pathParam.Value
+            };
+
+            await CartService.CreateCartAndOrder(cartAndOrder);
+            var response = new
+            {
+                status = "Success",
+                message = "Successfully added to the cart"
+            };
+            RedisCache.Remove(email + "-cart");
+            await arg.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+        }
+    }
+
+    private static void AddRedisUser(User? user)
+    {
+        try
+        {
+            if (user != null)
+            {
+                var redisUer = new
+                {
+                    Id = user.Id.ToString(),
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    user.Address,
+                    user.Password,
+                    user.Pic,
+                    user.EmailVerify,
+                    user.Tokens,
+                    user.UserAuthTokens
+                };
+                RedisCache.Set(redisUer.Email, redisUer.ToJson());
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
 
     public static async Task CheckOutAllItems(HttpContext arg)
@@ -224,13 +305,14 @@ public abstract class CartController
 #pragma warning restore CS8601 // Possible null reference assignment.
 
         await productPurchasesService.CreateProductPurchaseAsync(productPurchases);
-        cartAndOrdersList.ForEach(i => CartAndOrderService.DeleteCartAndOrder(i.Id));
+        cartAndOrdersList.ForEach(i => CartService.DeleteCartAndOrder(i.Id));
         var response = new
         {
             status = "Success",
             message = "Successfully CheckOut"
         };
         RedisCache.Remove("User-SeePurchase-" + email);
+        RedisCache.Remove(email + "-order");
         await arg.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
     }
 }

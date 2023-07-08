@@ -125,7 +125,23 @@ public static class TokenService
                 user = fromDb;
                 try
                 {
-                    if (user?.Email != null) RedisCache.Set(user?.Email, user.ToJson());
+                    if (user != null)
+                    {
+                        var redisUer = new
+                        {
+                            Id = user.Id.ToString(),
+                            user.FirstName,
+                            user.LastName,
+                            user.Email,
+                            user.Address,
+                            user.Password,
+                            user.Pic,
+                            user.EmailVerify,
+                            user.Tokens,
+                            user.UserAuthTokens
+                        };
+                        RedisCache.Set(redisUer.Email, redisUer.ToString());
+                    }
                 }
                 catch (Exception)
                 {
@@ -148,7 +164,20 @@ public static class TokenService
         if (user == null) return null;
         try
         {
-            RedisCache.Set(user.Email, user.ToJson());
+            var redisUer = new
+            {
+                Id = user.Id.ToString(),
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.Address,
+                user.Password,
+                user.Pic,
+                user.EmailVerify,
+                user.Tokens,
+                user.UserAuthTokens
+            };
+            RedisCache.Set(redisUer.Email, redisUer.ToString());
         }
         catch (Exception e)
         {

@@ -57,7 +57,6 @@ public partial class SingUp : MaterialForm
                     var status = jObject["status"]?.Value<string>();
                     var token = jObject["token"]?.Value<string>();
                     if (status != null)
-                    {
                         switch (status)
                         {
                             case "Success":
@@ -76,24 +75,18 @@ public partial class SingUp : MaterialForm
                                 Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
                                 break;
                         }
-                    }
                     else
-                    {
                         Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
-                        return;
-                    }
                 }
                 else
                 {
                     Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
-                    return;
                 }
             }
         }
         catch (Exception ex)
         {
             Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
-            return;
         }
     }
 

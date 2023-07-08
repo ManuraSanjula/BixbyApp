@@ -18,10 +18,10 @@ public class CommentRes
         ShopItem = shopItem;
     }
 
-    public String Id { get; set; }
-    public String UserComment { get; set; }
-    public String User { get; set; }
-    public String ShopItem { get; set; }
+    public string Id { get; set; }
+    public string UserComment { get; set; }
+    public string User { get; set; }
+    public string ShopItem { get; set; }
 }
 
 public class Comment

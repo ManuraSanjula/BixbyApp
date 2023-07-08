@@ -1,14 +1,11 @@
-﻿using System.Windows.Forms;
-
-namespace Bixbu_UI;
+﻿namespace Bixbu_UI;
 
 public partial class ImageDetail : UserControl
 {
-    public string path { get; }
     public ImageDetail(string url, bool aws, bool full)
     {
         InitializeComponent();
-        this.path = url;
+        path = url;
         if (aws)
         {
             BixbyApp.RetrieveImageFromS3(url, pictureBox1, 404, 251);
@@ -20,6 +17,8 @@ public partial class ImageDetail : UserControl
         }
     }
 
+    public string path { get; }
+
     protected override void OnHandleDestroyed(EventArgs e)
     {
         // Call the base implementation first
@@ -30,15 +29,12 @@ public partial class ImageDetail : UserControl
 
     private void pictureBox1_Click(object sender, EventArgs e)
     {
-        
     }
 }
 
-
-
-public partial class SecondForm : Form
+public class SecondForm : Form
 {
-    public SecondForm(String image)
+    public SecondForm(string image)
     {
         // Set the properties of the second form
         FormBorderStyle = FormBorderStyle.FixedDialog;

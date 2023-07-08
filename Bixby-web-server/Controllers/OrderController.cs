@@ -22,19 +22,20 @@ public abstract class OrderController
                 new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
         User? user;
-        user = JsonConvert.DeserializeObject<User>(RedisCache.Get(email));
+        user = JsonConvert.DeserializeObject<User>(RedisCache.Get(email) ?? string.Empty);
         if (user == null)
         {
             user = await UserService.GetUserByEmailAsync(email);
-            RedisCache.Set(user.Email, user.ToJson());
+            RedisUser(user);
         }
         else
         {
-            var user_db = await UserService.GetUserByEmailAsync(email);
-            if (!user.Equals(user_db))
+            var userDb = await UserService.GetUserByEmailAsync(email);
+            if (userDb == null) throw new ArgumentNullException(nameof(userDb));
+            if (!user.Equals(userDb))
             {
-                user = user_db;
-                RedisCache.Set(user.Email, user.ToJson());
+                user = userDb;
+                RedisUser(userDb);
             }
         }
 
@@ -58,6 +59,27 @@ public abstract class OrderController
             throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
                 .ToJson());
         return user;
+    }
+
+    private static void RedisUser(User? user)
+    {
+        if (user != null)
+        {
+            var redisUer = new
+            {
+                Id = user.Id.ToString(),
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.Address,
+                user.Password,
+                user.Pic,
+                user.EmailVerify,
+                user.Tokens,
+                user.UserAuthTokens
+            };
+            RedisCache.Set(redisUer.Email, redisUer.ToJson());
+        }
     }
 
     internal static async Task ConfirmTheOrder(HttpContext context)
@@ -97,9 +119,15 @@ public abstract class OrderController
         var checkMiddleWare = new CheckMiddleWare();
         var email = context.DynamicPath?[0];
 
-        if (RedisCache.Get(email + "-order") != null)
-            await context.WriteResponse(RedisCache.Get(email + "-order"), "application/json").ConfigureAwait(false);
-
+        try
+        {
+            if (RedisCache.Get(email + "-order") != null)
+                await context.WriteResponse(RedisCache.Get(email + "-order"), "application/json").ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            // ignored
+        }
 
         var user = await GetUser(checkMiddleWare, email, context);
         var orders = OrderService.GetAllOrders(user?.Email);
@@ -111,10 +139,28 @@ public abstract class OrderController
         var response = new
         {
             status = "Success",
-            data = orders.ToArray()
+            data = orders.ConvertAll(order =>
+            {
+                return new
+                {
+                    Id = order.Id.ToString(),
+                    Items = new List<ObjectId>(order.Items).ConvertAll(id => id.ToString()),
+                    order.User,
+                    order.Price,
+                    order.Confirm
+                };
+            })
         };
         context.ResponseContent = response.ToJson();
-        RedisCache.Set(email + "-order", response.ToJson());
+        try
+        {
+            RedisCache.Set(email + "-order", response.ToJson());
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
+
         await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
     }
 }

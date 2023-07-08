@@ -35,8 +35,8 @@ public abstract class UserController
         var result = (User)jwt["jwt"];
 
         if (!NullEmptyChecker.HasNullEmptyValues(result))
-            throw new NotFoundException(new
-                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
+                .ToJson());
 
         using var reader = new StreamReader(request.InputStream, request.ContentEncoding);
         if (reader == null)
@@ -65,7 +65,20 @@ public abstract class UserController
                 : new { status = "An error occurred.", message = "BadRequest" };
             try
             {
-                RedisCache.Set(user.Email, user.ToJson());
+                var redisUer = new
+                {
+                    Id = user.Id.ToString(),
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    user.Address,
+                    user.Password,
+                    user.Pic,
+                    user.EmailVerify,
+                    user.Tokens,
+                    user.UserAuthTokens
+                };
+                RedisCache.Set(redisUer.Email, redisUer.ToString());
             }
             catch (Exception)
             {
@@ -147,7 +160,20 @@ public abstract class UserController
 
         try
         {
-            RedisCache.Set(user.Email, user.ToJson());
+            var redisUer = new
+            {
+                Id = user.Id.ToString(),
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.Address,
+                user.Password,
+                user.Pic,
+                user.EmailVerify,
+                user.Tokens,
+                user.UserAuthTokens
+            };
+            RedisCache.Set(redisUer.Email, redisUer.ToString());
         }
         catch (Exception)
         {
@@ -310,7 +336,20 @@ public abstract class UserController
 
         try
         {
-            RedisCache.Set(user.Email, user.ToJson());
+            var redisUer = new
+            {
+                Id = user.Id.ToString(),
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.Address,
+                user.Password,
+                user.Pic,
+                user.EmailVerify,
+                user.Tokens,
+                user.UserAuthTokens
+            };
+            RedisCache.Set(redisUer.Email, redisUer.ToString());
         }
         catch (Exception)
         {

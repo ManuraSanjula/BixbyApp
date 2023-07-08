@@ -311,3 +311,6 @@ C:\BixbyApp\Bixbu-UI\obj\Release\net6.0-windows\refint\Bixby-UI.dll
 C:\BixbyApp\Bixbu-UI\obj\Release\net6.0-windows\Bixby-UI.pdb
 C:\BixbyApp\Bixbu-UI\obj\Release\net6.0-windows\Bixby-UI.genruntimeconfig.cache
 C:\BixbyApp\Bixbu-UI\obj\Release\net6.0-windows\ref\Bixby-UI.dll
+C:\BixbyApp\Bixbu-UI\obj\Release\net6.0-windows\Bixbu_UI.HomeItem.resources
+C:\BixbyApp\Bixbu-UI\obj\Release\net6.0-windows\Bixbu_UI.FullItemDetails.resources
+C:\BixbyApp\Bixbu-UI\obj\Release\net6.0-windows\Bixbu_UI.Comment.resources

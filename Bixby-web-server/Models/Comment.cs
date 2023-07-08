@@ -6,7 +6,22 @@ namespace Bixby_web_server.Models;
 public class CommentReq
 {
     public string? UserComment { get; set; }
-    public int rate { get; set; }
+}
+
+public class CommentRes
+{
+    public CommentRes(string id, string userComment, string user, string shopItem)
+    {
+        Id = id;
+        UserComment = userComment;
+        User = user;
+        ShopItem = shopItem;
+    }
+
+    public String Id { get; set; }
+    public String UserComment { get; set; }
+    public String User { get; set; }
+    public String ShopItem { get; set; }
 }
 
 public class Comment

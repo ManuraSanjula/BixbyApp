@@ -1,5 +1,6 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 using Amazon;
@@ -172,13 +173,13 @@ public partial class BixbyApp : MaterialForm
         var email = Properties.Settings.Default.Email;
 
         flowLayoutPanel1.FlowDirection = FlowDirection.LeftToRight;
-        // Set the FlowLayoutPanel properties
         flowLayoutPanel1.AutoScroll = true;
         flowLayoutPanel1.WrapContents = false;
         flowLayoutPanel1.Padding = new Padding(10); // Adjust the padding as per your requirement
 
         home_panel.AutoScroll = true;
-        home_panel.FlowDirection = FlowDirection.LeftToRight;
+        home_panel.Padding = new Padding(11); // Adjust the padding as per your requirement
+
 
         var loadingForm =
             new LoadingForm("https://cdn.dribbble.com/users/295241/screenshots/4496315/loading-animation.gif");
@@ -255,7 +256,6 @@ public partial class BixbyApp : MaterialForm
             pictureBox.Size = new Size(desiredWidth, desiredHeight);
         }
     }
-
     private void home(LoadingForm loadingForm)
     {
         try
@@ -279,14 +279,17 @@ public partial class BixbyApp : MaterialForm
                         if (item != null)
                         {
                             if (!ControlProperties(home_panel.Controls, item.PicLowRes))
-                                home_panel.Controls.Add(new ImageDetail(item.PicLowRes, true));
+                            {
+                                HomeItem home_item =  new HomeItem(item.PicLowRes, item.Name, item._id, home_panel);
+                                home_panel.Controls.Add(home_item);
+                            }
                         }
                     }
-                    return;
+                    loadingForm.Close();
                 }
                 else
                 {
-                    return;
+                    loadingForm.Close();
                 }
             }
         }
@@ -294,7 +297,6 @@ public partial class BixbyApp : MaterialForm
         {
             if (loadingForm != null)
                 loadingForm.Close();
-            return;
             // Close the loading form once both requests are completed
         }
     }
@@ -369,7 +371,7 @@ public partial class BixbyApp : MaterialForm
         }
     }
 
-    public static async void RetrieveImageFromS3(string key, PictureBox pictureBox)
+    public static async void RetrieveImageFromS3(string key, PictureBox pictureBox, bool fullRes)
     {
         var s3Client = new AmazonS3Client(AccessKey, SecretKey, RegionEndpoint.APSouth1);
 
@@ -707,7 +709,7 @@ public partial class BixbyApp : MaterialForm
             var resizedFilePath =
                 Path.Combine(Path.GetDirectoryName(imagePath), "resized_" + Path.GetFileName(imagePath));
             ResizeImage(imagePath, resizedFilePath, 404, 251);
-            flowLayoutPanel1.Controls.Add(new ImageDetail(resizedFilePath, false));
+            flowLayoutPanel1.Controls.Add(new ImageDetail(resizedFilePath, imagePath, false, false));
             re_sized_images.Add(resizedFilePath);
             original_images.Add(imagePath);
         }
@@ -726,7 +728,11 @@ public partial class BixbyApp : MaterialForm
 
         var token = Properties.Settings.Default.TokenValue;
         var email = Properties.Settings.Default.Email;
-
+        if (token == null || email == null)
+        {
+            MessageBox.Show("Authentication Need");
+            return;
+        }
         try
         {
             var client = new HttpClient();
@@ -766,9 +772,9 @@ public partial class BixbyApp : MaterialForm
                             Invoke(() =>
                             {
                                 MessageBox.Show("Success");
-                                materialTabControl1.SelectedIndex = 0;
                                 materialTabControl1.Refresh();
                                 Home.Refresh();
+                                materialTabControl1.SelectedIndex = 0;
                             });
                             break;
                         case "An error occurred.":

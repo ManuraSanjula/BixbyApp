@@ -74,7 +74,18 @@ public abstract class ShopController
                 var response = new
                 {
                     status = "Success",
-                    body = shopItem
+                    body = new
+                    {
+                        id = shopItem.Id.ToString(),
+                        Name = shopItem.Name,
+                        Description = shopItem.Description,
+                        TotalComments = (int)shopItem.TotalComments,
+                        Price = shopItem.Price,
+                        shopItem.PicsLowRes,
+                        shopItem.PicsHighRes,
+                        shopItem.publish,
+                        loveThisProduct = shopItem.loveThisProduct
+                    }
                 };
                 RedisCache.Set("item-" + context.DynamicPath[0], response.ToJson());
                 context.ResponseContent = response.ToJson();
@@ -251,25 +262,35 @@ public abstract class ShopController
                     .ToJson());
             case "GET":
             {
+                /*Console.Write("======================================================================");
                 if (RedisCache.Get("comment-" + shopId) != null)
                     await context.WriteResponse(RedisCache.Get("commend-" + shopId), "application/json")
-                        .ConfigureAwait(false);
+                        .ConfigureAwait(false);*/
 
                 var comment = CommentService.GetAllCommentsByShopItemName(shopId) ??
                               throw new NotFoundException(new
                                       { status = "An error occurred.", message = "Not Found Exception" }
                                   .ToJson());
 
-                if (comment.IsNullOrEmpty())
+                /*if (comment.IsNullOrEmpty())
                     throw new NotFoundException(
-                        new { status = "An error occurred.", message = "Not Found" }.ToJson());
+                        new { status = "An error occurred.", message = "Not Found" }.ToJson());*/
 
                 var response = new
                 {
                     status = "Success",
-                    body = comment
+                    body = comment.ConvertAll(input =>
+                    {
+                        if (input.UserComment != null)
+                        {
+                            CommentRes commentRes = new CommentRes(input.Id.ToString(), input.UserComment,
+                                input.User.ToString(), input.ShopItem.ToString());
+                            return commentRes;
+                        }
+                        return null;
+                    })
                 };
-                RedisCache.Set("comment-" + shopId, response.ToJson());
+                /*RedisCache.Set("comment-" + shopId, response.ToJson());*/
                 await context.WriteResponse(response.ToJson(), "application/json")
                     .ConfigureAwait(false);
 

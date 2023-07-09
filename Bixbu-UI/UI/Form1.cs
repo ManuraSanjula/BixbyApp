@@ -20,9 +20,9 @@ namespace Bixbu_UI;
 
 public partial class BixbyApp : MaterialForm
 {
-    private const string AccessKey = "AKIASULOPD3USE5RVZCQ";
-    private const string SecretKey = "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";
-    private const string BucketName = "bixby-app-nibm";
+    private const string AccessKey = "";
+    private const string SecretKey = "++";
+    private const string BucketName = "b";
 
     private readonly List<string> images = new();
     private readonly ConcurrentHashSet<string> addedItems_v2 = new();

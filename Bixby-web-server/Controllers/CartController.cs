@@ -6,7 +6,6 @@ using BixbyShop_LK.Services;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Newtonsoft.Json;
 using SendGrid.Helpers.Errors.Model;
 
 namespace Bixby_web_server.Controllers;
@@ -42,8 +41,8 @@ public abstract class CartController
 
         checkMiddleWare = new CheckMiddleWare();
         email = httpContext.DynamicPath?[0];
-        User? user = await UserService.GetUserByEmailAsync(email);
-       
+        var user = await UserService.GetUserByEmailAsync(email);
+
         var jwt =
             await checkMiddleWare.CheckMiddleWareJwt(httpContext, httpContext.DynamicPath?[0]?.Trim());
 
@@ -138,6 +137,7 @@ public abstract class CartController
         if (cart != null)
         {
             cart.Price = cart.Price + shopItem.Price;
+            cart.Quantity += 1;
             CartService.UpdateCartAndOrder(cart.Id, cart);
             await arg.WriteResponse(new
             {
@@ -167,6 +167,7 @@ public abstract class CartController
             await arg.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
         }
     }
+
     public static async Task CheckOutAllItems(HttpContext arg)
     {
         if (arg.Request.HttpMethod != "GET")
@@ -221,5 +222,43 @@ public abstract class CartController
             message = "Successfully CheckOut"
         };
         await arg.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+    }
+
+    public static async Task DeleteCart(HttpContext arg)
+    {
+        if (arg.Request.HttpMethod != "GET")
+            throw new MethodNotAllowedException(new { status = "An error occurred.", message = "Method Not Allowed" }
+                .ToJson());
+
+        var email = arg.DynamicPath?[0];
+        var checkMiddleWare = new CheckMiddleWare();
+
+        var cartAndOrders = await CartAndOrders(arg, checkMiddleWare, email);
+
+        if (cartAndOrders.User.Email != null && !cartAndOrders.User.Email.Equals(email))
+            throw new UnauthorizedException(new { status = "An error occurred.", message = "UnauthorizedException" }
+                .ToJson());
+
+        if (NullEmptyChecker.HasNullEmptyValues(cartAndOrders))
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        if (cartAndOrders.cartAndOrder.IsNullOrEmpty())
+            throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
+
+        var find = cartAndOrders.cartAndOrder.Find(c => c.Id == new ObjectId(arg.DynamicPath?[1]));
+
+        if (find != null)
+        {
+            CartService.DeleteCartAndOrder(find.Id);
+            var response = new
+            {
+                status = "Success"
+            };
+            await arg.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
+        }
+        else
+        {
+            throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+        }
     }
 }

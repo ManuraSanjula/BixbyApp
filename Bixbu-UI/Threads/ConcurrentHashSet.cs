@@ -1,13 +1,10 @@
-﻿namespace Bixbu_UI.Threads;
+﻿using System.Collections.Concurrent;
 
-
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+namespace Bixbu_UI.Threads;
 
 public class ConcurrentHashSet<T>
 {
-    private readonly ConcurrentDictionary<T, byte> dictionary = new ConcurrentDictionary<T, byte>();
+    private readonly ConcurrentDictionary<T, byte> dictionary = new();
 
     public bool Add(T item)
     {

@@ -1,23 +1,28 @@
-﻿using Bixbu_UI.Properties;
+﻿using Bixbu_UI.HTTP;
+using Bixbu_UI.Properties;
 using Newtonsoft.Json.Linq;
 
 namespace Bixbu_UI;
 
 public partial class HomeItem : UserControl
 {
-    public FlowLayoutPanel flowLayoutPanel;
+    private readonly Func<Task> cartAsyncFunc;
+    private readonly HttpDataFetcher httpDataFetcher = new();
     private bool isFormLocked;
-
-    public HomeItem(string url, string name, string id, FlowLayoutPanel flowLayoutPanel)
+    private readonly Func<Task> orderAsyncFunc;
+    private bool notLogedIn;
+    public HomeItem(string url, string name, string id, Func<Task> cartAsyncFunc, Func<Task> orderAsyncFunc, bool notLogedIn)
     {
         InitializeComponent();
         this.url = url;
         Name = name;
         this.name = name;
         metroLabel1.Text = name;
-        this.itemId = id;
-        BixbyApp.RetrieveImageFromS3(url, pictureBox1, 404, 251);
-        this.flowLayoutPanel = flowLayoutPanel;
+        itemId = id;
+        BixbyApp.RetrieveImageFromS3(url, pictureBox1, 404, 251).ContinueWith(data => { });
+        this.cartAsyncFunc = cartAsyncFunc;
+        this.orderAsyncFunc = orderAsyncFunc;
+        this.notLogedIn = notLogedIn;
     }
 
     public string url { get; }
@@ -26,7 +31,16 @@ public partial class HomeItem : UserControl
 
     private void HomeItem_Load(object sender, EventArgs e)
     {
+    }
 
+    public async Task HomeFunCall(string type)
+    {
+        var token = Settings.Default.TokenValue;
+        var email = Settings.Default.Email;
+        await httpDataFetcher.RefreshDataAsync(email, token, notLogedIn);
+        if (type == "c")
+            await cartAsyncFunc();
+        else if (type == "o") await orderAsyncFunc();
     }
 
     private void pictureBox1_Click(object sender, EventArgs e)
@@ -105,9 +119,14 @@ public partial class HomeItem : UserControl
                     var jObject = JObject.Parse(jsonResult);
                     var status = jObject["status"]?.Value<string>();
                     if (status == "Success")
+                    {
                         MessageBox.Show("Success");
+                        await HomeFunCall("c");
+                    }
                     else
+                    {
                         MessageBox.Show("Failed");
+                    }
                 }
                 else
                 {
@@ -144,9 +163,14 @@ public partial class HomeItem : UserControl
                     var jObject = JObject.Parse(jsonResult);
                     var status = jObject["status"]?.Value<string>();
                     if (status == "Success")
+                    {
                         MessageBox.Show("Success");
+                        await HomeFunCall("o");
+                    }
                     else
+                    {
                         MessageBox.Show("Failed");
+                    }
                 }
                 else
                 {

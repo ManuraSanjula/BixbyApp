@@ -135,6 +135,7 @@ public abstract class UserController
             user?.Tokens.Remove(token);
             throw new BadRequestException(new { status = "An error occurred.", message = "BadRequest" }.ToJson());
         }
+
         if (await UserService.UpdateUserAsync(user.Id, user))
         {
             var response = new
@@ -402,7 +403,7 @@ public abstract class UserController
         if (NullEmptyChecker.HasNullEmptyValues(result))
             throw new NotFoundException(new
                 { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
-        
+
         var productPurchases = await ProductPurchasesService.GetProductPurchasesByOwnerIdAsync(result.Email);
         var response = new
         {

@@ -7,17 +7,13 @@ public partial class ImageDetail : UserControl
         InitializeComponent();
         path = url;
         if (aws)
-        {
             Task.Run(() => BixbyApp.RetrieveImageFromS3(url, pictureBox1, 404, 251));
-        }
         else
-        {
             Task.Run(() =>
             {
                 pictureBox1.Image = Image.FromFile(url);
                 pictureBox1.SizeMode = PictureBoxSizeMode.CenterImage;
             });
-        }
     }
 
     public string path { get; }

@@ -1,82 +1,74 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
 
-namespace Bixbu_UI.HTTP
+namespace Bixbu_UI.HTTP;
+
+public class Cart
 {
-    [JsonObject]
-    public class CartItem
+    public string status { get; set; }
+    public List<Data> data { get; set; }
+}
+
+public class Data
+{
+    public string _id { get; set; }
+    public string Item { get; set; }
+    public string User { get; set; }
+    public int Quantity { get; set; }
+    public int Price { get; set; }
+}
+
+public class OrderRes
+{
+    public string status { get; set; }
+    public List<Order> data { get; set; }
+}
+
+public class Order
+{
+    public string _id { get; set; }
+    public List<string> Items { get; set; }
+    public string User { get; set; }
+    public int Price { get; set; }
+    public bool Confirm { get; set; }
+}
+
+public class HttpDataFetcher
+{
+    public static Task<Dictionary<string, object>>? fetchUserTask;
+    public static Task<HashSet<Item>>? fetchItemsTask;
+    public static Task<Cart>? fetchCartItemsTask;
+    public static Task<OrderRes>? fetchOrdersTask;
+    private readonly HttpClient _httpClient;
+
+    public HttpDataFetcher()
     {
-        public string _id { get; set; }
-        public string Item { get; set; }
-        public string User { get; set; }
-        public int Quantity { get; set; }
-        public int Price { get; set; }
+        _httpClient = new HttpClient();
     }
 
-    public class OrderRes
+    public async Task RefreshDataAsync(string email, string token, bool notLogedIn)
     {
-        public string status { get; set; }
-        public List<Order> data { get; set; }
+        if(notLogedIn)
+            await FetchDataAsync(email, token, notLogedIn);
+
     }
 
-    public class Order
+    public async Task FetchDataAsync(string email, string token, bool notLogedIn)
     {
-        public string _id { get; set; }
-        public string Item { get; set; }
-        public string User { get; set; }
-        public int Quantity { get; set; }
-        public int Price { get; set; }
-    }
-
-    public partial class HttpDataFetcher
-    {
-        public static Task<Dictionary<string, object>>? fetchUserTask;
-        public static Task<HashSet<Item>>? fetchItemsTask;
-        private readonly HttpClient _httpClient;
-        public static Task<List<CartItem>>? fetchCartItemsTask;
-        public static Task<List<Order>>? fetchOrdersTask;
-
-        public HttpDataFetcher()
+        if (notLogedIn)
         {
-            _httpClient = new HttpClient();
-        }
+            fetchUserTask = FetchUserAsync(email, token, notLogedIn);
+            fetchItemsTask = FetchItemsAsync(email, token, notLogedIn);
 
-        public async Task RefreshDataAsync(string email, string token)
-        {
-            await FetchDataAsync(email, token);
-        }
-
-        public async Task FetchDataAsync(string email, string token)
-        {
-            Console.WriteLine("Loading screen displayed...");
-
-            fetchUserTask = FetchUserAsync(email, token);
-            fetchItemsTask = FetchItemsAsync(email, token);
-
-            fetchCartItemsTask = FetchCartItemsAsync(email, token);
-            fetchOrdersTask = FetchOrdersAsync(email, token);
+            fetchCartItemsTask = FetchCartItemsAsync(email, token, notLogedIn);
+            fetchOrdersTask = FetchOrdersAsync(email, token, notLogedIn);
 
             await Task.WhenAll(fetchUserTask, fetchItemsTask, fetchCartItemsTask, fetchOrdersTask);
-
-            Dictionary<string, object> user = fetchUserTask.Result;
-            HashSet<Item> items = fetchItemsTask.Result;
-
-            List<CartItem> cartItems = fetchCartItemsTask.Result;
-            List<Order> orders = fetchOrdersTask.Result;
-
-            // Continue with processing the fetched data
-            Console.WriteLine("User data: " + user);
-            Console.WriteLine("Item data: " + string.Join(", ", items));
-            Console.WriteLine("Cart details: " + string.Join(", ", cartItems));
-            Console.WriteLine("Order details: " + string.Join(", ", orders));
-
-            Console.WriteLine("Loading screen removed...");
         }
+    }
 
-        private async Task<Dictionary<string, object>> FetchUserAsync(string email, string token)
+    private async Task<Dictionary<string, object>> FetchUserAsync(string email, string token, bool notLogedIn)
+    {
+        if(notLogedIn)
         {
             try
             {
@@ -94,15 +86,23 @@ namespace Bixbu_UI.HTTP
                     var userDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(bodyKey);
                     return userDict;
                 }
+
                 return null;
             }
             catch (Exception ex)
             {
-                throw;
+              return null;
             }
         }
+        else
+        {
+            return null;
+        }
+    }
 
-        private async Task<HashSet<Item>> FetchItemsAsync(string email, string token)
+    private async Task<HashSet<Item>> FetchItemsAsync(string email, string token, bool notLogedIn)
+    {
+        if(notLogedIn)
         {
             try
             {
@@ -119,15 +119,24 @@ namespace Bixbu_UI.HTTP
                     var responseObject = JsonConvert.DeserializeObject<Response>(json);
                     return responseObject.body;
                 }
-                return null;
+
+                return new HashSet<Item>();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                return new HashSet<Item>();
+
             }
         }
+        else
+        {
+            return new HashSet<Item>();
+        }
+    }
 
-        private async Task<List<CartItem>> FetchCartItemsAsync(string email, string token)
+    private async Task<Cart?> FetchCartItemsAsync(string email, string token, bool notLogedIn)
+    {
+        if (notLogedIn)
         {
             try
             {
@@ -137,68 +146,59 @@ namespace Bixbu_UI.HTTP
                 var response = await client.SendAsync(request);
                 response.EnsureSuccessStatusCode();
                 var json = await response.Content.ReadAsStringAsync();
-
-                // Check if the JSON response is an object or an array
-                if (json.StartsWith("{"))
-                {
-                    // Single object received, deserialize into a single CartItem object
-                    var cartItem = JsonConvert.DeserializeObject<CartItem>(json);
-                    return new List<CartItem> { cartItem };
-                }
-                else if (json.StartsWith("["))
-                {
-                    // JSON array received, deserialize into a list of CartItem objects
-                    var cartItems = JsonConvert.DeserializeObject<List<CartItem>>(json);
-                    return cartItems;
-                }
-                else
-                {
-                    // Invalid JSON format
-                    throw new JsonSerializationException("Invalid JSON format");
-                }
+#pragma warning disable CS8603 // Possible null reference return.
+                return JsonConvert.DeserializeObject<Cart>(json);
+#pragma warning restore CS8603 // Possible null reference return.
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                return new Cart();
             }
         }
+        else
+        {
+            return new Cart();
+        }
+    }
 
 
-        private async Task<List<Order>> FetchOrdersAsync(string email, string token)
+    private async Task<OrderRes> FetchOrdersAsync(string email, string token, bool notLogedIn)
+    {
+        if (notLogedIn)
         {
             try
             {
                 var client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/order/{email}/view");
                 request.Headers.Add("Authorization", $"Bearer {token}");
-                var response = await client.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-                var json = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response = null;
+                try
+                {
+                    response = await client.SendAsync(request);
+                }catch(Exception)
+                {
+                    return new OrderRes();
+                }
 
-                // Check if the JSON response is an object
-                if (json.StartsWith("{"))
-                {
-                    // Single object received, create a list with a single item
-                    var order = JsonConvert.DeserializeObject<Order>(json);
-                    return new List<Order> { order };
+                if (response == null) return null;
+
+                HttpResponseMessage httpResponseMessage = response.EnsureSuccessStatusCode();
+
+                if (httpResponseMessage.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                { 
+                    var json = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<OrderRes>(json);
                 }
-                else if (json.StartsWith("["))
-                {
-                    // JSON array received, deserialize into a list of Order objects
-                    var orders = JsonConvert.DeserializeObject<List<Order>>(json);
-                    return orders;
-                }
-                else
-                {
-                    // Invalid JSON format
-                    throw new JsonSerializationException("Invalid JSON format");
-                }
+                return new OrderRes();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                return new OrderRes();
             }
         }
-
+        else
+        {
+            return new OrderRes();
+        }
     }
 }

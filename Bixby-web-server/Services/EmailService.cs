@@ -6,8 +6,6 @@ using Bixby_web_server.Controllers;
 using Bixby_web_server.Helpers;
 using Bixby_web_server.Models;
 using Microsoft.IdentityModel.Tokens;
-using MongoDB.Bson;
-using Newtonsoft.Json;
 
 namespace Bixby_web_server.Services;
 
@@ -57,8 +55,8 @@ public static class EmailService
 
     private static async void UserUpdate(string? email, string? token)
     {
-        User? user = await UserService.GetUserByEmailAsync(email);
-        
+        var user = await UserService.GetUserByEmailAsync(email);
+
         if (user != null)
         {
             user.AddToken(token, DateTime.Now.ToString(CultureInfo.InvariantCulture));
@@ -68,8 +66,8 @@ public static class EmailService
 
     private static string? EmailVerificationCode(string code, string path, string? email)
     {
-        string? text = Startup.GetFileContent(Startup.ConfirmYourEmail);
-     
+        var text = Startup.GetFileContent(Startup.ConfirmYourEmail);
+
         if (text != null)
             return FormatHtml(text, placeholder =>
             {
@@ -77,13 +75,13 @@ public static class EmailService
                 var link = path + $"/ui/email-verify/?token={path + $"/email-verify/{email}/{code}"}";
                 return link;
             });
-        return String.Empty;
+        return string.Empty;
     }
 
     private static Task<string?> ForgotPasswordEmailVerification(string code, string path,
         User user)
     {
-        string? text = Startup.GetFileContent(Startup.ResetPasswordReqEmail);
+        var text = Startup.GetFileContent(Startup.ResetPasswordReqEmail);
         return Task.FromResult(FormatHtml(text, placeholder =>
         {
             if (placeholder != "VerificationLink") return string.Empty;

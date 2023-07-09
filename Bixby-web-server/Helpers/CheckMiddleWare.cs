@@ -37,7 +37,7 @@ public class CheckMiddleWare
             var userReq = JsonConvert.DeserializeObject<UserReqForUpdate>(jsonString, settings);
             if (userReq == null && NullEmptyChecker.HasNullEmptyValues(userReq)) return Values;
             if (dynamic is not { Length: > 0 } || string.IsNullOrEmpty(dynamic[0])) return Values;
-            User? user = await UserService.GetUserByEmailAsync(dynamic[0]);
+            var user = await UserService.GetUserByEmailAsync(dynamic[0]);
             if (user == null && NullEmptyChecker.HasNullEmptyValues(user) && user!.EmailVerify) return Values;
 
             if (userReq != null) Values.Add("UserReqForUpdate", userReq);
@@ -58,8 +58,8 @@ public class CheckMiddleWare
             if (shopItemReq == null || NullEmptyChecker.HasNullEmptyValues(shopItemReq)) return Values;
 
             if (dynamic is not { Length: > 0 }) return Values;
-            User? user = await UserService.GetUserByEmailAsync(dynamic[0]);
-            
+            var user = await UserService.GetUserByEmailAsync(dynamic[0]);
+
             if (user == null || !user.EmailVerify) return Values;
             var userInShopItem = new UserInShopItem
             {

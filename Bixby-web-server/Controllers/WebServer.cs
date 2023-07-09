@@ -175,6 +175,7 @@ public class WebServer
         routeHandlers.Add("/delete/{email}/product/{shopId}", UserController.RemoveUserProduct);
 
         routeHandlers.Add("/cart/{email}/{shopId}/add", CartController.AddToCart); // 👍🏻👌👌
+        routeHandlers.Add("/cart/{email}/{shopId}/delete", CartController.DeleteCart); // 👍🏻👌👌
         routeHandlers.Add("/cart/{email}/view", CartController.SeeAllTheCart); // 👌👍🏻
         routeHandlers.Add("/cart/{email}/check-out", CartController.CheckOutAllItems); // 👍🏻👌
 

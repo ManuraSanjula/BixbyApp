@@ -4,7 +4,6 @@ using Bixby_web_server.Services;
 using BixbyShop_LK.Services;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
-using Newtonsoft.Json;
 using SendGrid.Helpers.Errors.Model;
 
 namespace Bixby_web_server.Controllers;
@@ -21,36 +20,10 @@ public abstract class OrderController
             throw new MethodNotAllowedException(
                 new { status = "An error occurred.", message = "Method Not Allowed" }.ToJson());
 
-        User? user = await UserService.GetUserByEmailAsync(email);;
-        /*
-        try
-        {
-            user = JsonConvert.DeserializeObject<User>(RedisCache.Get(email) ?? string.Empty);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-        */
-        
-        /*if (user == null)
-        {
-            user = await UserService.GetUserByEmailAsync(email);
-            RedisUser(user);
-        }
-        else
-        {
-            var userDb = await UserService.GetUserByEmailAsync(email);
-            if (userDb == null) throw new ArgumentNullException(nameof(userDb));
-            if (!user.Equals(userDb))
-            {
-                user = userDb;
-                RedisUser(userDb);
-            }
-        }*/
+        var user = await UserService.GetUserByEmailAsync(email);
+        ;
 
-        /*
-        if (NullEmptyChecker.HasNullEmptyValues(user))
+        /*if (NullEmptyChecker.HasNullEmptyValues(user))
             throw new UnauthorizedException(new { status = "An error occurred.", message = "Unauthorized Exception" }
                 .ToJson());*/
         var jwt =
@@ -110,7 +83,7 @@ public abstract class OrderController
         var email = context.DynamicPath?[0];
         var user = await GetUser(checkMiddleWare, email, context);
         var orders = OrderService.GetAllOrders(user?.Email);
-        
+
         if (orders.IsNullOrEmpty())
             throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }
                 .ToJson());

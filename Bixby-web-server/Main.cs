@@ -1,5 +1,4 @@
 ﻿using Bixby_web_server.Controllers;
-using StackExchange.Redis;
 
 namespace Bixby_web_server;
 
@@ -13,7 +12,7 @@ public abstract class Program
         _webServer.Start();
 
         _webServer.UseMiddleware(async (context, next) => { await next(); });
-        
+
         Console.WriteLine("Press any key to stop the server...");
         Console.ReadKey();
 

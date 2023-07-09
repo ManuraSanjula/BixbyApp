@@ -34,7 +34,7 @@ partial class BixbyApp
         home_panel = new FlowLayoutPanel();
         Account = new TabPage();
         panel1 = new Panel();
-        panel3 = new Panel();
+        accout_panel = new Panel();
         metroButton2 = new MetroFramework.Controls.MetroButton();
         metroLabel1 = new MetroFramework.Controls.MetroLabel();
         metroLabel4 = new MetroFramework.Controls.MetroLabel();
@@ -54,11 +54,11 @@ partial class BixbyApp
         Settings = new TabPage();
         AddProducts = new TabPage();
         panel4 = new Panel();
-        panel5 = new Panel();
+        add_products = new Panel();
         metroLabel5 = new MetroFramework.Controls.MetroLabel();
         Save = new MetroFramework.Controls.MetroButton();
         UploadImages = new MetroFramework.Controls.MetroButton();
-        flowLayoutPanel1 = new FlowLayoutPanel();
+        image_list = new FlowLayoutPanel();
         metroLabel7 = new MetroFramework.Controls.MetroLabel();
         metroLabel6 = new MetroFramework.Controls.MetroLabel();
         Price = new MaterialSkin.Controls.MaterialTextBox2();
@@ -66,15 +66,21 @@ partial class BixbyApp
         ItemName = new MaterialSkin.Controls.MaterialTextBox2();
         button3 = new Button();
         button4 = new Button();
+        Cart = new TabPage();
+        cart_panel = new FlowLayoutPanel();
+        Order = new TabPage();
+        order_panel = new FlowLayoutPanel();
         materialTabControl1.SuspendLayout();
         Home.SuspendLayout();
         Account.SuspendLayout();
         panel1.SuspendLayout();
-        panel3.SuspendLayout();
+        accout_panel.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)pictureBox4).BeginInit();
         AddProducts.SuspendLayout();
         panel4.SuspendLayout();
-        panel5.SuspendLayout();
+        add_products.SuspendLayout();
+        Cart.SuspendLayout();
+        Order.SuspendLayout();
         SuspendLayout();
         // 
         // materialTabControl1
@@ -83,6 +89,8 @@ partial class BixbyApp
         materialTabControl1.Controls.Add(Account);
         materialTabControl1.Controls.Add(Settings);
         materialTabControl1.Controls.Add(AddProducts);
+        materialTabControl1.Controls.Add(Cart);
+        materialTabControl1.Controls.Add(Order);
         materialTabControl1.Depth = 0;
         materialTabControl1.Dock = DockStyle.Fill;
         materialTabControl1.Location = new Point(3, 64);
@@ -95,12 +103,12 @@ partial class BixbyApp
         materialTabControl1.SizeMode = TabSizeMode.Fixed;
         materialTabControl1.TabIndex = 0;
         // 
-        // HomeUI
+        // Home
         // 
         Home.Controls.Add(home_panel);
         Home.Location = new Point(4, 24);
         Home.Margin = new Padding(3, 2, 3, 2);
-        Home.Name = "HomeUI";
+        Home.Name = "Home";
         Home.Size = new Size(1252, 664);
         Home.TabIndex = 3;
         Home.Text = "HomeUI";
@@ -129,7 +137,7 @@ partial class BixbyApp
         // panel1
         // 
         panel1.BackColor = Color.White;
-        panel1.Controls.Add(panel3);
+        panel1.Controls.Add(accout_panel);
         panel1.Controls.Add(button1);
         panel1.Controls.Add(button2);
         panel1.Dock = DockStyle.Fill;
@@ -138,27 +146,27 @@ partial class BixbyApp
         panel1.Size = new Size(1246, 660);
         panel1.TabIndex = 2;
         // 
-        // panel3
+        // accout_panel
         // 
-        panel3.Controls.Add(metroButton2);
-        panel3.Controls.Add(metroLabel1);
-        panel3.Controls.Add(metroLabel4);
-        panel3.Controls.Add(materialButton3);
-        panel3.Controls.Add(materialButton2);
-        panel3.Controls.Add(materialButton1);
-        panel3.Controls.Add(Address);
-        panel3.Controls.Add(Email);
-        panel3.Controls.Add(metroLabel3);
-        panel3.Controls.Add(LastName);
-        panel3.Controls.Add(metroLabel2);
-        panel3.Controls.Add(FirstName_txt);
-        panel3.Controls.Add(FirstName);
-        panel3.Controls.Add(pictureBox4);
-        panel3.Dock = DockStyle.Fill;
-        panel3.Location = new Point(0, 0);
-        panel3.Name = "panel3";
-        panel3.Size = new Size(1246, 660);
-        panel3.TabIndex = 4;
+        accout_panel.Controls.Add(metroButton2);
+        accout_panel.Controls.Add(metroLabel1);
+        accout_panel.Controls.Add(metroLabel4);
+        accout_panel.Controls.Add(materialButton3);
+        accout_panel.Controls.Add(materialButton2);
+        accout_panel.Controls.Add(materialButton1);
+        accout_panel.Controls.Add(Address);
+        accout_panel.Controls.Add(Email);
+        accout_panel.Controls.Add(metroLabel3);
+        accout_panel.Controls.Add(LastName);
+        accout_panel.Controls.Add(metroLabel2);
+        accout_panel.Controls.Add(FirstName_txt);
+        accout_panel.Controls.Add(FirstName);
+        accout_panel.Controls.Add(pictureBox4);
+        accout_panel.Dock = DockStyle.Fill;
+        accout_panel.Location = new Point(0, 0);
+        accout_panel.Name = "accout_panel";
+        accout_panel.Size = new Size(1246, 660);
+        accout_panel.TabIndex = 4;
         // 
         // metroButton2
         // 
@@ -472,7 +480,7 @@ partial class BixbyApp
         // panel4
         // 
         panel4.BackColor = Color.White;
-        panel4.Controls.Add(panel5);
+        panel4.Controls.Add(add_products);
         panel4.Controls.Add(button3);
         panel4.Controls.Add(button4);
         panel4.Dock = DockStyle.Fill;
@@ -481,22 +489,22 @@ partial class BixbyApp
         panel4.Size = new Size(1246, 658);
         panel4.TabIndex = 3;
         // 
-        // panel5
+        // add_products
         // 
-        panel5.Controls.Add(metroLabel5);
-        panel5.Controls.Add(Save);
-        panel5.Controls.Add(UploadImages);
-        panel5.Controls.Add(flowLayoutPanel1);
-        panel5.Controls.Add(metroLabel7);
-        panel5.Controls.Add(metroLabel6);
-        panel5.Controls.Add(Price);
-        panel5.Controls.Add(Description);
-        panel5.Controls.Add(ItemName);
-        panel5.Dock = DockStyle.Fill;
-        panel5.Location = new Point(0, 0);
-        panel5.Name = "panel5";
-        panel5.Size = new Size(1246, 658);
-        panel5.TabIndex = 3;
+        add_products.Controls.Add(metroLabel5);
+        add_products.Controls.Add(Save);
+        add_products.Controls.Add(UploadImages);
+        add_products.Controls.Add(image_list);
+        add_products.Controls.Add(metroLabel7);
+        add_products.Controls.Add(metroLabel6);
+        add_products.Controls.Add(Price);
+        add_products.Controls.Add(Description);
+        add_products.Controls.Add(ItemName);
+        add_products.Dock = DockStyle.Fill;
+        add_products.Location = new Point(0, 0);
+        add_products.Name = "add_products";
+        add_products.Size = new Size(1246, 658);
+        add_products.TabIndex = 3;
         // 
         // metroLabel5
         // 
@@ -539,12 +547,12 @@ partial class BixbyApp
         UploadImages.UseStyleColors = true;
         UploadImages.Click += UploadImages_Click;
         // 
-        // flowLayoutPanel1
+        // image_list
         // 
-        flowLayoutPanel1.Location = new Point(51, 330);
-        flowLayoutPanel1.Name = "flowLayoutPanel1";
-        flowLayoutPanel1.Size = new Size(1167, 304);
-        flowLayoutPanel1.TabIndex = 6;
+        image_list.Location = new Point(51, 330);
+        image_list.Name = "image_list";
+        image_list.Size = new Size(1167, 304);
+        image_list.TabIndex = 6;
         // 
         // metroLabel7
         // 
@@ -686,6 +694,46 @@ partial class BixbyApp
         button4.UseVisualStyleBackColor = true;
         button4.Click += button4_Click;
         // 
+        // Cart
+        // 
+        Cart.Controls.Add(cart_panel);
+        Cart.Location = new Point(4, 24);
+        Cart.Name = "Cart";
+        Cart.Padding = new Padding(3);
+        Cart.Size = new Size(1252, 664);
+        Cart.TabIndex = 5;
+        Cart.Text = "Cart";
+        Cart.UseVisualStyleBackColor = true;
+        // 
+        // cart_panel
+        // 
+        cart_panel.BackColor = Color.White;
+        cart_panel.Dock = DockStyle.Fill;
+        cart_panel.Location = new Point(3, 3);
+        cart_panel.Name = "cart_panel";
+        cart_panel.Size = new Size(1246, 658);
+        cart_panel.TabIndex = 0;
+        // 
+        // Order
+        // 
+        Order.Controls.Add(order_panel);
+        Order.Location = new Point(4, 24);
+        Order.Name = "Order";
+        Order.Padding = new Padding(3);
+        Order.Size = new Size(1252, 664);
+        Order.TabIndex = 6;
+        Order.Text = "Order";
+        Order.UseVisualStyleBackColor = true;
+        // 
+        // order_panel
+        // 
+        order_panel.BackColor = Color.White;
+        order_panel.Dock = DockStyle.Fill;
+        order_panel.Location = new Point(3, 3);
+        order_panel.Name = "order_panel";
+        order_panel.Size = new Size(1246, 658);
+        order_panel.TabIndex = 0;
+        // 
         // BixbyApp
         // 
         AutoScaleMode = AutoScaleMode.None;
@@ -703,13 +751,15 @@ partial class BixbyApp
         Home.ResumeLayout(false);
         Account.ResumeLayout(false);
         panel1.ResumeLayout(false);
-        panel3.ResumeLayout(false);
-        panel3.PerformLayout();
+        accout_panel.ResumeLayout(false);
+        accout_panel.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)pictureBox4).EndInit();
         AddProducts.ResumeLayout(false);
         panel4.ResumeLayout(false);
-        panel5.ResumeLayout(false);
-        panel5.PerformLayout();
+        add_products.ResumeLayout(false);
+        add_products.PerformLayout();
+        Cart.ResumeLayout(false);
+        Order.ResumeLayout(false);
         ResumeLayout(false);
     }
 
@@ -722,7 +772,7 @@ partial class BixbyApp
     private Button button2;
     private Button button1;
     private Panel panel1;
-    private Panel panel3;
+    private Panel accout_panel;
     private MetroFramework.Controls.MetroButton metroButton2;
     private MetroFramework.Controls.MetroLabel metroLabel1;
     private MetroFramework.Controls.MetroLabel metroLabel4;
@@ -741,15 +791,19 @@ partial class BixbyApp
     private Panel panel4;
     private Button button3;
     private Button button4;
-    private Panel panel5;
+    private Panel add_products;
     private MaterialSkin.Controls.MaterialTextBox2 ItemName;
     private MaterialSkin.Controls.MaterialTextBox2 Price;
     private MaterialSkin.Controls.MaterialTextBox2 Description;
     private MetroFramework.Controls.MetroLabel metroLabel7;
     private MetroFramework.Controls.MetroLabel metroLabel6;
-    private FlowLayoutPanel flowLayoutPanel1;
+    private FlowLayoutPanel image_list;
     private MetroFramework.Controls.MetroButton Save;
     private MetroFramework.Controls.MetroButton UploadImages;
     private MetroFramework.Controls.MetroLabel metroLabel5;
     private FlowLayoutPanel home_panel;
+    private TabPage Cart;
+    private TabPage Order;
+    private FlowLayoutPanel cart_panel;
+    private FlowLayoutPanel order_panel;
 }

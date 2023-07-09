@@ -47,16 +47,12 @@ public partial class FullItemDetails : Form
                     Invoke((MethodInvoker)(() =>
                     {
                         foreach (var key in product.Pics)
-                        {
                             if (!addedImages.Contains(key)) // Check if image is already added
-                            {
                                 if (!ControlPropertiesForImage(flowLayoutPanel1.Controls, key))
                                 {
                                     flowLayoutPanel1.Controls.Add(new ImageDetail(key, true, false));
                                     addedImages.Add(key); // Add image to the list
                                 }
-                            }
-                        }
 
                         metroLabel1.Text = product.Name;
                         metroLabel2.Text = product.Description;
@@ -98,7 +94,6 @@ public partial class FullItemDetails : Form
 
     private void FullItemDetails_Load(object sender, EventArgs e)
     {
-       
     }
 
     private void fetchingComments()
@@ -108,7 +103,8 @@ public partial class FullItemDetails : Form
             try
             {
                 var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/shopItem/{product._id}/comment");
+                var request = new HttpRequestMessage(HttpMethod.Get,
+                    $"http://localhost:8080/shopItem/{product._id}/comment");
                 var response = await client.SendAsync(request);
                 response.EnsureSuccessStatusCode();
                 var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -121,17 +117,15 @@ public partial class FullItemDetails : Form
                 comments.ForEach(comment =>
                 {
                     if (!addedComments.Contains(comment.UserComment)) // Check if comment is already added
-                    {
-                        if (!ControlPropertiesForComment(flowLayoutPanel2.Controls, comment.UserComment, comment.User, comment.ShopItem))
-                        {
+                        if (!ControlPropertiesForComment(flowLayoutPanel2.Controls, comment.UserComment, comment.User,
+                                comment.ShopItem))
                             // Update the UI controls using Control.Invoke
                             Invoke((MethodInvoker)(() =>
                             {
-                                flowLayoutPanel2.Controls.Add(new Comment(comment.UserComment, comment.User, comment.ShopItem));
+                                flowLayoutPanel2.Controls.Add(new Comment(comment.UserComment, comment.User,
+                                    comment.ShopItem));
                                 addedComments.Add(comment.UserComment); // Add comment to the list
                             }));
-                        }
-                    }
                 });
             }
             catch (Exception ex)

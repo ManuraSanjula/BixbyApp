@@ -1,6 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Compile Update="UI\CartItem.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Update="UI\Comment.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -18,6 +21,9 @@
     </Compile>
     <Compile Update="LoadingScreen\LoadingForm.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="UI\OrderItem.cs">
+      <SubType>UserControl</SubType>
     </Compile>
     <Compile Update="UI\User\SingUp.cs">
       <SubType>Form</SubType>

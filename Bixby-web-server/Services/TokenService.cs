@@ -3,8 +3,6 @@ using System.Security.Claims;
 using System.Text;
 using Bixby_web_server.Models;
 using Microsoft.IdentityModel.Tokens;
-using MongoDB.Bson;
-using Newtonsoft.Json;
 
 namespace Bixby_web_server.Services;
 
@@ -54,7 +52,7 @@ public static class TokenService
 
             user.UserAuthTokens.Add(userToken);
             if (!await UserService.UpdateUserAsync(user.Id, user)) return null;
-            
+
             if (!loginPath) return userToken;
 
             _ = EmailService.SendEmail(path, user.Email, "Email Verification Code for Your Account 🙂🙂", 0,
@@ -75,7 +73,7 @@ public static class TokenService
         var email = enumerable.FirstOrDefault(c => c.Type == "email")?.Value;
         var password = enumerable.FirstOrDefault(c => c.Type == "password")?.Value;
 
-        User? user = await UserService.GetUserByEmailAsync(email);
+        var user = await UserService.GetUserByEmailAsync(email);
         if (user == null) return null;
         if (user.Password == password && !user.UserAuthTokens.Contains(jwtToken)) return null;
         if (user.Password != password) return null;

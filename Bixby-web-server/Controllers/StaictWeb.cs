@@ -13,6 +13,6 @@ public static class StaticWeb
     public static async Task ResetPassword(HttpContext arg)
     {
         var text = Startup.GetFileContent(Startup.PasswordReset);
-         await arg.WriteResponse(text, "text/html").ConfigureAwait(false);
+        await arg.WriteResponse(text, "text/html").ConfigureAwait(false);
     }
 }

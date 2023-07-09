@@ -11,7 +11,7 @@ public partial class ImageDetail : UserControl
         else
             Task.Run(() =>
             {
-                pictureBox1.Image = Image.FromFile(url);
+                pictureBox1.Image = System.Drawing.Image.FromFile(url);
                 pictureBox1.SizeMode = PictureBoxSizeMode.CenterImage;
             });
     }

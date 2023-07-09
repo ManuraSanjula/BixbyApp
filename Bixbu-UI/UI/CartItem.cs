@@ -5,13 +5,14 @@ namespace Bixbu_UI.UI;
 public partial class CartItemuserControl : UserControl
 {
     private bool isFormLocked;
-    private string item;
+    public string item;
     private string price;
     private string Quantity;
     private string user;
     private string id;
     private BixbyApp bixby;
-    public CartItemuserControl(BixbyApp bixbyApp,string id, string item, string user, string Quantity, string price)
+    private FlowLayoutPanel flowLayoutPanel;
+    public CartItemuserControl(BixbyApp bixbyApp, FlowLayoutPanel flowLayoutPanel ,string id, string item, string user, string Quantity, string price)
     {
         this.item = item;
         this.Quantity = Quantity;
@@ -25,7 +26,7 @@ public partial class CartItemuserControl : UserControl
         metroLabel6.Text = user;
         metroLabel7.Text = Quantity;
         metroLabel8.Text = price;
-
+        this.flowLayoutPanel = flowLayoutPanel;
         linkLabel1.LinkClicked += LinkLabel_LinkClicked;
     }
 
@@ -69,7 +70,8 @@ public partial class CartItemuserControl : UserControl
 
     private async void metroButton1_Click(object sender, EventArgs e)
     {
-      await Task.Run(async () => {
+        await Task.Run(async () =>
+        {
             var token = Properties.Settings.Default.TokenValue;
             var email = Properties.Settings.Default.Email;
 
@@ -93,6 +95,8 @@ public partial class CartItemuserControl : UserControl
                             var email = Properties.Settings.Default.Email;
                             await bixby.httpDataFetcher.RefreshDataAsync(email, token, true);
                             await bixby.CartUI();
+                            flowLayoutPanel.Controls.Remove(this);
+                            Dispose();
                         }));
                         break;
                     case "An error occurred.":
@@ -104,5 +108,28 @@ public partial class CartItemuserControl : UserControl
 
         });
 
+    }
+
+    private void metroLabel2_Click(object sender, EventArgs e)
+    {
+
+    }
+
+    private void metroLabel6_Click(object sender, EventArgs e)
+    {
+        this.Invoke((MethodInvoker)(() => {
+            if (!isFormLocked)
+            {
+                isFormLocked = true;
+                LockControls(ParentForm); // Disable other controls on the form
+                var fullItemDetails = new UserProducts(user);
+                fullItemDetails.Show();
+                fullItemDetails.FormClosed += (s, args) =>
+                {
+                    UnlockControls(ParentForm); // Enable other controls on the form
+                    isFormLocked = false;
+                };
+            }
+        }));
     }
 }

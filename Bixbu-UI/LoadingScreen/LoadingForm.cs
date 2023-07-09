@@ -33,14 +33,14 @@ public class LoadingForm : Form
             var imageData = webClient.DownloadData(gifUrl);
             using (var ms = new MemoryStream(imageData))
             {
-                var gifImage = Image.FromStream(ms);
+                var gifImage = System.Drawing.Image.FromStream(ms);
                 pictureBox.Size = gifImage.Size;
                 ClientSize = new Size(gifImage.Width, gifImage.Height);
             }
         }
     }
 
-    private Bitmap BlurImage(Image image, int blurAmount)
+    private Bitmap BlurImage(System.Drawing.Image image, int blurAmount)
     {
         var blurredImage = new Bitmap(image.Width, image.Height);
         using (var g = Graphics.FromImage(blurredImage))

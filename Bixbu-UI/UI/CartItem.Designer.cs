@@ -58,6 +58,7 @@
             metroLabel2.Size = new Size(39, 19);
             metroLabel2.TabIndex = 2;
             metroLabel2.Text = "User";
+            metroLabel2.Click += metroLabel2_Click;
             // 
             // metroLabel3
             // 
@@ -88,6 +89,7 @@
             metroLabel6.Size = new Size(33, 19);
             metroLabel6.TabIndex = 6;
             metroLabel6.Text = "----";
+            metroLabel6.Click += metroLabel6_Click;
             // 
             // metroLabel7
             // 
@@ -161,8 +163,8 @@
         private MetroFramework.Controls.MetroLabel metroLabel3;
         private MetroFramework.Controls.MetroLabel metroLabel4;
         private MetroFramework.Controls.MetroLabel metroLabel6;
-        private MetroFramework.Controls.MetroLabel metroLabel7;
-        private MetroFramework.Controls.MetroLabel metroLabel8;
+        public MetroFramework.Controls.MetroLabel metroLabel7;
+        public MetroFramework.Controls.MetroLabel metroLabel8;
         private MetroFramework.Controls.MetroButton metroButton1;
         private LinkLabel linkLabel1;
     }

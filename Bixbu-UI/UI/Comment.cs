@@ -44,4 +44,9 @@ public partial class Comment : UserControl
     private void metroLabel6_Click(object sender, EventArgs e)
     {
     }
+
+    private void metroLabel5_Click_1(object sender, EventArgs e)
+    {
+
+    }
 }

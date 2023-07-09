@@ -29,8 +29,6 @@ public partial class BixbyApp : MaterialForm
     private readonly ConcurrentHashSet<string> addedItems_v2_for_cart = new();
     private readonly ConcurrentHashSet<string> addedItems_v2_for_order = new();
 
-    private Thread backgroundThread;
-
     public readonly HttpDataFetcher httpDataFetcher = null;
 
     private readonly ConcurrentBag<string> img = new();
@@ -51,12 +49,12 @@ public partial class BixbyApp : MaterialForm
 
         if (!loggedIn) ErrorUIUpdater();
 
-        if(loggedIn)
+        if (loggedIn)
         {
             httpDataFetcher = new();
         }
-        
-        if(httpDataFetcher !=null)
+
+        if (httpDataFetcher != null)
         {
             try
             {
@@ -239,7 +237,7 @@ public partial class BixbyApp : MaterialForm
         Size = new Size(1268, 758);
     }
 
-   
+
 
     private async void Form1_Load(object sender, EventArgs e)
     {
@@ -263,6 +261,74 @@ public partial class BixbyApp : MaterialForm
         image_list.Padding = new Padding(10);
 
         home_panel.AutoScroll = true;
+
+
+
+        Panel panel = new Panel();
+        panel.BackColor = Color.FromArgb(216, 255, 223); // Pale green color
+        panel.Size = new Size(1246, 50);
+        panel.Dock = DockStyle.Top;
+
+        // Create the button
+        Button button = new Button();
+        button.Text = "CheckOut Cart";
+        button.BackColor = Color.FromArgb(92, 184, 92); // Green button color
+        button.ForeColor = Color.White; // White button text color
+        button.FlatStyle = FlatStyle.Flat;
+        button.FlatAppearance.BorderSize = 0;
+        button.Size = new Size(100, 30);
+        button.Location = new Point(panel.Width - button.Width - 10, 10); // Position the button in the top-right corner
+
+        // Add the button to the panel
+        panel.Controls.Add(button);
+
+        // Add the panel to the flowControlPanel
+        cart_panel.Controls.Add(panel);
+        button.Click += Button_Click;
+
+    }
+
+    private async void Button_Click(object sender, EventArgs e)
+    {
+        if (loggedIn)
+        {
+          await Task.Run(async () =>
+            {
+
+
+                var token = Properties.Settings.Default.TokenValue;
+                var email = Properties.Settings.Default.Email;
+
+                var client = new HttpClient();
+                var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/cart/{email}/check-out");
+                request.Headers.Add("Authorization", $"Bearer {token}");
+                var response = await client.SendAsync(request);
+                var jsonResult = await response.Content.ReadAsStringAsync();
+                var jObject = JObject.Parse(jsonResult);
+                var status = jObject["status"]?.Value<string>();
+
+                if (status != null)
+                    switch (status)
+                    {
+                        case "Success":
+                           await Invoke( async () =>
+                            {
+                                MessageBox.Show("Success");
+                                materialTabControl1.SelectedIndex = 0;
+                                cart_panel.Controls.Clear();
+                                await httpDataFetcher.RefreshDataAsync(email, token, loggedIn);
+                                await HomeUI();
+                            });
+                            break;
+                        case "An error occurred.":
+                            Invoke(() => MessageBox.Show("Try Again")); // Invoke on UI thread
+                            break;
+                    }
+                else
+                    Invoke(() => MessageBox.Show("Try Again"));
+            });
+
+        }
     }
 
     public async Task OrderUI()
@@ -274,7 +340,7 @@ public partial class BixbyApp : MaterialForm
                 if (loggedIn)
                 {
                     OrderRes order = await HttpDataFetcher.fetchOrdersTask;
-                    if(order != null)
+                    if (order != null)
                     {
                         if (!order.data.IsNullOrEmpty())
                         {
@@ -291,7 +357,7 @@ public partial class BixbyApp : MaterialForm
                                 {
                                     Invoke((MethodInvoker)(() =>
                                     {
-                                        order_panel.Controls.Add(new OrderItemUserControll(this,orderData._id, orderData.User,
+                                        order_panel.Controls.Add(new OrderItemUserControll(this, orderData._id, orderData.User,
                                             orderData.Confirm, orderData.Price, orderData.Items, OrderUI));
                                     }));
 
@@ -299,7 +365,7 @@ public partial class BixbyApp : MaterialForm
                                 }
                             }
                         }
-                    }                       
+                    }
                 }
             });
         }
@@ -311,7 +377,7 @@ public partial class BixbyApp : MaterialForm
         if (loggedIn)
             await Task.Run(async () =>
             {
-                if(loggedIn)
+                if (loggedIn)
                 {
                     Cart cart = await HttpDataFetcher.fetchCartItemsTask;
                     if (cart != null && cart.data != null)
@@ -334,14 +400,14 @@ public partial class BixbyApp : MaterialForm
                             {
                                 Invoke((MethodInvoker)(() =>
                                 {
-                                    cart_panel.Controls.Add(new CartItemuserControl(this,cartData._id,cartData.Item, cartData.User,
+                                    cart_panel.Controls.Add(new CartItemuserControl(this, cart_panel ,cartData._id, cartData.Item, cartData.User,
                                         cartData.Quantity.ToString(), cartData.Price.ToString()));
                                 }));
 
                                 addedItems_v2_for_cart.Add(cartData.Item); // Add item to the set
                             }
                         }
-                    }                        
+                    }
                 }
             });
     }
@@ -382,7 +448,7 @@ public partial class BixbyApp : MaterialForm
                             if (!addedItems_v2.Contains(item._id)) // Check if item is already added
                                 home_panel.Invoke((MethodInvoker)(() =>
                                 {
-                                    var home_item = new HomeItem(item.PicLowRes, item.Name, item._id, CartUI, OrderUI, loggedIn);
+                                    var home_item = new HomeItem(item.PicLowRes, item.Name, item._id, CartUI, OrderUI, loggedIn, cart_panel, order_panel);
                                     home_panel.Controls.Add(home_item);
                                     addedItems_v2.Add(item._id); // Add item ID to the list
                                 }));
@@ -390,9 +456,10 @@ public partial class BixbyApp : MaterialForm
             });
 
 
-            await Task.Run(async () => {
-               await CartUI();
-               await OrderUI();
+            await Task.Run(async () =>
+            {
+                await CartUI();
+                await OrderUI();
             });
         }
     }
@@ -472,7 +539,6 @@ public partial class BixbyApp : MaterialForm
             MessageBox.Show($"Error retrieving image: {ex.Message}");
         }
     }
-
     public static async Task RetrieveImageFromS3(string key, PictureBox pictureBox, int width, int height)
     {
         await Task.Run(async () =>
@@ -495,7 +561,7 @@ public partial class BixbyApp : MaterialForm
                         await response.ResponseStream.CopyToAsync(imageStream);
 
                         // Resize the image using the in-memory stream
-                        var resizedImage = ResizeImage(Image.FromStream(imageStream), width, height);
+                        var resizedImage = ResizeImage_V2(System.Drawing.Image.FromStream(imageStream), width, height);
 
                         // Update the PictureBox with the resized image
                         pictureBox.Image = resizedImage;
@@ -510,8 +576,7 @@ public partial class BixbyApp : MaterialForm
         });
     }
 
-
-    public static Image ResizeImage(Image image, int width, int height)
+    public static System.Drawing.Image ResizeImage_V2(System.Drawing.Image image, int width, int height)
     {
         // Create a new bitmap with the desired width and height
         var resizedImage = new Bitmap(width, height);
@@ -534,10 +599,9 @@ public partial class BixbyApp : MaterialForm
         return resizedImage;
     }
 
-
     private void UpdatePictureBox(string imagePath)
     {
-        var image = Image.FromFile(imagePath);
+        var image = System.Drawing.Image.FromFile(imagePath);
         pictureBox4.Image = image;
         pictureBox4.SizeMode = PictureBoxSizeMode.CenterImage;
     }
@@ -546,112 +610,64 @@ public partial class BixbyApp : MaterialForm
     {
     }
 
-    private async Task<string> UploadToS3Normal(string filePath, string type, List<string> images)
-    {
-        var s3Client = new AmazonS3Client(AccessKey, SecretKey, RegionEndpoint.APSouth1);
-
-        // Generate a unique key for the uploaded image
-        var key = Guid.NewGuid() + Path.GetExtension(filePath);
-
-        // Set up the transfer utility
-        var transferUtility = new TransferUtility(s3Client);
-        var transferUtilityRequest = new TransferUtilityUploadRequest
-        {
-            BucketName = BucketName,
-            FilePath = filePath,
-            Key = key
-        };
-
-        try
-        {
-            // Upload the image to S3
-            transferUtility.Upload(transferUtilityRequest);
-
-            if (type == "user")
-            {
-                var client = new HttpClient();
-                var email = Properties.Settings.Default.Email;
-                var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/user/{email}/add/image");
-                request.Headers.Add("img", $"{key}");
-                var response = await client.SendAsync(request);
-                var httpResponseMessage = response.EnsureSuccessStatusCode();
-                if (httpResponseMessage.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Okay");
-                    materialTabControl1.SelectedIndex = 0;
-                    return null;
-                }
-
-                MessageBox.Show("Not Okay");
-                return null;
-            }
-
-            if (type == "food-images")
-            {
-                images.Add(key);
-                return key;
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Error uploading image: {ex.Message}");
-            return null;
-        }
-    }
-
     private async Task<string> UploadToS3(string filePath, string type, ConcurrentBag<string> images)
     {
-        var s3Client = new AmazonS3Client(AccessKey, SecretKey, RegionEndpoint.APSouth1);
-
-        // Generate a unique key for the uploaded image
-        var key = Guid.NewGuid() + Path.GetExtension(filePath);
-
-        // Set up the transfer utility
-        var transferUtility = new TransferUtility(s3Client);
-        var transferUtilityRequest = new TransferUtilityUploadRequest
+        if (loggedIn)
         {
-            BucketName = BucketName,
-            FilePath = filePath,
-            Key = key
-        };
+            var s3Client = new AmazonS3Client(AccessKey, SecretKey, RegionEndpoint.APSouth1);
 
-        try
-        {
-            // Upload the image to S3
-            transferUtility.Upload(transferUtilityRequest);
+            // Generate a unique key for the uploaded image
+            var key = Guid.NewGuid() + Path.GetExtension(filePath);
 
-            if (type == "user")
+            // Set up the transfer utility
+            var transferUtility = new TransferUtility(s3Client);
+            var transferUtilityRequest = new TransferUtilityUploadRequest
             {
-                var client = new HttpClient();
-                var email = Properties.Settings.Default.Email;
-                var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/user/{email}/add/image");
-                request.Headers.Add("img", $"{key}");
-                var response = await client.SendAsync(request);
-                var httpResponseMessage = response.EnsureSuccessStatusCode();
-                if (httpResponseMessage.IsSuccessStatusCode)
+                BucketName = BucketName,
+                FilePath = filePath,
+                Key = key
+            };
+
+            try
+            {
+                // Upload the image to S3
+                transferUtility.Upload(transferUtilityRequest);
+
+                if (type == "user")
                 {
-                    MessageBox.Show("Okay");
-                    materialTabControl1.SelectedIndex = 0;
+                    var client = new HttpClient();
+                    var email = Properties.Settings.Default.Email;
+                    var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/user/{email}/add/image");
+                    request.Headers.Add("img", $"{key}");
+                    var response = await client.SendAsync(request);
+                    var httpResponseMessage = response.EnsureSuccessStatusCode();
+                    if (httpResponseMessage.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Okay");
+                        materialTabControl1.SelectedIndex = 0;
+                        return null;
+                    }
+
+                    MessageBox.Show("Not Okay");
                     return null;
                 }
 
-                MessageBox.Show("Not Okay");
+                if (type == "food-images")
+                {
+                    images.Add(key);
+                    return key;
+                }
+
                 return null;
             }
-
-            if (type == "food-images")
+            catch (Exception ex)
             {
-                images.Add(key);
-                return key;
+                MessageBox.Show($"Error uploading image: {ex.Message}");
+                return null;
             }
-
-            return null;
         }
-        catch (Exception ex)
+        else
         {
-            MessageBox.Show($"Error uploading image: {ex.Message}");
             return null;
         }
     }
@@ -659,7 +675,7 @@ public partial class BixbyApp : MaterialForm
 
     public void ResizeImage(string sourceFilePath, string destFilePath, int maxWidth, int maxHeight)
     {
-        using (var sourceImage = Image.FromFile(sourceFilePath))
+        using (var sourceImage = System.Drawing.Image.FromFile(sourceFilePath))
         {
             var width = sourceImage.Width;
             var height = sourceImage.Height;
@@ -706,7 +722,7 @@ public partial class BixbyApp : MaterialForm
         if (openFileDialog.ShowDialog() == DialogResult.OK)
         {
             var filePath = openFileDialog.FileName;
-            var selectedImage = Image.FromFile(filePath);
+            var selectedImage = System.Drawing.Image.FromFile(filePath);
             metroLabel4.Visible = selectedImage != null;
             metroLabel4.Enabled = selectedImage != null;
             metroLabel4.Text = filePath;
@@ -715,31 +731,34 @@ public partial class BixbyApp : MaterialForm
 
     private async void materialButton1_Click_2(object sender, EventArgs e)
     {
-        var filePath = openFileDialog.FileName;
-        if (filePath == null)
+        if (loggedIn)
         {
-            MessageBox.Show("Pick an image");
-            return;
+            var filePath = openFileDialog.FileName;
+            if (filePath == null)
+            {
+                MessageBox.Show("Pick an image");
+                return;
+            }
+
+            var resizedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "resized_" + Path.GetFileName(filePath));
+
+            // Start a new thread for image resizing
+            var resizeThread = new Thread(() => { ResizeImage(filePath, resizedFilePath, 800, 600); });
+            resizeThread.Start();
+
+            // Wait for image resizing thread to complete
+            await Task.Run(() => resizeThread.Join());
+
+            // Start a new thread for S3 upload
+            var uploadThread = new Thread(() => { UploadToS3(resizedFilePath, "user", null).GetAwaiter().GetResult(); });
+            uploadThread.Start();
+
+            // Wait for S3 upload thread to complete
+            await Task.Run(() => uploadThread.Join());
+
+            // Clean up
+            File.Delete(resizedFilePath);
         }
-
-        var resizedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "resized_" + Path.GetFileName(filePath));
-
-        // Start a new thread for image resizing
-        var resizeThread = new Thread(() => { ResizeImage(filePath, resizedFilePath, 800, 600); });
-        resizeThread.Start();
-
-        // Wait for image resizing thread to complete
-        await Task.Run(() => resizeThread.Join());
-
-        // Start a new thread for S3 upload
-        var uploadThread = new Thread(() => { UploadToS3(resizedFilePath, "user", null).GetAwaiter().GetResult(); });
-        uploadThread.Start();
-
-        // Wait for S3 upload thread to complete
-        await Task.Run(() => uploadThread.Join());
-
-        // Clean up
-        File.Delete(resizedFilePath);
     }
 
 
@@ -754,69 +773,72 @@ public partial class BixbyApp : MaterialForm
 
     private async void materialButton2_Click(object sender, EventArgs e)
     {
-        await Task.Run(async () =>
+        if (loggedIn)
         {
-            var token = Properties.Settings.Default.TokenValue;
-            var email = Properties.Settings.Default.Email;
-
-            var firstName = FirstName_txt.Text;
-            var lastName = LastName.Text;
-            var userEmail = Email.Text;
-            var address = Address.Text;
-
-            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+            await Task.Run(async () =>
             {
-                Invoke(() => { MessageBox.Show("Invalid Input: Passwords do not match"); }); // Invoke on UI thread
-                return;
-            }
+                var token = Properties.Settings.Default.TokenValue;
+                var email = Properties.Settings.Default.Email;
 
-            var client = new HttpClient();
-            var request = new HttpRequestMessage(HttpMethod.Put, $"http://localhost:8080/updateUser/{email}");
-            request.Headers.Add("Authorization", $"Bearer {token}");
+                var firstName = FirstName_txt.Text;
+                var lastName = LastName.Text;
+                var userEmail = Email.Text;
+                var address = Address.Text;
 
-            var content = new
-            {
-                firstName,
-                lastName,
-                email = userEmail,
-                address
-            };
+                if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+                {
+                    Invoke(() => { MessageBox.Show("Invalid Input: Passwords do not match"); }); // Invoke on UI thread
+                    return;
+                }
 
-            var json = JsonConvert.SerializeObject(content);
-            var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
-            request.Content = stringContent;
+                var client = new HttpClient();
+                var request = new HttpRequestMessage(HttpMethod.Put, $"http://localhost:8080/updateUser/{email}");
+                request.Headers.Add("Authorization", $"Bearer {token}");
 
-            var response = await client.SendAsync(request);
-            var httpResponseMessage = response.EnsureSuccessStatusCode();
+                var content = new
+                {
+                    firstName,
+                    lastName,
+                    email = userEmail,
+                    address
+                };
 
-            if (httpResponseMessage.IsSuccessStatusCode)
-            {
-                var jsonResult = await response.Content.ReadAsStringAsync();
-                var jObject = JObject.Parse(jsonResult);
-                var status = jObject["status"]?.Value<string>();
+                var json = JsonConvert.SerializeObject(content);
+                var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
+                request.Content = stringContent;
 
-                if (status != null)
-                    switch (status)
-                    {
-                        case "Success":
-                            Invoke(() =>
-                            {
-                                MessageBox.Show("Success");
-                                materialTabControl1.SelectedIndex = 0;
-                            });
-                            break;
-                        case "An error occurred.":
-                            Invoke(() => MessageBox.Show("Try Again")); // Invoke on UI thread
-                            break;
-                    }
+                var response = await client.SendAsync(request);
+                var httpResponseMessage = response.EnsureSuccessStatusCode();
+
+                if (httpResponseMessage.IsSuccessStatusCode)
+                {
+                    var jsonResult = await response.Content.ReadAsStringAsync();
+                    var jObject = JObject.Parse(jsonResult);
+                    var status = jObject["status"]?.Value<string>();
+
+                    if (status != null)
+                        switch (status)
+                        {
+                            case "Success":
+                                Invoke(() =>
+                                {
+                                    MessageBox.Show("Success");
+                                    materialTabControl1.SelectedIndex = 0;
+                                });
+                                break;
+                            case "An error occurred.":
+                                Invoke(() => MessageBox.Show("Try Again")); // Invoke on UI thread
+                                break;
+                        }
+                    else
+                        Invoke(() => MessageBox.Show("Try Again"));
+                }
                 else
+                {
                     Invoke(() => MessageBox.Show("Try Again"));
-            }
-            else
-            {
-                Invoke(() => MessageBox.Show("Try Again"));
-            }
-        });
+                }
+            });
+        }
     }
 
 
@@ -870,87 +892,90 @@ public partial class BixbyApp : MaterialForm
         if (images.IsNullOrEmpty())
             return;
 
-        var loadingForm =
+        if (loggedIn)
+        {
+            var loadingForm =
             new LoadingForm("https://cdn.dribbble.com/users/295241/screenshots/4496315/loading-animation.gif");
-        loadingForm.Show();
+            loadingForm.Show();
 
-        await Task.Run(() => { images.ForEach(async image => { await UploadToS3(image, "food-images", img); }); });
+            await Task.Run(() => { images.ForEach(async image => { await UploadToS3(image, "food-images", img); }); });
 
-        var token = Properties.Settings.Default.TokenValue;
-        var email = Properties.Settings.Default.Email;
-        if (token == null || email == null)
-        {
-            Invoke((MethodInvoker)(() => { MessageBox.Show("Authentication Need"); }));
-            return;
-        }
-
-        await Task.Run(() =>
-        {
-            try
+            var token = Properties.Settings.Default.TokenValue;
+            var email = Properties.Settings.Default.Email;
+            if (token == null || email == null)
             {
-                var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Post, $"http://localhost:8080/{email}/add-shop-item");
-                request.Headers.Add("Authorization", $"Bearer {token}");
+                Invoke((MethodInvoker)(() => { MessageBox.Show("Authentication Need"); }));
+                return;
+            }
 
-                var item_name = ItemName.Text;
-                var description = Description.Text;
-                var price = int.Parse(Price.Text);
-
-                var content = new
+            await Task.Run(() =>
+            {
+                try
                 {
-                    name = item_name,
-                    description,
-                    price,
-                    pics = img.ToArray()
-                };
+                    var client = new HttpClient();
+                    var request = new HttpRequestMessage(HttpMethod.Post, $"http://localhost:8080/{email}/add-shop-item");
+                    request.Headers.Add("Authorization", $"Bearer {token}");
 
-                var json = JsonConvert.SerializeObject(content);
-                var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
-                request.Content = stringContent;
+                    var item_name = ItemName.Text;
+                    var description = Description.Text;
+                    var price = int.Parse(Price.Text);
 
-                var response = client.SendAsync(request).GetAwaiter().GetResult();
-                var httpResponseMessage = response.EnsureSuccessStatusCode();
+                    var content = new
+                    {
+                        name = item_name,
+                        description,
+                        price,
+                        pics = img.ToArray()
+                    };
 
-                if (httpResponseMessage.IsSuccessStatusCode)
-                {
-                    var jsonResult = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                    var jObject = JObject.Parse(jsonResult);
-                    var status = jObject["status"]?.Value<string>();
+                    var json = JsonConvert.SerializeObject(content);
+                    var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
+                    request.Content = stringContent;
 
-                    if (status != null)
-                        switch (status)
-                        {
-                            case "Success":
-                                Invoke((MethodInvoker)(async () =>
-                                {
-                                    loadingForm.Close();
-                                    MessageBox.Show("Success");
-                                    var token = Properties.Settings.Default.TokenValue;
-                                    var email = Properties.Settings.Default.Email;
-                                    materialTabControl1.Refresh();
-                                    Home.Refresh();
-                                    materialTabControl1.SelectedIndex = 0;
-                                    await httpDataFetcher.RefreshDataAsync(email, token, loggedIn);
-                                    HomeUI();
-                                }));
-                                break;
-                            case "An error occurred.":
-                                Invoke((MethodInvoker)(() => { MessageBox.Show("Try Again"); }));
-                                break;
-                        }
-                    else
-                        Invoke((MethodInvoker)(() => { MessageBox.Show("Try Again"); }));
+                    var response = client.SendAsync(request).GetAwaiter().GetResult();
+                    var httpResponseMessage = response.EnsureSuccessStatusCode();
 
-                    return;
+                    if (httpResponseMessage.IsSuccessStatusCode)
+                    {
+                        var jsonResult = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                        var jObject = JObject.Parse(jsonResult);
+                        var status = jObject["status"]?.Value<string>();
+
+                        if (status != null)
+                            switch (status)
+                            {
+                                case "Success":
+                                    Invoke((MethodInvoker)(async () =>
+                                    {
+                                        loadingForm.Close();
+                                        MessageBox.Show("Success");
+                                        var token = Properties.Settings.Default.TokenValue;
+                                        var email = Properties.Settings.Default.Email;
+                                        materialTabControl1.Refresh();
+                                        Home.Refresh();
+                                        materialTabControl1.SelectedIndex = 0;
+                                        await httpDataFetcher.RefreshDataAsync(email, token, loggedIn);
+                                        await HomeUI();
+                                    }));
+                                    break;
+                                case "An error occurred.":
+                                    Invoke((MethodInvoker)(() => { MessageBox.Show("Try Again"); }));
+                                    break;
+                            }
+                        else
+                            Invoke((MethodInvoker)(() => { MessageBox.Show("Try Again"); }));
+
+                        return;
+                    }
+
+                    Invoke((MethodInvoker)(() => { MessageBox.Show("Try Again"); }));
                 }
-
-                Invoke((MethodInvoker)(() => { MessageBox.Show("Try Again"); }));
-            }
-            catch (Exception ex)
-            {
-                Invoke((MethodInvoker)(() => { MessageBox.Show(ex.Message); }));
-            }
-        });
+                catch (Exception ex)
+                {
+                    Invoke((MethodInvoker)(() => { MessageBox.Show(ex.Message); }));
+                }
+            });
+        }
     }
 
     private void pictureBox2_Click_1(object sender, EventArgs e)

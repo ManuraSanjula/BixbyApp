@@ -16,8 +16,7 @@ public partial class OrderItemUserControll : UserControl
     private string user;
     private BixbyApp bixby;
 
-
-    public OrderItemUserControll(BixbyApp bixbyApp,string id, string user, bool confirm, int price, List<string> itemIds,
+    public OrderItemUserControll(BixbyApp bixbyApp, string id, string user, bool confirm, int price, List<string> itemIds,
         Func<Task> asyncFunc)
     {
         this.id = id;
@@ -27,7 +26,6 @@ public partial class OrderItemUserControll : UserControl
         this.itemIds = itemIds;
         this.asyncFunc = asyncFunc;
         this.bixby = bixbyApp;
-
         InitializeComponent();
 
         metroLabel5.Text = id;
@@ -71,6 +69,10 @@ public partial class OrderItemUserControll : UserControl
 
     private void OrderItem_Load(object sender, EventArgs e)
     {
+        if (confirm)
+        {
+            materialButton1.Enabled = false;
+        }
     }
 
     private void UnlockControls(Form form)
@@ -87,6 +89,7 @@ public partial class OrderItemUserControll : UserControl
         var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/order/{email}/{id}/confirm");
         request.Headers.Add("Authorization", $"Bearer {token}");
         var response = await client.SendAsync(request);
+        materialButton1.Enabled = false;
 
         var jsonResult = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
         var jObject = JObject.Parse(jsonResult);
@@ -99,6 +102,7 @@ public partial class OrderItemUserControll : UserControl
                     Invoke((MethodInvoker)(async () =>
                     {
                         MessageBox.Show("Success");
+                        this.confirm = true;
                         var token = Properties.Settings.Default.TokenValue;
                         var email = Properties.Settings.Default.Email;
                         await bixby.httpDataFetcher.RefreshDataAsync(email, token, true);
@@ -111,5 +115,24 @@ public partial class OrderItemUserControll : UserControl
             }
         else
             Invoke((MethodInvoker)(() => { MessageBox.Show("Try Again"); }));
+    }
+
+
+    private void metroLabel6_Click(object sender, EventArgs e)
+    {
+        this.Invoke((MethodInvoker)(() => {
+            if (!isFormLocked)
+            {
+                isFormLocked = true;
+                LockControls(ParentForm); // Disable other controls on the form
+                var fullItemDetails = new UserProducts(user);
+                fullItemDetails.Show();
+                fullItemDetails.FormClosed += (s, args) =>
+                {
+                    UnlockControls(ParentForm); // Enable other controls on the form
+                    isFormLocked = false;
+                };
+            }
+        }));
     }
 }

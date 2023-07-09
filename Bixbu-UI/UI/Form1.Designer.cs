@@ -51,7 +51,6 @@ partial class BixbyApp
         pictureBox4 = new PictureBox();
         button1 = new Button();
         button2 = new Button();
-        Settings = new TabPage();
         AddProducts = new TabPage();
         panel4 = new Panel();
         add_products = new Panel();
@@ -87,7 +86,6 @@ partial class BixbyApp
         // 
         materialTabControl1.Controls.Add(Home);
         materialTabControl1.Controls.Add(Account);
-        materialTabControl1.Controls.Add(Settings);
         materialTabControl1.Controls.Add(AddProducts);
         materialTabControl1.Controls.Add(Cart);
         materialTabControl1.Controls.Add(Order);
@@ -456,16 +454,6 @@ partial class BixbyApp
         button2.UseVisualStyleBackColor = true;
         button2.Click += button2_Click;
         // 
-        // Settings
-        // 
-        Settings.Location = new Point(4, 24);
-        Settings.Margin = new Padding(3, 2, 3, 2);
-        Settings.Name = "Settings";
-        Settings.Size = new Size(1252, 664);
-        Settings.TabIndex = 2;
-        Settings.Text = "Settings";
-        Settings.UseVisualStyleBackColor = true;
-        // 
         // AddProducts
         // 
         AddProducts.Controls.Add(panel4);
@@ -767,7 +755,6 @@ partial class BixbyApp
 
     private MaterialSkin.Controls.MaterialTabControl materialTabControl1;
     private TabPage Account;
-    private TabPage Settings;
     private TabPage Home;
     private Button button2;
     private Button button1;

@@ -32,12 +32,30 @@ public class Order
     public bool Confirm { get; set; }
 }
 
+
+public class Product
+{
+    public string _id { get; set; }
+    public string User { get; set; }
+    public string Item { get; set; }
+    public string TotalSuccessfulOrders { get; set; }
+    public string TotalRefunds { get; set; }
+    public string TotalViews { get; set; }
+}
+
+public class ProductRes
+{
+    public string status { get; set; }
+    public List<Product> allTheProducts { get; set; }
+}
+
 public class HttpDataFetcher
 {
     public static Task<Dictionary<string, object>>? fetchUserTask;
     public static Task<HashSet<Item>>? fetchItemsTask;
     public static Task<Cart>? fetchCartItemsTask;
     public static Task<OrderRes>? fetchOrdersTask;
+    public static Task<ProductRes>? fetchProductTask;
     private readonly HttpClient _httpClient;
 
     public HttpDataFetcher()
@@ -52,6 +70,31 @@ public class HttpDataFetcher
 
     }
 
+    public async Task<ProductRes> FetchProductsAsync(string email)
+    {
+        try
+        {
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/{email}/products");
+            var response = await client.SendAsync(request);
+            var httpResponseMessage = response.EnsureSuccessStatusCode();
+
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                ProductRes res = JsonConvert.DeserializeObject<ProductRes>(responseBody);
+                return res;
+            }
+
+            return new ProductRes();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.ToString());
+            return new ProductRes();
+        }
+    }
+
     public async Task FetchDataAsync(string email, string token, bool notLogedIn)
     {
         if (notLogedIn)
@@ -62,11 +105,13 @@ public class HttpDataFetcher
             fetchCartItemsTask = FetchCartItemsAsync(email, token, notLogedIn);
             fetchOrdersTask = FetchOrdersAsync(email, token, notLogedIn);
 
+            fetchProductTask = FetchProductsAsync(email);
+
             await Task.WhenAll(fetchUserTask, fetchItemsTask, fetchCartItemsTask, fetchOrdersTask);
         }
     }
 
-    private async Task<Dictionary<string, object>> FetchUserAsync(string email, string token, bool notLogedIn)
+    public async Task<Dictionary<string, object>> FetchUserAsync(string email, string token, bool notLogedIn)
     {
         if(notLogedIn)
         {

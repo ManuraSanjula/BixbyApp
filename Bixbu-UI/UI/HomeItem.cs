@@ -1,6 +1,9 @@
 ﻿using Bixbu_UI.HTTP;
 using Bixbu_UI.Properties;
+using Bixbu_UI.UI;
+using ImageResizer.ExtensionMethods;
 using Newtonsoft.Json.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace Bixbu_UI;
 
@@ -11,7 +14,8 @@ public partial class HomeItem : UserControl
     private bool isFormLocked;
     private readonly Func<Task> orderAsyncFunc;
     private bool notLogedIn;
-    public HomeItem(string url, string name, string id, Func<Task> cartAsyncFunc, Func<Task> orderAsyncFunc, bool notLogedIn)
+    private FlowLayoutPanel order ,cart = null;
+    public HomeItem(string url, string name, string id, Func<Task> cartAsyncFunc, Func<Task> orderAsyncFunc, bool notLogedIn, FlowLayoutPanel order, FlowLayoutPanel cart)
     {
         InitializeComponent();
         this.url = url;
@@ -23,6 +27,7 @@ public partial class HomeItem : UserControl
         this.cartAsyncFunc = cartAsyncFunc;
         this.orderAsyncFunc = orderAsyncFunc;
         this.notLogedIn = notLogedIn;
+        this.cart = cart;
     }
 
     public string url { get; }
@@ -33,17 +38,79 @@ public partial class HomeItem : UserControl
     {
     }
 
-    public async Task HomeFunCall(string type)
+    public async void HomeFunCall(string type)
     {
+        if (type == "c")
+            await cartAsyncFunc();
+        else
+            await orderAsyncFunc();
+
         var token = Settings.Default.TokenValue;
         var email = Settings.Default.Email;
         await httpDataFetcher.RefreshDataAsync(email, token, notLogedIn);
-        if (type == "c")
-            await cartAsyncFunc();
-        else if (type == "o") await orderAsyncFunc();
+
+        foreach (Control control in cart.Controls)
+        {
+            if (control is CartItemuserControl cartItemuser)
+            {
+                cart.Invoke(new Action<object>((MethodInvoker) => {
+
+                    if (cartItemuser.item == this.itemId)
+                    {
+                        int qutity = (int.Parse(cartItemuser.metroLabel7.Text));
+                        int price = int.Parse(cartItemuser.metroLabel7.Text);
+
+                        if (qutity == 1)
+                        {
+                            price = price + price;
+                            qutity++;
+                        }
+                        else
+                        {
+                            int itemprice = price / qutity;
+                            price = price + itemprice;
+                            qutity++;
+                        }
+                        cartItemuser.metroLabel7.Text = price.ToString();
+                        cartItemuser.metroLabel8.Text = qutity.ToString();
+                        cart.Refresh();
+                    }
+                }));
+            }
+
+        }
     }
 
-    private void pictureBox1_Click(object sender, EventArgs e)
+/*
+    cart.Invoke(new Action<object>((MethodInvoker) => {
+            foreach (Control control in cart.Controls)
+            {
+                if (control is CartItemuserControl cartItemuser)
+                {
+                    if (cartItemuser.item == this.itemId)
+                    {
+                        int qutity = (int.Parse(cartItemuser.metroLabel7.Text));
+    int price = int.Parse(cartItemuser.metroLabel7.Text);
+
+                        if (qutity == 1)
+                        {
+                            price = price + price;
+                            qutity++;
+                        }
+                        else
+                        {
+                            int itemprice = price / qutity;
+price = price + itemprice;
+                            qutity++;
+                        }
+                        cartItemuser.metroLabel7.Text = price.ToString();
+cartItemuser.metroLabel8.Text = qutity.ToString();
+                    }
+                }
+            }
+        }));
+*/
+private void pictureBox1_Click(object sender, EventArgs e)
     {
         click();
     }
@@ -121,7 +188,7 @@ public partial class HomeItem : UserControl
                     if (status == "Success")
                     {
                         MessageBox.Show("Success");
-                        await HomeFunCall("c");
+                        HomeFunCall("c");
                     }
                     else
                     {
@@ -165,7 +232,7 @@ public partial class HomeItem : UserControl
                     if (status == "Success")
                     {
                         MessageBox.Show("Success");
-                        await HomeFunCall("o");
+                        HomeFunCall("o");
                     }
                     else
                     {

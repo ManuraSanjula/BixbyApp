@@ -67,6 +67,7 @@
             metroLabel6.Size = new Size(83, 19);
             metroLabel6.TabIndex = 14;
             metroLabel6.Text = "metroLabel6";
+            metroLabel6.Click += metroLabel6_Click;
             // 
             // metroLabel4
             // 
@@ -148,7 +149,7 @@
             materialButton1.MouseState = MaterialSkin.MouseState.HOVER;
             materialButton1.Name = "materialButton1";
             materialButton1.NoAccentTextColor = Color.Empty;
-            materialButton1.Size = new Size(158, 36);
+            materialButton1.Size = new Size(156, 36);
             materialButton1.TabIndex = 21;
             materialButton1.Text = "Confirm Delivery";
             materialButton1.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;

@@ -25,6 +25,12 @@
     <Compile Update="UI\OrderItem.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Update="UI\UserProductModel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="UI\UserProducts.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="UI\User\SingUp.cs">
       <SubType>Form</SubType>
     </Compile>

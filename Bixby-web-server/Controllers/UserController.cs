@@ -313,7 +313,15 @@ public abstract class UserController
         var response = new
         {
             status = "Success",
-            allTheProducts = userProducts
+            allTheProducts = userProducts.ConvertAll((item) => new
+            {
+                _id = item.Id.ToString(),
+                item.User,
+                Item = item.Item.ToString(),
+                TotalSuccessfulOrders = item.TotalSuccessfulOrders.ToString(),
+                TotalRefunds = item.TotalRefunds.ToString(),
+                TotalViews = item.TotalViews.ToString()
+            })
         };
         context.ResponseContent = response.ToJson();
         await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
@@ -400,9 +408,9 @@ public abstract class UserController
                 .ToJson());
 
         var result = (User)jwt["jwt"];
-        if (NullEmptyChecker.HasNullEmptyValues(result))
+        /*if (NullEmptyChecker.HasNullEmptyValues(result))
             throw new NotFoundException(new
-                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
+                { status = "An error occurred.", message = "Not Found Exception" }.ToJson());*/
 
         var productPurchases = await ProductPurchasesService.GetProductPurchasesByOwnerIdAsync(result.Email);
         var response = new

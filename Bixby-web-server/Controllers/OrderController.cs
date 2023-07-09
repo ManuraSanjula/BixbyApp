@@ -13,7 +13,7 @@ public abstract class OrderController
     private static readonly OrderService OrderService = new();
     private static readonly UserService UserService = new();
     private static readonly ProductPurchasesService ProductPurchasesService = new();
-
+    private static readonly UserShopService UserShopService = new();
     private static async Task<User?> GetUser(CheckMiddleWare checkMiddleWare, string? email, HttpContext context)
     {
         if (context.Request.HttpMethod != "GET")
@@ -64,9 +64,17 @@ public abstract class OrderController
 
         order.Confirm = true;
         OrderService.UpdateOrder(order.Id, order);
-
+        
         var productPurchases = await ProductPurchasesService.GetProductPurchasesByOrderIdAsync(order.Id);
         productPurchases.isDeliverd = true;
+        
+        foreach (var orderItem in order.Items)
+        {
+          UserShop shop =  await UserShopService.GetProductByItemId(orderItem);
+          shop.TotalSuccessfulOrders++;
+          await UserShopService.ProductUpdateByItemId(shop.Id, shop);
+        }
+        
         await ProductPurchasesService.UpdateProductPurchaseAsync(productPurchases.Id, productPurchases);
         await context.WriteResponse(new { status = "Success" }
             .ToJson(), "application/json").ConfigureAwait(false);

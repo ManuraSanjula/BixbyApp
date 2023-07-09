@@ -90,6 +90,7 @@
             metroLabel5.Size = new Size(86, 19);
             metroLabel5.TabIndex = 4;
             metroLabel5.Text = "metroLabel5";
+            metroLabel5.Click += metroLabel5_Click_1;
             // 
             // metroLabel6
             // 

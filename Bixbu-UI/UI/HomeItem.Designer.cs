@@ -32,9 +32,7 @@
             metroLabel1 = new MetroFramework.Controls.MetroLabel();
             Cart = new Button();
             Buy = new Button();
-            numericUpDown1 = new NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
             SuspendLayout();
             // 
             // pictureBox1
@@ -84,19 +82,11 @@
             Buy.UseVisualStyleBackColor = false;
             Buy.Click += Buy_Click;
             // 
-            // numericUpDown1
-            // 
-            numericUpDown1.Location = new Point(303, 16);
-            numericUpDown1.Name = "numericUpDown1";
-            numericUpDown1.Size = new Size(85, 23);
-            numericUpDown1.TabIndex = 4;
-            // 
             // HomeItem
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.White;
-            Controls.Add(numericUpDown1);
             Controls.Add(Buy);
             Controls.Add(Cart);
             Controls.Add(metroLabel1);
@@ -105,7 +95,6 @@
             Size = new Size(405, 358);
             Load += HomeItem_Load;
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
-            ((System.ComponentModel.ISupportInitialize)numericUpDown1).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -116,6 +105,5 @@
         private MetroFramework.Controls.MetroLabel metroLabel1;
         public Button Cart;
         public Button Buy;
-        private NumericUpDown numericUpDown1;
     }
 }

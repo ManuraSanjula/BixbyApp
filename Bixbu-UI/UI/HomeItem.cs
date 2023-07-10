@@ -14,7 +14,7 @@ public partial class HomeItem : UserControl
     private bool isFormLocked;
     private readonly Func<Task> orderAsyncFunc;
     private bool notLogedIn;
-    private FlowLayoutPanel order ,cart = null;
+    private FlowLayoutPanel order, cart = null;
     public HomeItem(string url, string name, string id, Func<Task> cartAsyncFunc, Func<Task> orderAsyncFunc, bool notLogedIn, FlowLayoutPanel order, FlowLayoutPanel cart)
     {
         InitializeComponent();
@@ -53,7 +53,8 @@ public partial class HomeItem : UserControl
         {
             if (control is CartItemuserControl cartItemuser)
             {
-                cart.Invoke(new Action<object>((MethodInvoker) => {
+                cart.Invoke(new Action<object>((MethodInvoker) =>
+                {
 
                     if (cartItemuser.item == this.itemId)
                     {
@@ -81,36 +82,36 @@ public partial class HomeItem : UserControl
         }
     }
 
-/*
-    cart.Invoke(new Action<object>((MethodInvoker) => {
-            foreach (Control control in cart.Controls)
-            {
-                if (control is CartItemuserControl cartItemuser)
+    /*
+        cart.Invoke(new Action<object>((MethodInvoker) => {
+                foreach (Control control in cart.Controls)
                 {
-                    if (cartItemuser.item == this.itemId)
+                    if (control is CartItemuserControl cartItemuser)
                     {
-                        int qutity = (int.Parse(cartItemuser.metroLabel7.Text));
-    int price = int.Parse(cartItemuser.metroLabel7.Text);
+                        if (cartItemuser.item == this.itemId)
+                        {
+                            int qutity = (int.Parse(cartItemuser.metroLabel7.Text));
+        int price = int.Parse(cartItemuser.metroLabel7.Text);
 
-                        if (qutity == 1)
-                        {
-                            price = price + price;
-                            qutity++;
+                            if (qutity == 1)
+                            {
+                                price = price + price;
+                                qutity++;
+                            }
+                            else
+                            {
+                                int itemprice = price / qutity;
+    price = price + itemprice;
+                                qutity++;
+                            }
+                            cartItemuser.metroLabel7.Text = price.ToString();
+    cartItemuser.metroLabel8.Text = qutity.ToString();
                         }
-                        else
-                        {
-                            int itemprice = price / qutity;
-price = price + itemprice;
-                            qutity++;
-                        }
-                        cartItemuser.metroLabel7.Text = price.ToString();
-cartItemuser.metroLabel8.Text = qutity.ToString();
                     }
                 }
-            }
-        }));
-*/
-private void pictureBox1_Click(object sender, EventArgs e)
+            }));
+    */
+    private void pictureBox1_Click(object sender, EventArgs e)
     {
         click();
     }
@@ -168,8 +169,7 @@ private void pictureBox1_Click(object sender, EventArgs e)
             {
                 var token = Settings.Default.TokenValue;
                 var email = Settings.Default.Email;
-                var q = (int)numericUpDown1.Value;
-                if (token == null || (email == null && q == 0))
+                if (token == null || (email == null))
                 {
                     MessageBox.Show("Missing adata");
                     return;
@@ -177,7 +177,7 @@ private void pictureBox1_Click(object sender, EventArgs e)
 
                 var client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Get,
-                    $"http://localhost:8080/cart/{email}/{itemId}/add?Quantity={q}");
+                    $"http://localhost:8080/cart/{email}/{itemId}/add?Quantity={1}");
                 request.Headers.Add("Authorization", $"Bearer {token}");
                 var response = await client.SendAsync(request);
                 if (response.EnsureSuccessStatusCode().IsSuccessStatusCode)
@@ -203,7 +203,6 @@ private void pictureBox1_Click(object sender, EventArgs e)
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
-                throw ex;
             }
         });
     }
@@ -247,7 +246,6 @@ private void pictureBox1_Click(object sender, EventArgs e)
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
-                throw ex;
             }
         });
     }

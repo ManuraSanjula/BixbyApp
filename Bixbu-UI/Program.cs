@@ -1,3 +1,7 @@
+using Bixbu_UI.Properties;
+using Newtonsoft.Json.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
+
 namespace Bixbu_UI;
 
 internal static class Program
@@ -8,14 +12,25 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
-        // To customize application configuration such as set high DPI settings or default font,
-        // see https://aka.ms/applicationconfiguration.
-        ApplicationConfiguration.Initialize();
-        var form = new BixbyApp();
-        form.FormBorderStyle = FormBorderStyle.FixedSingle; // Prevent resizing
-        form.MaximizeBox = false; // Disable maximize button
+        try
+        {
+            // To customize application configuration such as set high DPI settings or default font,
+            // see https://aka.ms/applicationconfiguration.
+            ApplicationConfiguration.Initialize();
+            var form = new BixbyApp();
+            form.FormBorderStyle = FormBorderStyle.FixedSingle; // Prevent resizing
+            form.MaximizeBox = false; // Disable maximize button
 
 
-        Application.Run(form);
+            Application.Run(form);
+        }
+        catch (Exception ex)
+        {
+            Settings.Default.TokenValue = null;
+            Settings.Default.Save();
+
+            Settings.Default.Email = null;
+            Settings.Default.Save();
+        }
     }
 }

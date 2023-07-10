@@ -179,7 +179,7 @@ public abstract class CartController
 
         var cartAndOrders = await CartAndOrders(arg, checkMiddleWare, email);
 
-        if (cartAndOrders.User.Email != null && !cartAndOrders.User.Email.Equals(email))
+        if (cartAndOrders.User == null)
             throw new UnauthorizedException(new { status = "An error occurred.", message = "UnauthorizedException" }
                 .ToJson());
 

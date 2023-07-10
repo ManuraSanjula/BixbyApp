@@ -33,7 +33,13 @@ namespace Bixbu_UI.UI
                 }
                 else
                 {
-                    return;
+                    Label label = new Label();
+                    label.Size = new Size(200, 50); // Set the desired width and height of the label
+                    label.Text = "No items were found";
+                    label.Font = new Font(label.Font, FontStyle.Bold);
+                    label.TextAlign = ContentAlignment.MiddleCenter;
+                    label.Anchor = AnchorStyles.None; // Center the label within the FlowLayoutPanel
+                    flowLayoutPanel1.Controls.Add(label);
                 }
             });
         }

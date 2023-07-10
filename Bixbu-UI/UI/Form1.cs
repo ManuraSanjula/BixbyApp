@@ -20,16 +20,18 @@ namespace Bixbu_UI;
 
 public partial class BixbyApp : MaterialForm
 {
-    private const string AccessKey = "";
-    private const string SecretKey = "++";
-    private const string BucketName = "b";
+    private const string AccessKey = "AKIASULOPD3USE5RVZCQ";
+    private const string SecretKey = "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";
+    private const string BucketName = "bixby-app-nibm";
 
     private readonly List<string> images = new();
     private readonly ConcurrentHashSet<string> addedItems_v2 = new();
     private readonly ConcurrentHashSet<string> addedItems_v2_for_cart = new();
     private readonly ConcurrentHashSet<string> addedItems_v2_for_order = new();
+    public static Dictionary<string, System.Drawing.Image> imageCache = new Dictionary<string, System.Drawing.Image>();
 
-    public readonly HttpDataFetcher httpDataFetcher = null;
+
+    public readonly HttpDataFetcher httpDataFetcher = new();
 
     private readonly ConcurrentBag<string> img = new();
 
@@ -38,12 +40,54 @@ public partial class BixbyApp : MaterialForm
     private OpenFileDialog openFileDialog = new();
     private PictureBox pb;
 
+    async void StartApp()
+    {
+        var token = Properties.Settings.Default.TokenValue;
+        var email = Properties.Settings.Default.Email;
+        await httpDataFetcher.FetchDataAsync(email, token, loggedIn);
+
+        accout_panel.Invoke((MethodInvoker)(async () =>
+        {
+            await AccountUI();
+        }));
+
+        cart_panel.Invoke((MethodInvoker)(async () =>
+        {
+            await CartUI();
+        }));
+
+        order_panel.Invoke((MethodInvoker)(async () =>
+        {
+            await OrderUI();
+        }));
+    }
+
     public BixbyApp()
     {
         InitializeComponent();
 
         var token = Properties.Settings.Default.TokenValue;
         var email = Properties.Settings.Default.Email;
+        httpDataFetcher = new();
+        // UI update code
+        Invoke((Action)(async() =>
+        {
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            ShowIcon = false;
+            var textBox = new TextBox();
+            textBox.Multiline = true;
+            textBox.Height = 40;
+            textBox.Width = home_panel.Width;
+            textBox.Font = new Font(textBox.Font.FontFamily, 14);
+            textBox.Text = "Enter your item to Search And If you done enter Press";
+            textBox.KeyDown += TextBox_KeyDown;
+            textBox.TextChanged += TextBox_TextChanged;
+            home_panel.Controls.Add(textBox);
+            await HomeUI();
+
+        }));
 
         if (!token.IsNullOrEmpty() && !email.IsNullOrEmpty()) loggedIn = true;
 
@@ -60,49 +104,8 @@ public partial class BixbyApp : MaterialForm
             {
                 if (loggedIn)
                 {
-                    httpDataFetcher.FetchDataAsync(email, token, loggedIn).ContinueWith(task =>
-                    {
-                        if (task.Exception == null)
-                        {
-                            MessageBox.Show("Separate thread completed successfully!");
-                        }
-                    }, TaskScheduler.FromCurrentSynchronizationContext());
-
-
-                    FormBorderStyle = FormBorderStyle.FixedSingle;
-                    MaximizeBox = false;
-                    MinimizeBox = false;
-
-                    // Disable form minimizing
-                    ShowIcon = false;
-
-                    if (loggedIn)
-                    {
-                        var textBox = new TextBox();
-                        textBox.Multiline = true;
-                        textBox.Height = 40;
-                        textBox.Width = home_panel.Width;
-                        textBox.Font = new Font(textBox.Font.FontFamily, 14);
-                        textBox.Text = "Enter your item to Search And If you done enter Press";
-                        textBox.KeyDown += TextBox_KeyDown;
-                        textBox.TextChanged += TextBox_TextChanged;
-
-
-                        home_panel.Controls.Add(textBox);
-
-                        AccountUI().ContinueWith(i =>
-                        {
-
-                        });
-
-                        HomeUI().ContinueWith(i => { });
-
-                        if (HttpDataFetcher.fetchCartItemsTask != null)
-                            CartUI().ContinueWith(i => { });
-
-                        if (HttpDataFetcher.fetchOrdersTask != null)
-                            OrderUI().ContinueWith(i => { });
-                    }
+                    Thread threadStart = new Thread(StartApp);
+                    threadStart.Start();
                 }
             }
             catch (Exception ex)
@@ -201,31 +204,38 @@ public partial class BixbyApp : MaterialForm
     {
         await Task.Run(async () =>
         {
-            if (loggedIn)
+            try
             {
-                var userdata = await HttpDataFetcher.fetchUserTask;
-                if (userdata != null)
+                if (loggedIn)
                 {
-                    // Update the UI based on the userDict data
-                    Email.Invoke((MethodInvoker)(() => Email.Text = userdata["Email"].ToString()));
-                    FirstName_txt.Invoke((MethodInvoker)(() => FirstName_txt.Text = userdata["FirstName"].ToString()));
-                    LastName.Invoke((MethodInvoker)(() => LastName.Text = userdata["LastName"].ToString()));
-                    Address.Invoke((MethodInvoker)(() => Address.Text = userdata["Address"].ToString()));
-
-                    var url = userdata["Pic"].ToString();
-                    if (!url.Equals("default"))
+                    var userdata = await HttpDataFetcher.fetchUserTask;
+                    if (userdata != null)
                     {
-                        var filename = Path.GetFileName(url);
-                        RetrieveImageFromS3(url);
+                        // Update the UI based on the userDict data
+                        Email.Invoke((MethodInvoker)(() => Email.Text = userdata["Email"].ToString()));
+                        FirstName_txt.Invoke((MethodInvoker)(() => FirstName_txt.Text = userdata["FirstName"].ToString()));
+                        LastName.Invoke((MethodInvoker)(() => LastName.Text = userdata["LastName"].ToString()));
+                        Address.Invoke((MethodInvoker)(() => Address.Text = userdata["Address"].ToString()));
+
+                        var url = userdata["Pic"].ToString();
+                        if (!url.Equals("default"))
+                        {
+                            var filename = Path.GetFileName(url);
+                            RetrieveImageFromS3(url);
+                        }
+                    }
+                    else
+                    {
+                        panel1.Invoke((MethodInvoker)(() => panel1.Visible = true));
+                        panel4.Invoke((MethodInvoker)(() => panel4.Visible = true));
+                        accout_panel.Invoke((MethodInvoker)(() => accout_panel.Visible = false));
+                        add_products.Invoke((MethodInvoker)(() => add_products.Visible = false));
                     }
                 }
-                else
-                {
-                    panel1.Invoke((MethodInvoker)(() => panel1.Visible = true));
-                    panel4.Invoke((MethodInvoker)(() => panel4.Visible = true));
-                    accout_panel.Invoke((MethodInvoker)(() => accout_panel.Visible = false));
-                    add_products.Invoke((MethodInvoker)(() => add_products.Visible = false));
-                }
+            }
+            catch (Exception ex)
+            {
+
             }
         });
     }
@@ -292,42 +302,46 @@ public partial class BixbyApp : MaterialForm
     {
         if (loggedIn)
         {
-          await Task.Run(async () =>
+            await Task.Run(async () =>
             {
+                try
+                {
+                    var token = Properties.Settings.Default.TokenValue;
+                    var email = Properties.Settings.Default.Email;
 
+                    var client = new HttpClient();
+                    var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/cart/{email}/check-out");
+                    request.Headers.Add("Authorization", $"Bearer {token}");
+                    var response = await client.SendAsync(request);
+                    var jsonResult = await response.Content.ReadAsStringAsync();
+                    var jObject = JObject.Parse(jsonResult);
+                    var status = jObject["status"]?.Value<string>();
 
-                var token = Properties.Settings.Default.TokenValue;
-                var email = Properties.Settings.Default.Email;
+                    if (status != null)
+                        switch (status)
+                        {
+                            case "Success":
+                                await Invoke(async () =>
+                                {
+                                    MessageBox.Show("Success");
+                                    materialTabControl1.SelectedIndex = 0;
+                                    cart_panel.Controls.Clear();
+                                    await httpDataFetcher.RefreshDataAsync(email, token, loggedIn);
+                                    await HomeUI();
+                                });
+                                break;
+                            case "An error occurred.":
+                                Invoke(() => MessageBox.Show("Try Again")); // Invoke on UI thread
+                                break;
+                        }
+                    else
+                        Invoke(() => MessageBox.Show("Try Again"));
+                }
+                catch (Exception)
+                {
 
-                var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/cart/{email}/check-out");
-                request.Headers.Add("Authorization", $"Bearer {token}");
-                var response = await client.SendAsync(request);
-                var jsonResult = await response.Content.ReadAsStringAsync();
-                var jObject = JObject.Parse(jsonResult);
-                var status = jObject["status"]?.Value<string>();
-
-                if (status != null)
-                    switch (status)
-                    {
-                        case "Success":
-                           await Invoke( async () =>
-                            {
-                                MessageBox.Show("Success");
-                                materialTabControl1.SelectedIndex = 0;
-                                cart_panel.Controls.Clear();
-                                await httpDataFetcher.RefreshDataAsync(email, token, loggedIn);
-                                await HomeUI();
-                            });
-                            break;
-                        case "An error occurred.":
-                            Invoke(() => MessageBox.Show("Try Again")); // Invoke on UI thread
-                            break;
-                    }
-                else
-                    Invoke(() => MessageBox.Show("Try Again"));
+                }
             });
-
         }
     }
 
@@ -337,35 +351,50 @@ public partial class BixbyApp : MaterialForm
         {
             await Task.Run(async () =>
             {
-                if (loggedIn)
+                try
                 {
-                    OrderRes order = await HttpDataFetcher.fetchOrdersTask;
-                    if (order != null)
+                    if (loggedIn)
                     {
-                        if (!order.data.IsNullOrEmpty())
+                        OrderRes order = await HttpDataFetcher.fetchOrdersTask;
+                        if (order != null)
                         {
-                            foreach (var orderData in order.data)
+                            if (!order.data.IsNullOrEmpty())
                             {
-                                // =============================================================================
-                                foreach (Control control in home_panel.Controls)
-                                    if (control is HomeItem homeItem)
-                                        if (homeItem.itemId == orderData.Items.Find(i => i == homeItem.itemId))
-                                            homeItem.Buy.BackColor = Color.PaleGreen;
-                                //====================================================================================
-
-                                if (!addedItems_v2_for_order.Contains(orderData._id))
+                                foreach (var orderData in order.data)
                                 {
-                                    Invoke((MethodInvoker)(() =>
-                                    {
-                                        order_panel.Controls.Add(new OrderItemUserControll(this, orderData._id, orderData.User,
-                                            orderData.Confirm, orderData.Price, orderData.Items, OrderUI));
-                                    }));
+                                    // =============================================================================
+                                    foreach (Control control in home_panel.Controls)
+                                        if (control is HomeItem homeItem)
+                                            if (homeItem.itemId == orderData.Items.Find(i => i == homeItem.itemId))
+                                                homeItem.Buy.BackColor = Color.PaleGreen;
+                                    //====================================================================================
 
-                                    addedItems_v2_for_order.Add(orderData._id);
+                                    if (!addedItems_v2_for_order.Contains(orderData._id))
+                                    {
+                                        Invoke((MethodInvoker)(() =>
+                                        {
+                                            order_panel.Controls.Add(new OrderItemUserControll(this, orderData._id, orderData.User,
+                                                orderData.Confirm, orderData.Price, orderData.Items, OrderUI));
+                                        }));
+
+                                        addedItems_v2_for_order.Add(orderData._id);
+                                    }
                                 }
                             }
+                            else
+                            {
+                                
+                            }
+                        }
+                        else
+                        {
+                           
                         }
                     }
+                }
+                catch (Exception)
+                {
+
                 }
             });
         }
@@ -377,37 +406,48 @@ public partial class BixbyApp : MaterialForm
         if (loggedIn)
             await Task.Run(async () =>
             {
-                if (loggedIn)
+                try
                 {
-                    Cart cart = await HttpDataFetcher.fetchCartItemsTask;
-                    if (cart != null && cart.data != null)
+                    if (loggedIn)
                     {
-                        foreach (var cartData in cart.data)
+                        Cart cart = await HttpDataFetcher.fetchCartItemsTask;
+                        if (cart != null && cart.data != null)
                         {
-                            // =============================================================================
-                            foreach (Control control in home_panel.Controls)
-                                if (control is HomeItem homeItem)
-                                {
-                                    var data = cart.data.Find(i => i.Item == homeItem.itemId);
-                                    if (data != null)
-                                        if (homeItem.itemId == data.Item)
-                                            Invoke((MethodInvoker)(() => { homeItem.Cart.BackColor = Color.PaleGreen; }));
-                                }
-
-                            //====================================================================================
-                            // Check if item already exists
-                            if (!addedItems_v2_for_cart.Contains(cartData.Item))
+                            foreach (var cartData in cart.data)
                             {
-                                Invoke((MethodInvoker)(() =>
-                                {
-                                    cart_panel.Controls.Add(new CartItemuserControl(this, cart_panel ,cartData._id, cartData.Item, cartData.User,
-                                        cartData.Quantity.ToString(), cartData.Price.ToString()));
-                                }));
+                                // =============================================================================
+                                foreach (Control control in home_panel.Controls)
+                                    if (control is HomeItem homeItem)
+                                    {
+                                        var data = cart.data.Find(i => i.Item == homeItem.itemId);
+                                        if (data != null)
+                                            if (homeItem.itemId == data.Item)
+                                                Invoke((MethodInvoker)(() => { homeItem.Cart.BackColor = Color.PaleGreen; }));
+                                    }
 
-                                addedItems_v2_for_cart.Add(cartData.Item); // Add item to the set
+                                //====================================================================================
+                                // Check if item already exists
+                                if (!addedItems_v2_for_cart.Contains(cartData.Item))
+                                {
+                                    Invoke((MethodInvoker)(() =>
+                                    {
+                                        cart_panel.Controls.Add(new CartItemuserControl(this, cart_panel, cartData._id, cartData.Item, cartData.User,
+                                            cartData.Quantity.ToString(), cartData.Price.ToString()));
+                                    }));
+
+                                    addedItems_v2_for_cart.Add(cartData.Item); // Add item to the set
+                                }
                             }
                         }
+                        else
+                        {
+                            
+                        }
                     }
+                }
+                catch (Exception)
+                {
+
                 }
             });
     }
@@ -436,11 +476,11 @@ public partial class BixbyApp : MaterialForm
 
     private async Task HomeUI()
     {
-        if (loggedIn)
+        await Task.Run(async () =>
         {
-            await Task.Run(async () =>
+            try
             {
-                var items = await HttpDataFetcher.fetchItemsTask;
+                var items = await httpDataFetcher.FetchItemsAsync();
                 if (items.Count > 0)
                 {
                     foreach (var item in items)
@@ -453,15 +493,23 @@ public partial class BixbyApp : MaterialForm
                                     addedItems_v2.Add(item._id); // Add item ID to the list
                                 }));
                 }
-            });
-
-
-            await Task.Run(async () =>
+                else
+                {
+                    MessageBox.Show("HI");
+                }
+            }
+            catch (Exception ex)
             {
-                await CartUI();
-                await OrderUI();
-            });
-        }
+            }
+        });
+
+
+        await Task.Run(async () =>
+        {
+            await CartUI();
+            await OrderUI();
+        });
+
     }
 
 
@@ -576,7 +624,53 @@ public partial class BixbyApp : MaterialForm
         });
     }
 
+
     public static System.Drawing.Image ResizeImage_V2(System.Drawing.Image image, int width, int height)
+    {
+        string cacheKey = $"{image.Width}_{image.Height}_{width}_{height}";
+
+        if (imageCache.ContainsKey(cacheKey))
+        {
+            // Return the cached image if it exists
+            return imageCache[cacheKey];
+        }
+        else
+        {
+            // Create a new bitmap with the desired width and height
+            var resizedImage = new Bitmap(width, height);
+
+            // Set the resolution of the resized image to match the source image
+            resizedImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+
+            // Create a Graphics object from the resized image
+            using (var graphics = Graphics.FromImage(resizedImage))
+            {
+                // Set the interpolation mode and pixel offset mode for high-quality resizing
+                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                graphics.SmoothingMode = SmoothingMode.HighQuality;
+
+                // Calculate the scaling factors for width and height
+                var scaleWidth = (double)width / image.Width;
+                var scaleHeight = (double)height / image.Height;
+
+                // Calculate the destination rectangle
+                var destRect = new Rectangle(0, 0, width, height);
+
+                // Draw the original image onto the resized image using the calculated scaling factors
+                graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel);
+            }
+
+            // Cache the resized image
+            imageCache[cacheKey] = resizedImage;
+
+            return resizedImage;
+        }
+    }
+
+
+
+    public static System.Drawing.Image ResizeImage(System.Drawing.Image image, int width, int height)
     {
         // Create a new bitmap with the desired width and height
         var resizedImage = new Bitmap(width, height);
@@ -731,33 +825,84 @@ public partial class BixbyApp : MaterialForm
 
     private async void materialButton1_Click_2(object sender, EventArgs e)
     {
-        if (loggedIn)
+        try
         {
-            var filePath = openFileDialog.FileName;
-            if (filePath == null)
+            if (loggedIn)
             {
-                MessageBox.Show("Pick an image");
-                return;
+                var filePath = openFileDialog.FileName;
+                if (filePath == null)
+                {
+                    MessageBox.Show("Pick an image");
+                    return;
+                }
+
+                var resizedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "resized_" + Path.GetFileName(filePath));
+
+                // Start a new thread for image resizing
+                var resizeThread = new Thread(() =>
+                {
+                    try
+                    {
+                        ResizeImage(filePath, resizedFilePath, 800, 600);
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                
+                });
+                resizeThread.Start();
+
+                // Wait for image resizing thread to complete
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        resizeThread.Join();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                
+                });
+
+                // Start a new thread for S3 upload
+                var uploadThread = new Thread(() =>
+                {
+                    try
+                    {
+                        UploadToS3(resizedFilePath, "user", null).GetAwaiter().GetResult();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                
+                });
+                uploadThread.Start();
+
+                // Wait for S3 upload thread to complete
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        uploadThread.Join();
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                
+                });
+
+                // Clean up
+                File.Delete(resizedFilePath);
             }
+        }
+        catch (Exception)
+        {
 
-            var resizedFilePath = Path.Combine(Path.GetDirectoryName(filePath), "resized_" + Path.GetFileName(filePath));
-
-            // Start a new thread for image resizing
-            var resizeThread = new Thread(() => { ResizeImage(filePath, resizedFilePath, 800, 600); });
-            resizeThread.Start();
-
-            // Wait for image resizing thread to complete
-            await Task.Run(() => resizeThread.Join());
-
-            // Start a new thread for S3 upload
-            var uploadThread = new Thread(() => { UploadToS3(resizedFilePath, "user", null).GetAwaiter().GetResult(); });
-            uploadThread.Start();
-
-            // Wait for S3 upload thread to complete
-            await Task.Run(() => uploadThread.Join());
-
-            // Clean up
-            File.Delete(resizedFilePath);
         }
     }
 
@@ -777,65 +922,72 @@ public partial class BixbyApp : MaterialForm
         {
             await Task.Run(async () =>
             {
-                var token = Properties.Settings.Default.TokenValue;
-                var email = Properties.Settings.Default.Email;
-
-                var firstName = FirstName_txt.Text;
-                var lastName = LastName.Text;
-                var userEmail = Email.Text;
-                var address = Address.Text;
-
-                if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+                try
                 {
-                    Invoke(() => { MessageBox.Show("Invalid Input: Passwords do not match"); }); // Invoke on UI thread
-                    return;
-                }
+                    var token = Properties.Settings.Default.TokenValue;
+                    var email = Properties.Settings.Default.Email;
 
-                var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Put, $"http://localhost:8080/updateUser/{email}");
-                request.Headers.Add("Authorization", $"Bearer {token}");
+                    var firstName = FirstName_txt.Text;
+                    var lastName = LastName.Text;
+                    var userEmail = Email.Text;
+                    var address = Address.Text;
 
-                var content = new
-                {
-                    firstName,
-                    lastName,
-                    email = userEmail,
-                    address
-                };
+                    if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+                    {
+                        Invoke(() => { MessageBox.Show("Invalid Input: Passwords do not match"); }); // Invoke on UI thread
+                        return;
+                    }
 
-                var json = JsonConvert.SerializeObject(content);
-                var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
-                request.Content = stringContent;
+                    var client = new HttpClient();
+                    var request = new HttpRequestMessage(HttpMethod.Put, $"http://localhost:8080/updateUser/{email}");
+                    request.Headers.Add("Authorization", $"Bearer {token}");
 
-                var response = await client.SendAsync(request);
-                var httpResponseMessage = response.EnsureSuccessStatusCode();
+                    var content = new
+                    {
+                        firstName,
+                        lastName,
+                        email = userEmail,
+                        address
+                    };
 
-                if (httpResponseMessage.IsSuccessStatusCode)
-                {
-                    var jsonResult = await response.Content.ReadAsStringAsync();
-                    var jObject = JObject.Parse(jsonResult);
-                    var status = jObject["status"]?.Value<string>();
+                    var json = JsonConvert.SerializeObject(content);
+                    var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
+                    request.Content = stringContent;
 
-                    if (status != null)
-                        switch (status)
-                        {
-                            case "Success":
-                                Invoke(() =>
-                                {
-                                    MessageBox.Show("Success");
-                                    materialTabControl1.SelectedIndex = 0;
-                                });
-                                break;
-                            case "An error occurred.":
-                                Invoke(() => MessageBox.Show("Try Again")); // Invoke on UI thread
-                                break;
-                        }
+                    var response = await client.SendAsync(request);
+                    var httpResponseMessage = response.EnsureSuccessStatusCode();
+
+                    if (httpResponseMessage.IsSuccessStatusCode)
+                    {
+                        var jsonResult = await response.Content.ReadAsStringAsync();
+                        var jObject = JObject.Parse(jsonResult);
+                        var status = jObject["status"]?.Value<string>();
+
+                        if (status != null)
+                            switch (status)
+                            {
+                                case "Success":
+                                    Invoke(() =>
+                                    {
+                                        MessageBox.Show("Success");
+                                        materialTabControl1.SelectedIndex = 0;
+                                    });
+                                    break;
+                                case "An error occurred.":
+                                    Invoke(() => MessageBox.Show("Try Again")); // Invoke on UI thread
+                                    break;
+                            }
+                        else
+                            Invoke(() => MessageBox.Show("Try Again"));
+                    }
                     else
+                    {
                         Invoke(() => MessageBox.Show("Try Again"));
+                    }
                 }
-                else
+                catch (Exception)
                 {
-                    Invoke(() => MessageBox.Show("Try Again"));
+
                 }
             });
         }
@@ -953,7 +1105,6 @@ public partial class BixbyApp : MaterialForm
                                         var email = Properties.Settings.Default.Email;
                                         materialTabControl1.Refresh();
                                         Home.Refresh();
-                                        materialTabControl1.SelectedIndex = 0;
                                         await httpDataFetcher.RefreshDataAsync(email, token, loggedIn);
                                         await HomeUI();
                                     }));

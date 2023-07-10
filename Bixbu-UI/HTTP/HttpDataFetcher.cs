@@ -90,24 +90,22 @@ public class HttpDataFetcher
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.ToString());
             return new ProductRes();
         }
     }
 
     public async Task FetchDataAsync(string email, string token, bool notLogedIn)
     {
+        fetchItemsTask = FetchItemsAsync();
         if (notLogedIn)
         {
             fetchUserTask = FetchUserAsync(email, token, notLogedIn);
-            fetchItemsTask = FetchItemsAsync(email, token, notLogedIn);
-
             fetchCartItemsTask = FetchCartItemsAsync(email, token, notLogedIn);
             fetchOrdersTask = FetchOrdersAsync(email, token, notLogedIn);
 
             fetchProductTask = FetchProductsAsync(email);
 
-            await Task.WhenAll(fetchUserTask, fetchItemsTask, fetchCartItemsTask, fetchOrdersTask);
+            await Task.WhenAll(fetchUserTask, fetchCartItemsTask, fetchOrdersTask);
         }
     }
 
@@ -145,37 +143,30 @@ public class HttpDataFetcher
         }
     }
 
-    private async Task<HashSet<Item>> FetchItemsAsync(string email, string token, bool notLogedIn)
+    public async Task<HashSet<Item>> FetchItemsAsync()
     {
-        if(notLogedIn)
+        try
         {
-            try
+            var path = "home";
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/{path}");
+
+            var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            if (response.IsSuccessStatusCode)
             {
-                var path = "home";
-                var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8080/{path}");
-
-                var response = await client.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var responseObject = JsonConvert.DeserializeObject<Response>(json);
-                    return responseObject.body;
-                }
-
-                return new HashSet<Item>();
+                var json = await response.Content.ReadAsStringAsync();
+                var responseObject = JsonConvert.DeserializeObject<Response>(json);
+                return responseObject.body;
             }
-            catch (Exception ex)
-            {
-                return new HashSet<Item>();
 
-            }
+            return new HashSet<Item>();
         }
-        else
+        catch (Exception ex)
         {
             return new HashSet<Item>();
+
         }
     }
 

@@ -1,4 +1,6 @@
 ﻿using Bixbu_UI.HTTP;
+using Bixby_web_server.Controllers;
+using MetroFramework.Controls;
 using Newtonsoft.Json.Linq;
 
 namespace Bixbu_UI.UI;
@@ -9,7 +11,7 @@ public partial class OrderItemUserControll : UserControl
     private bool confirm;
     private HttpDataFetcher httpDataFetcher = new();
 
-    private string id;
+    public string id;
     private bool isFormLocked;
     private List<string> itemIds;
     private int price;
@@ -82,6 +84,12 @@ public partial class OrderItemUserControll : UserControl
 
     private async void materialButton1_Click(object sender, EventArgs e)
     {
+        Thread threadStart = new Thread(confirmFun);
+        threadStart.Start();
+    }
+
+    private async void confirmFun()
+    {
         var token = Properties.Settings.Default.TokenValue;
         var email = Properties.Settings.Default.Email;
 
@@ -90,7 +98,8 @@ public partial class OrderItemUserControll : UserControl
         request.Headers.Add("Authorization", $"Bearer {token}");
         var response = await client.SendAsync(request);
         materialButton1.Enabled = false;
-
+        confirm = true;
+        metroLabel7.Text = confirm.ToString();
         var jsonResult = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
         var jObject = JObject.Parse(jsonResult);
         var status = jObject["status"]?.Value<string>();
@@ -99,10 +108,10 @@ public partial class OrderItemUserControll : UserControl
             switch (status)
             {
                 case "Success":
+
                     Invoke((MethodInvoker)(async () =>
                     {
                         MessageBox.Show("Success");
-                        this.confirm = true;
                         var token = Properties.Settings.Default.TokenValue;
                         var email = Properties.Settings.Default.Email;
                         await bixby.httpDataFetcher.RefreshDataAsync(email, token, true);

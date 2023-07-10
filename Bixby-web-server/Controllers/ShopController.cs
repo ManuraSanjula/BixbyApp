@@ -317,7 +317,13 @@ public abstract class ShopController
         };
 
         await OrderService.CreateOrder(order);
-
+        
+        foreach (ObjectId objectId in items)
+        {
+             UserShop userShop = await UserShopService.GetProductByUserAndShopItem(objectId, email);
+             userShop.TotalSuccessfulOrders += 1;
+             await UserShopService.ProductUpdateByItemId(userShop.Id, userShop);
+        }       
 #pragma warning disable CS8601 // Possible null reference assignment.
         var productPurchases = new ProductPurchases
         {

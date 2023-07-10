@@ -1,4 +1,6 @@
 ﻿using System.Dynamic;
+using System.Net;
+using System.Net.Sockets;
 using Bixby_web_server.Helpers;
 using Bixby_web_server.Models;
 using Bixby_web_server.Services;
@@ -231,9 +233,36 @@ public abstract class UserController
         if (user == null)
             throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
 
-        await EmailService.SendEmail(context.Url, user.Email,
-            "Forgot Password EmailVerification to Reset Password in your Account 🙂🙂", 1, user);
 
+        async void Start()
+        {
+            try
+            {
+                string hostName = Dns.GetHostName();
+                IPHostEntry hostEntry = await Dns.GetHostEntryAsync(hostName);
+
+                IPAddress? localIpAddress = hostEntry.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+
+                if (localIpAddress != null)
+                {
+                    string portNumber = Program.configuration["ServerPort"];
+                    await EmailService.SendEmail(localIpAddress.ToString() + ":" + portNumber, user.Email, "Forgot Password EmailVerification to Reset Password in your Account 🙂🙂", 1, user);
+                }
+                else
+                {
+                    Console.WriteLine("No local IP address found.");
+                    await EmailService.SendEmail(context.Url, user.Email, "Forgot Password EmailVerification to Reset Password in your Account 🙂🙂", 1, user);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+            }
+        }
+
+        Thread thread = new Thread(Start, 4);
+        thread.Start();
+        
         var response = new
         {
             status = "Success"
@@ -432,8 +461,28 @@ public abstract class UserController
 
         if (user == null)
             throw new NotFoundException(new { status = "An error occurred.", message = "NotFoundException" }.ToJson());
+        try
+        {
+            string hostName = Dns.GetHostName();
+            IPHostEntry hostEntry = Dns.GetHostEntry(hostName);
 
-        await EmailService.SendEmail(context.Url, user.Email, "Email Verification Code for Your Account 🙂🙂", 0, user);
+            IPAddress? localIpAddress = hostEntry.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+
+            if (localIpAddress != null)
+            {
+                string portNumber = Program.configuration["ServerPort"];
+                await EmailService.SendEmail(localIpAddress.ToString() + ":" + portNumber, user.Email, "Email Verification Code for Your Account 🙂🙂", 0, user);
+            }
+            else
+            {
+                Console.WriteLine("No local IP address found.");
+                await EmailService.SendEmail(context.Url, user.Email, "Email Verification Code for Your Account 🙂🙂", 0, user);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("An error occurred: " + ex.Message);
+        }
 
         var response = new
         {

@@ -31,7 +31,6 @@ partial class BixbyApp
     {
         materialTabControl1 = new MaterialSkin.Controls.MaterialTabControl();
         Home = new TabPage();
-        home_panel = new FlowLayoutPanel();
         Account = new TabPage();
         panel1 = new Panel();
         accout_panel = new Panel();
@@ -69,6 +68,8 @@ partial class BixbyApp
         cart_panel = new FlowLayoutPanel();
         Order = new TabPage();
         order_panel = new FlowLayoutPanel();
+        home_error = new Panel();
+        home_panel = new FlowLayoutPanel();
         materialTabControl1.SuspendLayout();
         Home.SuspendLayout();
         Account.SuspendLayout();
@@ -80,6 +81,7 @@ partial class BixbyApp
         add_products.SuspendLayout();
         Cart.SuspendLayout();
         Order.SuspendLayout();
+        home_panel.SuspendLayout();
         SuspendLayout();
         // 
         // materialTabControl1
@@ -111,14 +113,6 @@ partial class BixbyApp
         Home.TabIndex = 3;
         Home.Text = "HomeUI";
         Home.UseVisualStyleBackColor = true;
-        // 
-        // home_panel
-        // 
-        home_panel.Dock = DockStyle.Fill;
-        home_panel.Location = new Point(0, 0);
-        home_panel.Name = "home_panel";
-        home_panel.Size = new Size(1252, 664);
-        home_panel.TabIndex = 0;
         // 
         // Account
         // 
@@ -722,6 +716,24 @@ partial class BixbyApp
         order_panel.Size = new Size(1246, 658);
         order_panel.TabIndex = 0;
         // 
+        // home_error
+        // 
+        home_error.BackColor = Color.Silver;
+        home_error.Dock = DockStyle.Fill;
+        home_error.Location = new Point(3, 3);
+        home_error.Name = "home_error";
+        home_error.Size = new Size(200, 0);
+        home_error.TabIndex = 0;
+        // 
+        // home_panel
+        // 
+        home_panel.Controls.Add(home_error);
+        home_panel.Dock = DockStyle.Fill;
+        home_panel.Location = new Point(0, 0);
+        home_panel.Name = "home_panel";
+        home_panel.Size = new Size(1252, 664);
+        home_panel.TabIndex = 0;
+        // 
         // BixbyApp
         // 
         AutoScaleMode = AutoScaleMode.None;
@@ -748,6 +760,7 @@ partial class BixbyApp
         add_products.PerformLayout();
         Cart.ResumeLayout(false);
         Order.ResumeLayout(false);
+        home_panel.ResumeLayout(false);
         ResumeLayout(false);
     }
 
@@ -788,9 +801,10 @@ partial class BixbyApp
     private MetroFramework.Controls.MetroButton Save;
     private MetroFramework.Controls.MetroButton UploadImages;
     private MetroFramework.Controls.MetroLabel metroLabel5;
-    private FlowLayoutPanel home_panel;
     private TabPage Cart;
     private TabPage Order;
     private FlowLayoutPanel cart_panel;
     private FlowLayoutPanel order_panel;
+    private FlowLayoutPanel home_panel;
+    private Panel home_error;
 }

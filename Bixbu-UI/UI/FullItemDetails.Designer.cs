@@ -43,9 +43,9 @@
             // flowLayoutPanel1
             // 
             flowLayoutPanel1.BackColor = Color.White;
-            flowLayoutPanel1.Location = new Point(2, 1);
+            flowLayoutPanel1.Location = new Point(6, 9);
             flowLayoutPanel1.Name = "flowLayoutPanel1";
-            flowLayoutPanel1.Size = new Size(1218, 304);
+            flowLayoutPanel1.Size = new Size(1242, 304);
             flowLayoutPanel1.TabIndex = 7;
             flowLayoutPanel1.Paint += flowLayoutPanel1_Paint;
             // 
@@ -55,7 +55,7 @@
             metro1.BackColor = Color.White;
             metro1.FontSize = MetroFramework.MetroLabelSize.Tall;
             metro1.FontWeight = MetroFramework.MetroLabelWeight.Bold;
-            metro1.Location = new Point(12, 323);
+            metro1.Location = new Point(13, 369);
             metro1.Name = "metro1";
             metro1.Size = new Size(62, 25);
             metro1.TabIndex = 8;
@@ -67,7 +67,7 @@
             metroLabel1.Font = new Font("Segoe UI", 18F, FontStyle.Bold, GraphicsUnit.Point);
             metroLabel1.FontSize = MetroFramework.MetroLabelSize.Tall;
             metroLabel1.FontWeight = MetroFramework.MetroLabelWeight.Regular;
-            metroLabel1.Location = new Point(89, 323);
+            metroLabel1.Location = new Point(136, 369);
             metroLabel1.Name = "metroLabel1";
             metroLabel1.Size = new Size(33, 25);
             metroLabel1.TabIndex = 9;
@@ -79,7 +79,7 @@
             metroLabel2.Font = new Font("Segoe UI", 18F, FontStyle.Bold, GraphicsUnit.Point);
             metroLabel2.FontSize = MetroFramework.MetroLabelSize.Tall;
             metroLabel2.FontWeight = MetroFramework.MetroLabelWeight.Regular;
-            metroLabel2.Location = new Point(127, 368);
+            metroLabel2.Location = new Point(136, 418);
             metroLabel2.Name = "metroLabel2";
             metroLabel2.Size = new Size(40, 25);
             metroLabel2.TabIndex = 12;
@@ -91,7 +91,7 @@
             metroLabel3.BackColor = Color.White;
             metroLabel3.FontSize = MetroFramework.MetroLabelSize.Tall;
             metroLabel3.FontWeight = MetroFramework.MetroLabelWeight.Bold;
-            metroLabel3.Location = new Point(12, 368);
+            metroLabel3.Location = new Point(12, 418);
             metroLabel3.Name = "metroLabel3";
             metroLabel3.Size = new Size(109, 25);
             metroLabel3.TabIndex = 11;
@@ -103,7 +103,7 @@
             metroLabel4.Font = new Font("Segoe UI", 18F, FontStyle.Bold, GraphicsUnit.Point);
             metroLabel4.FontSize = MetroFramework.MetroLabelSize.Tall;
             metroLabel4.FontWeight = MetroFramework.MetroLabelWeight.Regular;
-            metroLabel4.Location = new Point(127, 416);
+            metroLabel4.Location = new Point(136, 468);
             metroLabel4.Name = "metroLabel4";
             metroLabel4.Size = new Size(40, 25);
             metroLabel4.TabIndex = 14;
@@ -115,7 +115,7 @@
             metroLabel5.BackColor = Color.White;
             metroLabel5.FontSize = MetroFramework.MetroLabelSize.Tall;
             metroLabel5.FontWeight = MetroFramework.MetroLabelWeight.Bold;
-            metroLabel5.Location = new Point(12, 416);
+            metroLabel5.Location = new Point(13, 468);
             metroLabel5.Name = "metroLabel5";
             metroLabel5.Size = new Size(54, 25);
             metroLabel5.TabIndex = 13;
@@ -128,7 +128,7 @@
             CommetBox.CharacterCasing = CharacterCasing.Normal;
             CommetBox.Depth = 0;
             CommetBox.HideSelection = true;
-            CommetBox.Location = new Point(22, 466);
+            CommetBox.Location = new Point(12, 511);
             CommetBox.MaxLength = 32767;
             CommetBox.MouseState = MaterialSkin.MouseState.OUT;
             CommetBox.Name = "CommetBox";
@@ -154,7 +154,7 @@
             Comment.Depth = 0;
             Comment.HighEmphasis = true;
             Comment.Icon = null;
-            Comment.Location = new Point(22, 597);
+            Comment.Location = new Point(13, 669);
             Comment.Margin = new Padding(4, 6, 4, 6);
             Comment.MouseState = MaterialSkin.MouseState.HOVER;
             Comment.Name = "Comment";
@@ -171,7 +171,7 @@
             // 
             flowLayoutPanel2.AutoScroll = true;
             flowLayoutPanel2.FlowDirection = FlowDirection.TopDown;
-            flowLayoutPanel2.Location = new Point(475, 323);
+            flowLayoutPanel2.Location = new Point(513, 408);
             flowLayoutPanel2.Name = "flowLayoutPanel2";
             flowLayoutPanel2.Size = new Size(735, 310);
             flowLayoutPanel2.TabIndex = 18;
@@ -181,7 +181,7 @@
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.White;
             BackgroundImageLayout = ImageLayout.Center;
-            ClientSize = new Size(1222, 651);
+            ClientSize = new Size(1254, 729);
             Controls.Add(flowLayoutPanel2);
             Controls.Add(Comment);
             Controls.Add(CommetBox);
@@ -194,6 +194,7 @@
             Controls.Add(flowLayoutPanel1);
             FormBorderStyle = FormBorderStyle.FixedToolWindow;
             Name = "FullItemDetails";
+            Padding = new Padding(3, 24, 3, 3);
             StartPosition = FormStartPosition.CenterScreen;
             Text = "FullItemDetails";
             Load += FullItemDetails_Load;

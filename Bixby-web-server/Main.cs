@@ -1,5 +1,6 @@
 ﻿using Bixby_web_server.Controllers;
 using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
 
 namespace Bixby_web_server;
 
@@ -14,8 +15,6 @@ public abstract class Program
         _webServer = new WebServer(8080);
         _webServer.Start();
         
-       
-
         configuration["ServerPort"] = "8080"; // Set the desired port number
 
         string portNumber = configuration["ServerPort"];

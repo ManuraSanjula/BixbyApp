@@ -676,15 +676,15 @@ partial class BixbyApp
         button4.UseVisualStyleBackColor = true;
         button4.Click += button4_Click;
         // 
-        // Cart
+        // CartRes
         // 
         Cart.Controls.Add(cart_panel);
         Cart.Location = new Point(4, 24);
-        Cart.Name = "Cart";
+        Cart.Name = "CartRes";
         Cart.Padding = new Padding(3);
         Cart.Size = new Size(1252, 664);
         Cart.TabIndex = 5;
-        Cart.Text = "Cart";
+        Cart.Text = "CartRes";
         Cart.UseVisualStyleBackColor = true;
         // 
         // cart_panel

@@ -14,8 +14,8 @@ public partial class HomeItem : UserControl
     private bool isFormLocked;
     private readonly Func<Task> orderAsyncFunc;
     private bool notLogedIn;
-    private FlowLayoutPanel order, cart = null;
-    public HomeItem(string url, string name, string id, Func<Task> cartAsyncFunc, Func<Task> orderAsyncFunc, bool notLogedIn, FlowLayoutPanel order, FlowLayoutPanel cart)
+    private FlowLayoutPanel order, cart, home = null;
+    public HomeItem(string url, string name, string id, Func<Task> cartAsyncFunc, Func<Task> orderAsyncFunc, bool notLogedIn, FlowLayoutPanel order, FlowLayoutPanel cart, FlowLayoutPanel home)
     {
         InitializeComponent();
         this.url = url;
@@ -28,6 +28,7 @@ public partial class HomeItem : UserControl
         this.orderAsyncFunc = orderAsyncFunc;
         this.notLogedIn = notLogedIn;
         this.cart = cart;
+        this.home = home;
     }
 
     public string url { get; }
@@ -40,77 +41,26 @@ public partial class HomeItem : UserControl
 
     public async void HomeFunCall(string type)
     {
+        var token = Settings.Default.TokenValue;
+        var email = Settings.Default.Email;
         if (type == "c")
-            await cartAsyncFunc();
+        {
+            cart.Invoke((MethodInvoker)(() =>
+            {
+                cart.Controls.Clear();
+            }));
+
+            await httpDataFetcher.FetchDataAsync(email, token, notLogedIn);
+            await orderAsyncFunc();
+        }
         else
             await orderAsyncFunc();
 
-        var token = Settings.Default.TokenValue;
-        var email = Settings.Default.Email;
-        await httpDataFetcher.RefreshDataAsync(email, token, notLogedIn);
 
-        foreach (Control control in cart.Controls)
-        {
-            if (control is CartItemuserControl cartItemuser)
-            {
-                cart.Invoke(new Action<object>((MethodInvoker) =>
-                {
+        /*        await httpDataFetcher.RefreshDataAsync(email, token, notLogedIn);
+        */
 
-                    if (cartItemuser.item == this.itemId)
-                    {
-                        int qutity = (int.Parse(cartItemuser.metroLabel7.Text));
-                        int price = int.Parse(cartItemuser.metroLabel7.Text);
-
-                        if (qutity == 1)
-                        {
-                            price = price + price;
-                            qutity++;
-                        }
-                        else
-                        {
-                            int itemprice = price / qutity;
-                            price = price + itemprice;
-                            qutity++;
-                        }
-                        cartItemuser.metroLabel7.Text = price.ToString();
-                        cartItemuser.metroLabel8.Text = qutity.ToString();
-                        cart.Refresh();
-                    }
-                }));
-            }
-
-        }
     }
-
-    /*
-        cart.Invoke(new Action<object>((MethodInvoker) => {
-                foreach (Control control in cart.Controls)
-                {
-                    if (control is CartItemuserControl cartItemuser)
-                    {
-                        if (cartItemuser.item == this.itemId)
-                        {
-                            int qutity = (int.Parse(cartItemuser.metroLabel7.Text));
-        int price = int.Parse(cartItemuser.metroLabel7.Text);
-
-                            if (qutity == 1)
-                            {
-                                price = price + price;
-                                qutity++;
-                            }
-                            else
-                            {
-                                int itemprice = price / qutity;
-    price = price + itemprice;
-                                qutity++;
-                            }
-                            cartItemuser.metroLabel7.Text = price.ToString();
-    cartItemuser.metroLabel8.Text = qutity.ToString();
-                        }
-                    }
-                }
-            }));
-    */
     private void pictureBox1_Click(object sender, EventArgs e)
     {
         click();

@@ -25,9 +25,9 @@ public partial class BixbyApp : MaterialForm
     private const string BucketName = "bixby-app-nibm";
 
     private readonly List<string> images = new();
-    private readonly ConcurrentHashSet<string> addedItems_v2 = new();
-    private readonly ConcurrentHashSet<string> addedItems_v2_for_cart = new();
-    private readonly ConcurrentHashSet<string> addedItems_v2_for_order = new();
+    private readonly ThreadSafeHashSet<string> addedItems_v2 = new();
+    private readonly ThreadSafeHashSet<string> addedItems_v2_for_cart = new();
+    private readonly ThreadSafeHashSet<string> addedItems_v2_for_order = new();
     public static Dictionary<string, System.Drawing.Image> imageCache = new Dictionary<string, System.Drawing.Image>();
 
 
@@ -183,6 +183,8 @@ public partial class BixbyApp : MaterialForm
 
     private async void tabControl1_Selecting(object sender, TabControlCancelEventArgs e)
     {
+        if (e.TabPage == Home)
+            await HomeUI();
         if (loggedIn)
         {
             var token = Properties.Settings.Default.TokenValue;
@@ -369,16 +371,15 @@ public partial class BixbyApp : MaterialForm
                                                 homeItem.Buy.BackColor = Color.PaleGreen;
                                     //====================================================================================
 
-                                    if (!addedItems_v2_for_order.Contains(orderData._id))
+                                    Invoke((MethodInvoker)(() =>
                                     {
-                                        Invoke((MethodInvoker)(() =>
-                                        {
+                                        if (!addedItems_v2_for_order.Contains(orderData._id))
                                             order_panel.Controls.Add(new OrderItemUserControll(this, orderData._id, orderData.User,
-                                                orderData.Confirm, orderData.Price, orderData.Items, OrderUI));
-                                        }));
-
+                                            orderData.Confirm, orderData.Price, orderData.Items, OrderUI));
                                         addedItems_v2_for_order.Add(orderData._id);
-                                    }
+
+                                    }));
+
                                 }
                             }
                             else
@@ -427,16 +428,14 @@ public partial class BixbyApp : MaterialForm
 
                                 //====================================================================================
                                 // Check if item already exists
-                                if (!addedItems_v2_for_cart.Contains(cartData.Item))
+                                Invoke((MethodInvoker)(() =>
                                 {
-                                    Invoke((MethodInvoker)(() =>
-                                    {
-                                        cart_panel.Controls.Add(new CartItemuserControl(this, cart_panel, cartData._id, cartData.Item, cartData.User,
+                                    if (!addedItems_v2_for_cart.Contains(cartData.Item))
+                                        cart_panel.Controls.Add(new CartItemuserControl(this, cart_panel, home_panel, cartData._id, cartData.Item, cartData.User,
                                             cartData.Quantity.ToString(), cartData.Price.ToString()));
-                                    }));
-
                                     addedItems_v2_for_cart.Add(cartData.Item); // Add item to the set
-                                }
+
+                                }));
                             }
                         }
                         else
@@ -485,12 +484,14 @@ public partial class BixbyApp : MaterialForm
                 {
                     foreach (var item in items)
                         if (item != null)
-                            if (!addedItems_v2.Contains(item._id)) // Check if item is already added
                                 home_panel.Invoke((MethodInvoker)(() =>
                                 {
-                                    var home_item = new HomeItem(item.PicLowRes, item.Name, item._id, CartUI, OrderUI, loggedIn, cart_panel, order_panel);
-                                    home_panel.Controls.Add(home_item);
-                                    addedItems_v2.Add(item._id); // Add item ID to the list
+                                    if (!addedItems_v2.Contains(item._id)) // Check if item is already added
+                                    {
+                                        var home_item = new HomeItem(item.PicLowRes, item.Name, item._id, CartUI, OrderUI, loggedIn, cart_panel, order_panel, home_panel);
+                                        home_panel.Controls.Add(home_item);
+                                        addedItems_v2.Add(item._id); // Add item ID to the list
+                                    }
                                 }));
                 }
                 else
@@ -515,15 +516,16 @@ public partial class BixbyApp : MaterialForm
 
     private async void tabControl1_Selecting(object? sender, EventArgs e)
     {
+        var tab = (TabControl)sender;
+        if (tab.SelectedTab == Home) await HomeUI();
+
         if (loggedIn)
         {
             var token = Properties.Settings.Default.TokenValue;
             var email = Properties.Settings.Default.Email;
             await httpDataFetcher.RefreshDataAsync(email, token, loggedIn);
 
-            var tab = (TabControl)sender;
             if (tab.SelectedTab == Account) await AccountUI();
-            if (tab.SelectedTab == Home) await HomeUI();
             if (tab.SelectedTab == Cart) await CartUI();
             if (tab.SelectedTab == Order) await OrderUI();
         }
@@ -829,6 +831,14 @@ public partial class BixbyApp : MaterialForm
         {
             if (loggedIn)
             {
+                var token = Properties.Settings.Default.TokenValue;
+                var email = Properties.Settings.Default.Email;
+                if (token == null || email == null)
+                {
+                    Invoke((MethodInvoker)(() => { MessageBox.Show("Authentication Need"); }));
+                    return;
+                }
+
                 var filePath = openFileDialog.FileName;
                 if (filePath == null)
                 {
@@ -932,9 +942,9 @@ public partial class BixbyApp : MaterialForm
                     var userEmail = Email.Text;
                     var address = Address.Text;
 
-                    if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+                    if (token == null || email == null)
                     {
-                        Invoke(() => { MessageBox.Show("Invalid Input: Passwords do not match"); }); // Invoke on UI thread
+                        Invoke((MethodInvoker)(() => { MessageBox.Show("Authentication Need"); }));
                         return;
                     }
 

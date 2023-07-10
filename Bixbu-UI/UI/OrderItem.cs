@@ -9,7 +9,6 @@ public partial class OrderItemUserControll : UserControl
 {
     private Func<Task> asyncFunc;
     private bool confirm;
-    private HttpDataFetcher httpDataFetcher = new();
 
     public string id;
     private bool isFormLocked;

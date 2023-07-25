@@ -38,6 +38,7 @@
             CommetBox = new MaterialSkin.Controls.MaterialMultiLineTextBox2();
             Comment = new MaterialSkin.Controls.MaterialButton();
             flowLayoutPanel2 = new FlowLayoutPanel();
+            materialButton1 = new MaterialSkin.Controls.MaterialButton();
             SuspendLayout();
             // 
             // flowLayoutPanel1
@@ -176,12 +177,33 @@
             flowLayoutPanel2.Size = new Size(735, 310);
             flowLayoutPanel2.TabIndex = 18;
             // 
+            // materialButton1
+            // 
+            materialButton1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            materialButton1.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            materialButton1.Depth = 0;
+            materialButton1.HighEmphasis = true;
+            materialButton1.Icon = null;
+            materialButton1.Location = new Point(136, 669);
+            materialButton1.Margin = new Padding(4, 6, 4, 6);
+            materialButton1.MouseState = MaterialSkin.MouseState.HOVER;
+            materialButton1.Name = "materialButton1";
+            materialButton1.NoAccentTextColor = Color.Empty;
+            materialButton1.Size = new Size(158, 36);
+            materialButton1.TabIndex = 19;
+            materialButton1.Text = "Buy Now";
+            materialButton1.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            materialButton1.UseAccentColor = false;
+            materialButton1.UseVisualStyleBackColor = true;
+            materialButton1.Click += materialButton1_Click;
+            // 
             // FullItemDetails
             // 
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.White;
             BackgroundImageLayout = ImageLayout.Center;
             ClientSize = new Size(1254, 729);
+            Controls.Add(materialButton1);
             Controls.Add(flowLayoutPanel2);
             Controls.Add(Comment);
             Controls.Add(CommetBox);
@@ -214,5 +236,6 @@
         private MaterialSkin.Controls.MaterialMultiLineTextBox2 CommetBox;
         private MaterialSkin.Controls.MaterialButton Comment;
         private FlowLayoutPanel flowLayoutPanel2;
+        private MaterialSkin.Controls.MaterialButton materialButton1;
     }
 }

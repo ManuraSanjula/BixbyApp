@@ -94,14 +94,14 @@ public class HttpDataFetcher
         }
     }
 
-    public async Task FetchDataAsync(string email, string token, bool notLogedIn)
+    public async Task FetchDataAsync(string email, string token, bool login)
     {
         fetchItemsTask = FetchItemsAsync();
-        if (notLogedIn)
+        if (login)
         {
-            fetchUserTask = FetchUserAsync(email, token, notLogedIn);
-            fetchCartItemsTask = FetchCartItemsAsync(email, token, notLogedIn);
-            fetchOrdersTask = FetchOrdersAsync(email, token, notLogedIn);
+            fetchUserTask = FetchUserAsync(email, token, login);
+            fetchCartItemsTask = FetchCartItemsAsync(email, token, login);
+            fetchOrdersTask = FetchOrdersAsync(email, token, login);
 
             fetchProductTask = FetchProductsAsync(email);
 

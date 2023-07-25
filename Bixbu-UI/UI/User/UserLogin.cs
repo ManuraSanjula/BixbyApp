@@ -54,8 +54,6 @@ public partial class UserLogin : MetroForm
                             Invoke(() =>
                             {
                                 Settings.Default.TokenValue = token;
-                                Settings.Default.Save();
-
                                 Settings.Default.Email = email;
                                 Settings.Default.Save();
                                 MessageBox.Show("Success");

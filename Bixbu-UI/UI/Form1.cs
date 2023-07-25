@@ -15,6 +15,9 @@ using MaterialSkin.Controls;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using DevExpress.XtraReports.UI;
+using DevExpress.DataAccess.ConnectionParameters;
+using DevExpress.DataAccess.MongoDB;
 
 namespace Bixbu_UI;
 
@@ -70,7 +73,7 @@ public partial class BixbyApp : MaterialForm
         var email = Properties.Settings.Default.Email;
         httpDataFetcher = new();
         // UI update code
-        Invoke((Action)(async() =>
+        Invoke((Action)(async () =>
         {
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
@@ -199,7 +202,16 @@ public partial class BixbyApp : MaterialForm
                 await CartUI();
             if (e.TabPage == Cart)
                 await OrderUI();
+            if (e.TabPage == Report)
+            {
+                ReportUI();
+            }
         }
+    }
+
+    private void ReportUI()
+    {
+
     }
 
     private async Task AccountUI()
@@ -297,7 +309,6 @@ public partial class BixbyApp : MaterialForm
         // Add the panel to the flowControlPanel
         cart_panel.Controls.Add(panel);
         button.Click += Button_Click;
-
     }
 
     private async void Button_Click(object sender, EventArgs e)
@@ -364,13 +375,6 @@ public partial class BixbyApp : MaterialForm
                             {
                                 foreach (var orderData in order.data)
                                 {
-                                    // =============================================================================
-                                    foreach (Control control in home_panel.Controls)
-                                        if (control is HomeItem homeItem)
-                                            if (homeItem.itemId == orderData.Items.Find(i => i == homeItem.itemId))
-                                                homeItem.Buy.BackColor = Color.PaleGreen;
-                                    //====================================================================================
-
                                     Invoke((MethodInvoker)(() =>
                                     {
                                         if (!addedItems_v2_for_order.Contains(orderData._id))
@@ -384,12 +388,12 @@ public partial class BixbyApp : MaterialForm
                             }
                             else
                             {
-                                
+
                             }
                         }
                         else
                         {
-                           
+
                         }
                     }
                 }
@@ -440,7 +444,7 @@ public partial class BixbyApp : MaterialForm
                         }
                         else
                         {
-                            
+
                         }
                     }
                 }
@@ -484,19 +488,18 @@ public partial class BixbyApp : MaterialForm
                 {
                     foreach (var item in items)
                         if (item != null)
-                                home_panel.Invoke((MethodInvoker)(() =>
+                            home_panel.Invoke((MethodInvoker)(() =>
+                            {
+                                if (!addedItems_v2.Contains(item._id)) // Check if item is already added
                                 {
-                                    if (!addedItems_v2.Contains(item._id)) // Check if item is already added
-                                    {
-                                        var home_item = new HomeItem(item.PicLowRes, item.Name, item._id, CartUI, OrderUI, loggedIn, cart_panel, order_panel, home_panel);
-                                        home_panel.Controls.Add(home_item);
-                                        addedItems_v2.Add(item._id); // Add item ID to the list
-                                    }
-                                }));
+                                    var home_item = new HomeItem(item.PicLowRes, item.Name, item._id, CartUI, OrderUI, loggedIn, cart_panel, order_panel, home_panel);
+                                    home_panel.Controls.Add(home_item);
+                                    addedItems_v2.Add(item._id); // Add item ID to the list
+                                }
+                            }));
                 }
                 else
                 {
-                    MessageBox.Show("HI");
                 }
             }
             catch (Exception ex)
@@ -859,7 +862,7 @@ public partial class BixbyApp : MaterialForm
                     {
 
                     }
-                
+
                 });
                 resizeThread.Start();
 
@@ -874,7 +877,7 @@ public partial class BixbyApp : MaterialForm
                     {
 
                     }
-                
+
                 });
 
                 // Start a new thread for S3 upload
@@ -888,7 +891,7 @@ public partial class BixbyApp : MaterialForm
                     {
 
                     }
-                
+
                 });
                 uploadThread.Start();
 
@@ -903,7 +906,7 @@ public partial class BixbyApp : MaterialForm
                     {
 
                     }
-                
+
                 });
 
                 // Clean up
@@ -1141,6 +1144,77 @@ public partial class BixbyApp : MaterialForm
 
     private void pictureBox2_Click_1(object sender, EventArgs e)
     {
+    }
+
+    private void home_panel_Paint(object sender, PaintEventArgs e)
+    {
+
+    }
+
+    private void Report_Click(object sender, EventArgs e)
+    {
+
+    }
+
+    private void showReport_V1()
+    {
+        var connectionString = new MongoDBCustomConnectionParameters()
+        {
+            ConnectionString = "mongodb+srv://geethaliyanage23:1dJz8r5mX6nfkoG6@cluster0.xdb3qmc.mongodb.net/?retryWrites=true&w=majority"
+        };
+
+        // Specify data queries to the MongoDB instance.
+        var queryCategories = new MongoDBQuery()
+        {
+            DatabaseName = "BixByApp",
+            CollectionName = "CartAndOrder",
+        };
+
+        var queryProducts = new MongoDBQuery()
+        {
+            DatabaseName = "BixByApp",
+            CollectionName = "Order",
+        };
+
+        // Create a MongoDBDataSource object. Assign the created connection
+        // string to the object's ConnectionParameters property. Add the
+        // queries to the object's Queries collection.
+        var mongoDBDataSource = new MongoDBDataSource()
+        {
+            ConnectionParameters = connectionString,
+            Queries = { queryCategories, queryProducts }
+        };
+
+        // Create a report. Set the report's DataSource property
+        // to the created mongoDBDataSource object.
+        var report = new XtraReport()
+        {
+            DataSource = mongoDBDataSource,
+            DataMember = "CartAndOrder"
+        };
+
+        // Configure the report layout.
+        // ...
+
+        //mongoDBDataSource.RebuildResultSchema();
+        ReportPrintTool reportPrintTool = new ReportPrintTool(report);
+        reportPrintTool.ShowPreview();
+
+        // Print the report using the specified printer settings.
+
+        // Print the report using the specified page settings.
+    }
+
+    private void showReport_V2()
+    {
+        Report report = new Report();
+        ReportPrintTool reportPrintTool = new ReportPrintTool(report);
+        reportPrintTool.ShowPreview();
+    }
+
+    private void ShowReport_Click(object sender, EventArgs e)
+    {
+        showReport_V2();
     }
 }
 

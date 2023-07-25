@@ -31,6 +31,8 @@ partial class BixbyApp
     {
         materialTabControl1 = new MaterialSkin.Controls.MaterialTabControl();
         Home = new TabPage();
+        home_panel = new FlowLayoutPanel();
+        home_error = new Panel();
         Account = new TabPage();
         panel1 = new Panel();
         accout_panel = new Panel();
@@ -68,10 +70,11 @@ partial class BixbyApp
         cart_panel = new FlowLayoutPanel();
         Order = new TabPage();
         order_panel = new FlowLayoutPanel();
-        home_error = new Panel();
-        home_panel = new FlowLayoutPanel();
+        Report = new TabPage();
+        ShowReport = new Button();
         materialTabControl1.SuspendLayout();
         Home.SuspendLayout();
+        home_panel.SuspendLayout();
         Account.SuspendLayout();
         panel1.SuspendLayout();
         accout_panel.SuspendLayout();
@@ -81,7 +84,6 @@ partial class BixbyApp
         add_products.SuspendLayout();
         Cart.SuspendLayout();
         Order.SuspendLayout();
-        home_panel.SuspendLayout();
         SuspendLayout();
         // 
         // materialTabControl1
@@ -91,6 +93,7 @@ partial class BixbyApp
         materialTabControl1.Controls.Add(AddProducts);
         materialTabControl1.Controls.Add(Cart);
         materialTabControl1.Controls.Add(Order);
+        materialTabControl1.Controls.Add(Report);
         materialTabControl1.Depth = 0;
         materialTabControl1.Dock = DockStyle.Fill;
         materialTabControl1.Location = new Point(3, 64);
@@ -113,6 +116,25 @@ partial class BixbyApp
         Home.TabIndex = 3;
         Home.Text = "HomeUI";
         Home.UseVisualStyleBackColor = true;
+        // 
+        // home_panel
+        // 
+        home_panel.Controls.Add(home_error);
+        home_panel.Dock = DockStyle.Fill;
+        home_panel.Location = new Point(0, 0);
+        home_panel.Name = "home_panel";
+        home_panel.Size = new Size(1252, 664);
+        home_panel.TabIndex = 0;
+        home_panel.Paint += home_panel_Paint;
+        // 
+        // home_error
+        // 
+        home_error.BackColor = Color.Silver;
+        home_error.Dock = DockStyle.Fill;
+        home_error.Location = new Point(3, 3);
+        home_error.Name = "home_error";
+        home_error.Size = new Size(200, 0);
+        home_error.TabIndex = 0;
         // 
         // Account
         // 
@@ -676,11 +698,11 @@ partial class BixbyApp
         button4.UseVisualStyleBackColor = true;
         button4.Click += button4_Click;
         // 
-        // CartRes
+        // Cart
         // 
         Cart.Controls.Add(cart_panel);
         Cart.Location = new Point(4, 24);
-        Cart.Name = "CartRes";
+        Cart.Name = "Cart";
         Cart.Padding = new Padding(3);
         Cart.Size = new Size(1252, 664);
         Cart.TabIndex = 5;
@@ -716,23 +738,25 @@ partial class BixbyApp
         order_panel.Size = new Size(1246, 658);
         order_panel.TabIndex = 0;
         // 
-        // home_error
+        // Report
         // 
-        home_error.BackColor = Color.Silver;
-        home_error.Dock = DockStyle.Fill;
-        home_error.Location = new Point(3, 3);
-        home_error.Name = "home_error";
-        home_error.Size = new Size(200, 0);
-        home_error.TabIndex = 0;
+        Report.Location = new Point(4, 24);
+        Report.Name = "Report";
+        Report.Size = new Size(1252, 664);
+        Report.TabIndex = 7;
+        Report.Text = "Report";
+        Report.UseVisualStyleBackColor = true;
+        Report.Click += Report_Click;
         // 
-        // home_panel
+        // ShowReport
         // 
-        home_panel.Controls.Add(home_error);
-        home_panel.Dock = DockStyle.Fill;
-        home_panel.Location = new Point(0, 0);
-        home_panel.Name = "home_panel";
-        home_panel.Size = new Size(1252, 664);
-        home_panel.TabIndex = 0;
+        ShowReport.Location = new Point(1145, 36);
+        ShowReport.Name = "ShowReport";
+        ShowReport.Size = new Size(101, 23);
+        ShowReport.TabIndex = 1;
+        ShowReport.Text = "ShowReport";
+        ShowReport.UseVisualStyleBackColor = true;
+        ShowReport.Click += ShowReport_Click;
         // 
         // BixbyApp
         // 
@@ -740,6 +764,7 @@ partial class BixbyApp
         AutoSize = true;
         ClientSize = new Size(1266, 758);
         Controls.Add(materialTabControl1);
+        Controls.Add(ShowReport);
         DrawerTabControl = materialTabControl1;
         Margin = new Padding(3, 2, 3, 2);
         Name = "BixbyApp";
@@ -749,6 +774,7 @@ partial class BixbyApp
         Load += Form1_Load;
         materialTabControl1.ResumeLayout(false);
         Home.ResumeLayout(false);
+        home_panel.ResumeLayout(false);
         Account.ResumeLayout(false);
         panel1.ResumeLayout(false);
         accout_panel.ResumeLayout(false);
@@ -760,7 +786,6 @@ partial class BixbyApp
         add_products.PerformLayout();
         Cart.ResumeLayout(false);
         Order.ResumeLayout(false);
-        home_panel.ResumeLayout(false);
         ResumeLayout(false);
     }
 
@@ -807,4 +832,6 @@ partial class BixbyApp
     private FlowLayoutPanel order_panel;
     private FlowLayoutPanel home_panel;
     private Panel home_error;
+    private TabPage Report;
+    private Button ShowReport;
 }

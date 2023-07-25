@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Bixbu_UI.Properties;
+using Bixbu_UI.UI;
 using MaterialSkin.Controls;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,7 +13,7 @@ public partial class FullItemDetails : Form
 
     private readonly List<string> addedImages = new(); // Track added images
     private Product product;
-
+    private int price;
     public FullItemDetails(string id)
     {
         InitializeComponent();
@@ -58,6 +59,7 @@ public partial class FullItemDetails : Form
                         metroLabel1.Text = product.Name;
                         metroLabel2.Text = product.Description;
                         metroLabel4.Text = product.Price.ToString();
+                        price = product.Price;
                     }));
 
                     fetchingComments();
@@ -191,6 +193,58 @@ public partial class FullItemDetails : Form
 
     private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e)
     {
+    }
+
+    private void ChildForm_FormClosed(object sender, FormClosedEventArgs e)
+    {
+        Task.Run(async () =>
+        {
+            try
+            {
+                var token = Settings.Default.TokenValue;
+                var email = Settings.Default.Email;
+
+                if (token == null || email == null) MessageBox.Show("Authentication Need");
+                var client = new HttpClient();
+                var request = new HttpRequestMessage(HttpMethod.Get,
+                    $"http://localhost:8080/shopItem/{id}/buy/{email}");
+                request.Headers.Add("Authorization", $"Bearer {token}");
+
+                var response = await client.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                if (response.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                {
+                    var jsonResult = await response.Content.ReadAsStringAsync();
+                    var jObject = JObject.Parse(jsonResult);
+                    var status = jObject["status"]?.Value<string>();
+                    if (status == "Success")
+                    {
+                        MessageBox.Show("Success");
+
+                    }
+                    else
+                    {
+                        MessageBox.Show("Failed");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Failed");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        });
+    }
+
+
+    private void materialButton1_Click(object sender, EventArgs e)
+    {
+        var form = new Payment(price);
+        form.ShowDialog();
+        form.FormClosed += ChildForm_FormClosed;
     }
 }
 

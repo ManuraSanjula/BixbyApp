@@ -14,7 +14,7 @@
     "additionalProbingPaths": [
       "C:\\Users\\MSI\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\MSI\\.nuget\\packages",
-      "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      "C:\\Program Files\\DevExpress 23.1\\Components\\Offline Packages"
     ],
     "configProperties": {
       "System.Reflection.Metadata.MetadataUpdater.IsSupported": false,

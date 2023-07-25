@@ -1,6 +1,7 @@
 ﻿using Bixbu_UI.HTTP;
 using Bixbu_UI.Properties;
 using Bixbu_UI.UI;
+using DevExpress.XtraReports.UI;
 using ImageResizer.ExtensionMethods;
 using Newtonsoft.Json.Linq;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
@@ -119,6 +120,7 @@ public partial class HomeItem : UserControl
             {
                 var token = Settings.Default.TokenValue;
                 var email = Settings.Default.Email;
+                MessageBox.Show(email);
                 if (token == null || (email == null))
                 {
                     MessageBox.Show("Missing adata");
@@ -139,49 +141,6 @@ public partial class HomeItem : UserControl
                     {
                         MessageBox.Show("Success");
                         HomeFunCall("c");
-                    }
-                    else
-                    {
-                        MessageBox.Show("Failed");
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Failed");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        });
-    }
-
-    private void Buy_Click(object sender, EventArgs e)
-    {
-        Task.Run(async () =>
-        {
-            try
-            {
-                var token = Settings.Default.TokenValue;
-                var email = Settings.Default.Email;
-
-                if (token == null || email == null) MessageBox.Show("Authentication Need");
-                var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Get,
-                    $"http://localhost:8080/shopItem/{itemId}/buy/{email}");
-                request.Headers.Add("Authorization", $"Bearer {token}");
-                var response = await client.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-                if (response.EnsureSuccessStatusCode().IsSuccessStatusCode)
-                {
-                    var jsonResult = await response.Content.ReadAsStringAsync();
-                    var jObject = JObject.Parse(jsonResult);
-                    var status = jObject["status"]?.Value<string>();
-                    if (status == "Success")
-                    {
-                        MessageBox.Show("Success");
-                        HomeFunCall("o");
                     }
                     else
                     {

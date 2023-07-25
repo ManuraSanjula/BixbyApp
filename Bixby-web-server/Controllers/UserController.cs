@@ -126,7 +126,7 @@ public abstract class UserController
         var token = context.DynamicPath?[1];
 
         var user = await UserService.GetUserByEmailAsync(email);
-        if (user != null && !user.IsTokenExpired(token))
+        if (user != null)
         {
             user.EmailVerify = true;
             user.Tokens[token].valid = false;
@@ -144,6 +144,7 @@ public abstract class UserController
             {
                 status = "Success"
             };
+            Console.Write(user.ToJson().ToString());
             await context.WriteResponse(response.ToJson(), "application/json").ConfigureAwait(false);
         }
         else

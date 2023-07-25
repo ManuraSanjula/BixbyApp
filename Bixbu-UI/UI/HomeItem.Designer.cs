@@ -31,7 +31,6 @@
             pictureBox1 = new PictureBox();
             metroLabel1 = new MetroFramework.Controls.MetroLabel();
             Cart = new Button();
-            Buy = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
@@ -70,24 +69,11 @@
             Cart.UseVisualStyleBackColor = false;
             Cart.Click += Cart_Click;
             // 
-            // Buy
-            // 
-            Buy.BackColor = Color.Red;
-            Buy.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
-            Buy.Location = new Point(127, 302);
-            Buy.Name = "Buy";
-            Buy.Size = new Size(78, 31);
-            Buy.TabIndex = 3;
-            Buy.Text = "Buy";
-            Buy.UseVisualStyleBackColor = false;
-            Buy.Click += Buy_Click;
-            // 
             // HomeItem
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.White;
-            Controls.Add(Buy);
             Controls.Add(Cart);
             Controls.Add(metroLabel1);
             Controls.Add(pictureBox1);
@@ -104,6 +90,5 @@
         private PictureBox pictureBox1;
         private MetroFramework.Controls.MetroLabel metroLabel1;
         public Button Cart;
-        public Button Buy;
     }
 }

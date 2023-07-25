@@ -134,7 +134,7 @@ public abstract class CartController
                 { status = "An error occurred.", message = "Not Found Exception" }.ToJson());
 
         var cart = await CartService.GetCartAndOrderByItem(new ObjectId(shopId));
-        if (cart != null)
+        if (cart != null && cart.User.Equals(result?.Email))
         {
             cart.Price = cart.Price + shopItem.Price;
             cart.Quantity += 1;

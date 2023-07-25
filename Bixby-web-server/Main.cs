@@ -1,6 +1,5 @@
 ﻿using Bixby_web_server.Controllers;
 using Microsoft.Extensions.Configuration;
-using System.Diagnostics;
 
 namespace Bixby_web_server;
 
@@ -19,9 +18,10 @@ public abstract class Program
 
         string portNumber = configuration["ServerPort"];
         Console.WriteLine("Server Port: " + portNumber);
-        
 
-        _webServer.UseMiddleware(async (context, next) => { await next(); });
+        _webServer.UseMiddleware(async (context, next) => {
+            await next();
+        });
 
         Console.WriteLine("Press any key to stop the server...");
         Console.ReadKey();

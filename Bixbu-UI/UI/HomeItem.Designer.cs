@@ -58,7 +58,7 @@
             // 
             // Cart
             // 
-            Cart.BackColor = Color.Red;
+            Cart.BackColor = Color.CornflowerBlue;
             Cart.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point);
             Cart.ForeColor = SystemColors.ActiveCaptionText;
             Cart.Location = new Point(22, 302);

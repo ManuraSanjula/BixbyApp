@@ -24,7 +24,8 @@ public partial class UserLogin : MetroForm
 
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
-                Invoke(new Action(() => MessageBox.Show("Try Again"))); // Invoke on UI thread
+                Invoke(new Action(() =>
+                                            MetroFramework.MetroMessageBox.Show(this, "Missing Inputs", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error))); // Invoke on UI thread
                 return;
             }
 

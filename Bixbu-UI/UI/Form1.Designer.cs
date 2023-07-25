@@ -70,7 +70,6 @@ partial class BixbyApp
         cart_panel = new FlowLayoutPanel();
         Order = new TabPage();
         order_panel = new FlowLayoutPanel();
-        Report = new TabPage();
         ShowReport = new Button();
         materialTabControl1.SuspendLayout();
         Home.SuspendLayout();
@@ -93,7 +92,6 @@ partial class BixbyApp
         materialTabControl1.Controls.Add(AddProducts);
         materialTabControl1.Controls.Add(Cart);
         materialTabControl1.Controls.Add(Order);
-        materialTabControl1.Controls.Add(Report);
         materialTabControl1.Depth = 0;
         materialTabControl1.Dock = DockStyle.Fill;
         materialTabControl1.Location = new Point(3, 64);
@@ -114,7 +112,7 @@ partial class BixbyApp
         Home.Name = "Home";
         Home.Size = new Size(1252, 664);
         Home.TabIndex = 3;
-        Home.Text = "HomeUI";
+        Home.Text = "Home";
         Home.UseVisualStyleBackColor = true;
         // 
         // home_panel
@@ -706,7 +704,7 @@ partial class BixbyApp
         Cart.Padding = new Padding(3);
         Cart.Size = new Size(1252, 664);
         Cart.TabIndex = 5;
-        Cart.Text = "CartRes";
+        Cart.Text = "Cart";
         Cart.UseVisualStyleBackColor = true;
         // 
         // cart_panel
@@ -737,16 +735,6 @@ partial class BixbyApp
         order_panel.Name = "order_panel";
         order_panel.Size = new Size(1246, 658);
         order_panel.TabIndex = 0;
-        // 
-        // Report
-        // 
-        Report.Location = new Point(4, 24);
-        Report.Name = "Report";
-        Report.Size = new Size(1252, 664);
-        Report.TabIndex = 7;
-        Report.Text = "Report";
-        Report.UseVisualStyleBackColor = true;
-        Report.Click += Report_Click;
         // 
         // ShowReport
         // 
@@ -832,6 +820,5 @@ partial class BixbyApp
     private FlowLayoutPanel order_panel;
     private FlowLayoutPanel home_panel;
     private Panel home_error;
-    private TabPage Report;
     private Button ShowReport;
 }

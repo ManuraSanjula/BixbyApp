@@ -202,10 +202,6 @@ public partial class BixbyApp : MaterialForm
                 await CartUI();
             if (e.TabPage == Cart)
                 await OrderUI();
-            if (e.TabPage == Report)
-            {
-                ReportUI();
-            }
         }
     }
 

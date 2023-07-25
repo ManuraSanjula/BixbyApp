@@ -40,7 +40,7 @@ public class LoadingForm : Form
         }
     }
 
-    private Bitmap BlurImage(System.Drawing.Image image, int blurAmount)
+    private Bitmap BlurImage(Image image, int blurAmount)
     {
         var blurredImage = new Bitmap(image.Width, image.Height);
         using (var g = Graphics.FromImage(blurredImage))
@@ -58,6 +58,15 @@ public class LoadingForm : Form
         }
 
         return blurredImage;
+    }
+
+    private void InitializeComponent()
+    {
+
+    }
+
+    private void LoadingForm_Load(object sender, EventArgs e)
+    {
     }
 }
 
